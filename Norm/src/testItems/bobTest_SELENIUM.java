@@ -23,6 +23,7 @@ public class bobTest_SELENIUM extends BaseMain
 	{
 		SetupDiver();
 		OpenConsole();
+		LoginOneClick();
 		Thread.sleep(3000);
 	}
 	

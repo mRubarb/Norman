@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.By.ByCssSelector;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -15,7 +16,13 @@ public class BaseMain
 {
 
 	public static WebDriver driver;
-	public static String baseUrl = "http://www.google.com/";
+	// public static String baseUrl = "http://www.google.com/";
+	public static String baseUrl = "http://dc1testrmapp03.prod.tangoe.com:4070/#";
+	public static String userName = "admin";
+	public static String password = "admin";
+	
+	
+	// http://dc1testrmapp03.prod.tangoe.com:4070/
 	
 	public static void SetupDiver()
 	{
@@ -38,6 +45,17 @@ public class BaseMain
 		driver.manage().window().maximize();
 		driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);        
 	}
+	
+	public static void LoginOneClick()
+	{
+		WaitForElementClickable(By.cssSelector(".alert-link"), 5, "Failed Wait");
+		driver.findElement(By.cssSelector(".alert-link")).click();
+		WaitForElementClickable(By.cssSelector("#username"), 5, "Failed Wait");
+		driver.findElement(By.cssSelector("#username")).sendKeys(userName);
+		driver.findElement(By.cssSelector("#password")).sendKeys(password);
+		driver.findElement(By.cssSelector(".btn.btn-primary")).click();		
+	}
+	
 	
 	public static void ShowText(String str) 
 	{

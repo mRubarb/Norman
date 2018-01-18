@@ -1,17 +1,15 @@
 package testItems;
-import java.io.File;
+import java.io.IOException;
 
 import javax.swing.JOptionPane;
 
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.PageFactory;
+import org.json.JSONException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import baseItems.BaseMain;
+import common.CommonMethods;
 import pages.Applications;
 
 public class bobTest_SELENIUM extends BaseMain
@@ -29,9 +27,12 @@ public class bobTest_SELENIUM extends BaseMain
 	
 	
 	@Test
-	public void SmokeTest() throws InterruptedException 
+	public void SmokeTest() throws InterruptedException, IOException, JSONException 
 	{
-		Applications.Open();
+		Applications.GoToApplications();
+		CommonMethods.verifyTitle("Applications");	
+		Applications.VerifyFullList();
+		Applications.VerifyPullDownForRows();		
 	}
 	
 	
@@ -40,7 +41,5 @@ public class bobTest_SELENIUM extends BaseMain
 	{
 		JOptionPane.showMessageDialog(null, "Ready To Close Driver.");		
 		driver.close();
-		
-
 	}
 }

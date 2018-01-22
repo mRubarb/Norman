@@ -97,7 +97,6 @@ public class Applications extends BaseMain
 		//VerifyApplicationsCollectionsExpectedAndActual();
 	}	
 	
-	// bladd
 	public static void VerifyPullDownForRows() throws IOException, JSONException
 	{
 		// get totalCount from metadata.
@@ -135,12 +134,70 @@ public class Applications extends BaseMain
 			ShowApplicationsActualAndExpectedCollection();
 		}
 	}		
+
+	public static void VerifyPaging() throws IOException, JSONException
+	{
+		VerifyCurrentPaging(token, 3);
+		VerifyCurrentPaging(token, 4);		
+		VerifyCurrentPaging(token, 5);
+	}
+	
+	public static void VerifySorting() throws IOException, JSONException
+	{
+		// get totalCount from metadata.
+		String url = ""; // applicationsURL + "?pageSize=300";
+		String apiType = "\"applications\":";
+		String sortDirection = "ASC";
+		String sortBy = "";
+		JSONArray jArray;
+
+		sortBy = "IS_ENABLED";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+
+
+		sortBy = "KEY";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
+		VerifySortingHelper(url, token, apiType);
+		
+		sortBy = "NAME";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
+		VerifySortingHelper(url, token, apiType);
+		sortDirection = "DESC";
+
+		sortBy = "IS_ENABLED";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+
+		sortBy = "KEY";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
+		VerifySortingHelper(url, token, apiType);
+		
+		sortBy = "NAME";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
+		VerifySortingHelper(url, token, apiType);
+	}
+
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	// 															HELPERS 
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+
+	public static void VerifySortingHelper(String url, String token, String apiType) throws IOException, JSONException
+	{
+		JSONArray jArray;
+		
+		//  get all of the applications from API call and verify count is equal to metadata totalCount.
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+
+		AddJsonArrayToExpectedList(jArray);
+		// get apps from console and add to actual list// TODO: 
+		ShowApplicationsActualAndExpectedCollection();
+		listOfExpectedApps.clear();
+	}	
+	
 	// go through rows and columns and show items or add items to the list of apps.
 	public static void ShowActualApplicationsOrStore(ActionForApplications action)
 	{
@@ -192,6 +249,55 @@ public class Applications extends BaseMain
 		}		
 	}	
 	
+	public static void VerifyCurrentPaging(String token, int pageSize) throws IOException , JSONException
+	{
+		String url = applicationsURL + "?pageSize=300";
+		String apiType = "\"applications\":";
+		String metadata = "";
+		int totalCount = 0;
+		int totalPages = 0;
+		int numberOfItemsInPartialPage = 0;
+		JSONArray jArray;
+		
+		// get metadata
+		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
+		
+		// take out totalCount 
+		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
+		
+		// get the expected total number of pages.
+		totalPages = GetTotalPages(totalCount, pageSize);
+		
+		// if there will be a last page with less than 'pageSize' items, calculate how many items there should be. 
+		if((totalCount % pageSize) > 0)
+		{
+			numberOfItemsInPartialPage = totalCount % pageSize;			
+		}
+		
+		// call each page through the API and get each page shown in the console. for each of the pages compare actual (from console) to expected (from API). 
+		for(int x = 0; x < totalPages; x++)
+		{
+			// get current page from API call and store page info into expected list.
+			url = applicationsURL + "?pageSize=" + pageSize + "&page=" + String.valueOf(x+1);
+			jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+			AddJsonArrayToExpectedList(jArray);
+			
+			ShowApplicationsActualAndExpectedCollection(); 
+			listOfExpectedApps.clear();
+			
+			// redundant check -- if the last page will have less than 'pageSize' number of items, verify the correct number of 
+			if(x == (totalPages - 1) && numberOfItemsInPartialPage != 0)
+			{
+				ShowText("Verify length.");
+				ShowInt(jArray.length());
+			}
+			
+			// set page in console and get items in page onto actual list. // TODO
+			// compare list // TODO:
+		}
+	}	
+	
+	
 	public static void ShowApplicationsActualAndExpectedCollection()
 	{
 		ShowText(" ********** Actual Apps **********");
@@ -205,6 +311,21 @@ public class Applications extends BaseMain
 		{
 			appClass.ShowApp();
 		}
+	}
+	
+	static public int GetTotalPages(int totalCount, int pageSize)
+	{
+		int totalPages = 0;
+		
+		totalPages = totalCount/pageSize;
+		
+		if(totalCount % pageSize > 0)
+		{
+			totalPages++;
+		}
+		return totalPages;
 	}	
+	
+	
 	
 }

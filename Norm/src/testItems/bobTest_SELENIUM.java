@@ -31,8 +31,10 @@ public class bobTest_SELENIUM extends BaseMain
 	{
 		Applications.GoToApplications();
 		CommonMethods.verifyTitle("Applications");	
-		Applications.VerifyFullList();
-		Applications.VerifyPullDownForRows();		
+		Applications.VerifyFullList(); // TC948 step 1.
+		Applications.VerifyPullDownForRows(); // TC948 step 2	
+		Applications.VerifyPaging(); // TC948 step 3		
+		Applications.VerifySorting(); // TC948 step 7
 	}
 	
 	

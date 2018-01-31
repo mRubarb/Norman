@@ -6,6 +6,7 @@ import java.util.List;
 
 import baseItems.BaseMain;
 import classes.ApplicationClass;
+import classes.TenantAppForAppSearch;
 import common.CommonMethods;
 
 import org.testng.Assert;
@@ -20,7 +21,7 @@ import org.openqa.selenium.WebElement;
 public class Applications extends BaseMain
 {
 	public static String AppTableCss = ".table.table-striped>tbody>tr";
-	public static int expectedNumberOfColumns = 4;
+	public static int expectedNumberOfColumns = 5;
 	
 	public static String key;
 	public static String name;
@@ -32,8 +33,22 @@ public class Applications extends BaseMain
 
 	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUxODgxOTAzOH0.HHgZ-BwWT1jrvo8yPLJsOA5YEP3utNDdBolJPHpbY4wcpOaBWGiXKS2ivbg-8pLvuGOb2ri6MTk3W-NqlsIEcg";
 	
+	public static int maxItemsPerPage = 50;
+	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console. 
+	
 	public static List<ApplicationClass> listOfExpectedApps = new ArrayList<ApplicationClass>();
 	public static List<ApplicationClass> listOfActualApps = new ArrayList<ApplicationClass>();	
+	public static List<TenantAppForAppSearch> listOfTenantWithAppExpected = new ArrayList<TenantAppForAppSearch>();
+	
+	/*
+    static enum PageSelections
+    {
+    	five,
+    	ten,
+    	twenty,
+    	fifty
+    }	
+	*/
 	
 	public static enum ActionForApplications
 	{
@@ -46,11 +61,10 @@ public class Applications extends BaseMain
 		CommonMethods.selectItemPlatformDropdown("Applications");
 	}
 	
-	// this gets all items in the collection from the API and all items from the applications UI.
-	public static void VerifyFullList() throws IOException, JSONException
+	// this gets all items in the collection from the API and all items from the applications UI and compares them.
+	public static void VerifyFullList() throws IOException, JSONException, InterruptedException
 	{
-		// get all the applications from API.
-		String url = applicationsURL + "?pageSize=300";
+		String url = applicationsURL + "?pageSize=300"; // get all the applications from API.
 		String apiType = "\"applications\":";
 		String metadata = "";
 		int totalCount = 0;
@@ -61,13 +75,18 @@ public class Applications extends BaseMain
 		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
 		
 		JSONArray jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
-		//System.out.println("Json array length = " + jArray.length());
 
 		Assert.assertTrue(jArray.length() == totalCount); // verify collection count matches metadata. 
 		
 		// store all the applications from API onto expected list.
 		for(int x = 0; x < jArray.length(); x++)
 		{
+			// the list page has a maximum number of rows. 
+			if(x == (maxItemsPerPage - 1))
+			{
+				break;
+			}			
+			
 			JSONObject jo = jArray.getJSONObject(x);
 			//System.out.println(jo.getString("key"));		
 			//System.out.println(jo.getString("name"));
@@ -82,56 +101,53 @@ public class Applications extends BaseMain
 			listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
 		}		
 		
-		ShowApplicationsActualAndExpectedCollection();
-		
-		// DEBUG
-		//ShowText(" ********** Expected Apps **********");
-		//for(ApplicationClass appClass : listOfExpectedApps){appClass.ShowApp();}
-		
-		// setup UI to show all applications. TODO:
+		// set page size to max.
+		WaitForElementClickable(By.xpath("(//span/label)[4]"), 5, "");
+		driver.findElement(By.xpath("(//span/label)[4]")).click(); 		
+		Thread.sleep(1000);
 		
 		// store the application in UI to listOfActualApps
-		//ShowActualApplicationsOrStore(ActionForApplications.Store);
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		// ShowApplicationsActualAndExpectedCollection();
 		
 		// verify actual and expected are equal.
-		//VerifyApplicationsCollectionsExpectedAndActual();
+		VerifyApplicationsCollectionsExpectedAndActual();
 	}	
 	
-	public static void VerifyPullDownForRows() throws IOException, JSONException
+	// this compares what the API returns to what is in the UI for each page size selection that can be tested.
+	public static void VerifyPageSettings() throws IOException, JSONException, InterruptedException
 	{
-		// get totalCount from metadata.
-		String url = applicationsURL + "?pageSize=300";
+		String url = applicationsURL + "?pageSize=300"; // this will get full list of applications from API.
 		String apiType = "\"applications\":";
 		String metadata = "";
 		int totalCount = 0;
-		int maxRowsToTest = 3;
 		JSONArray jArray;
 		
+		// get meta data. 
 		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
 
-		// take out totalCount 
+		// take out totalCount of applications in list. 
 		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
 		
-		//  get all of the applications from API call and verify count is equal to metadata totalCount.
+		//  get all of the applications from API call and verify count is equal to meta data totalCount.
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
-		Assert.assertTrue(jArray.length() == totalCount); // verify collection count matches metadata. 
+		Assert.assertTrue(jArray.length() == totalCount); // verify collection count matches meta data. 
 		
-		for(int x = 0; x < maxRowsToTest; x++)
+		// loop through the possible page selections.
+		for(int j = 0; j < pageSizes.length; j++)
 		{
-			listOfActualApps.clear();
-			listOfExpectedApps.clear();
+			if(pageSizes[j] > totalCount) // make sure there enough applications in collection to get requested page size. if not, break from for loop.
+			{
+				break;
+			}
+			ShowText("Verify Page Size " +  pageSizes[j] + " **************** .\r\n");
+			SetUiPageSizeSelector(j + 1); // select index of page size 5 selector.
 			
-			// set UI pull down to x + 1 and store the application in UI to listOfActualApps // TODO:
-			ShowActualApplicationsOrStore(ActionForApplications.Store);
-			
-			// update URL for next pull down setting.
-			url = applicationsURL + "?pageSize=" + String.valueOf(x + 1);
-			
-			jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
-			
-			AddJsonArrayToExpectedList(jArray);
-			ShowApplicationsActualAndExpectedCollection();
+			// call info API with page size and store results from API call. store results from UI applications list.  
+			ApiRequestWithPageSize(url, apiType, pageSizes[j]);  
+			// compare the stored results.
+			VerifyApplicationsCollectionsExpectedAndActual();
 		}
 	}		
 
@@ -179,12 +195,113 @@ public class Applications extends BaseMain
 	}
 
 	
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////
+	// * go through the tenants list and call 'getAppsForTenant' for each tenant.  
+	// * find a tenant with one application associated to it and store that tenant/application 
+	//   as an object and put the object onto a list.
+	// * find the tenant with the most applications associated to it and store that tenant/applications 
+	//   as an object and put the object onto a list. 
+	// /////////////////////////////////////////////////////////////////////////////////////////////////// 
+	public static void VerifyFilteringByTenant() throws IOException, JSONException
+	{
+		String url = ""; 
+		String apiType = "\"tenants\":";
+		int indexForTenantWithMostApps = 0;
+		JSONObject jo;
+		JSONArray jArray;
+		JSONArray jArrayAppsFromTenantCall;
+		boolean savedTenantWithOneApp = false;
+		
+		//CommonMethods.showResponse = false;
+		
+		// create a URL that will get a list of all the tenants.
+		url = tenantsURL + "?pageSize=300"; 
+		
+		// get the list of tenants. 
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+
+		// loop through tenants list. find a tenant with one associated application. store the tenant name and the application in a 
+		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list. 
+		System.out.println(jArray.length());
+		for(int x = 0; x < jArray.length(); x++)
+		{
+			jo = jArray.getJSONObject(x);
+			System.out.println(" Tenant Name found -------------");
+			System.out.println(jo.getString("key"));		
+			System.out.println("");
+			
+			// build a URL that will call 'getAppsForTenant' passing in the current tenant key. 
+			url = tenantsURL + "/" + jo.getString("key") + "/applications";
+			apiType = "\"applications\":";
+			
+			// call 'getAppsForTenant' passing in the current tenant key. receive back a list of application objects (can also be empty).
+			jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+			
+			// if only find one application returned from getAppsForTenant call, store the tenant name and the application properties 
+			// into a 'TenantAppForAppSearch' object. after that, don't store any more tenant names with one application. 
+			if((jArrayAppsFromTenantCall.length() == 1) && !savedTenantWithOneApp) 
+			{
+				BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
+				savedTenantWithOneApp = true;
+			}
+			
+			// store the jArray (list of tenants) index of the tenant that has the most associated applications (jArrayAppsFromTenantCall).
+			if(jArrayAppsFromTenantCall.length() > 1)
+			{
+				if(indexForTenantWithMostApps < jArrayAppsFromTenantCall.length())
+				{
+					indexForTenantWithMostApps = x;
+				}
+			}
+		}
+		
+		// get tenant with most associated applications.
+		jo = jArray.getJSONObject(indexForTenantWithMostApps);
+		
+		// build a URL that will call 'getAppsForTenant' using the tenant key from above. 
+		url = tenantsURL + "/" + jo.getString("key") + "/applications";
+		apiType = "\"applications\":";
+		
+		// call 'getAppsForTenant' passing in the tenant key. 
+		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		// store the tenant and applications as an object and store the object onto a list.
+		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
+		
+		// show tenant with one application and tenant with the most applications.
+		for(TenantAppForAppSearch tenApp : listOfTenantWithAppExpected)
+		{
+			tenApp.Show();
+		}
+		
+	}	
+	
+	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	// 															HELPERS 
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	// receive a list of application(s) and a tenant name. create a 'TenantAppForAppSearch' object to hold the tenant name and all of 
+	// the applications that go with it.
+	public static void BuildTenantAppForAppSearchObject(String tenantName, JSONArray jArrayOfApps) throws JSONException
+	{
+		TenantAppForAppSearch tempObj = new TenantAppForAppSearch(tenantName); // create object that will hold tenant name and its associated applications.
+		System.out.println("Tenant name in 'BuildTenantAppForAppSearchObject' is " + tenantName);
+		
+		// loop through the applications in array of applications. get each application and add it to the 'TenantAppForAppSearch' object's list of applications.
+		for(int y = 0; y < jArrayOfApps.length(); y++)
+		{
+			JSONObject joObjectApplication = jArrayOfApps.getJSONObject(y); // get application. 
+			tempObj.AddAppToList(new ApplicationClass(joObjectApplication.getString("key"), joObjectApplication.getString("name"), 
+					joObjectApplication.getString("description"), joObjectApplication.getBoolean("enabled")));
+		}
+		listOfTenantWithAppExpected.add(tempObj);
+	}	
+	
+	
+	
 	public static void VerifySortingHelper(String url, String token, String apiType) throws IOException, JSONException
 	{
 		JSONArray jArray;
@@ -206,7 +323,9 @@ public class Applications extends BaseMain
 		for(int x = 1; x <= numberOfRows; x++)
 		{
 			int numberOfColumns = driver.findElements(By.cssSelector(AppTableCss + ":nth-of-type(1)>td")).size(); 
+			
 			Assert.assertTrue(numberOfColumns == expectedNumberOfColumns); // verify number of columns is correct.
+			
 			
 			if (action.equals(ActionForApplications.Show))
 			{
@@ -226,7 +345,20 @@ public class Applications extends BaseMain
 				name = eleList.get(1).getText();
 				description = eleList.get(2).getText();
 				enabledString = eleList.get(3).getText();
-				enabled = Boolean.parseBoolean(enabledString);
+				//ShowText(enabledString);
+				//enabled = Boolean.parseBoolean(enabledString);
+				if(enabledString.equals("ENABLED"))
+				{
+					enabled = true;
+				}
+				else
+				{
+					enabled = false;
+				}
+				
+				
+				
+				
 				
 				// listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
 				listOfActualApps.add(new ApplicationClass(key, name, description, enabled));
@@ -282,8 +414,10 @@ public class Applications extends BaseMain
 			jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 			AddJsonArrayToExpectedList(jArray);
 			
-			ShowApplicationsActualAndExpectedCollection(); 
-			listOfExpectedApps.clear();
+			// set page in console and get items in page onto actual list. // TODO
+			
+			// ShowApplicationsActualAndExpectedCollection(); 
+			//listOfExpectedApps.clear();
 			
 			// redundant check -- if the last page will have less than 'pageSize' number of items, verify the correct number of 
 			if(x == (totalPages - 1) && numberOfItemsInPartialPage != 0)
@@ -292,11 +426,61 @@ public class Applications extends BaseMain
 				ShowInt(jArray.length());
 			}
 			
-			// set page in console and get items in page onto actual list. // TODO
+
 			// compare list // TODO:
 		}
 	}	
-	
+
+	// compare the list of apps from the API call to the list of apps from the UI.
+	// both lists should be in the same order.
+	public static void VerifyApplicationsCollectionsExpectedAndActual()
+	{
+		boolean bFoundInLoop = false;
+		String message = "";
+		int x = 0;
+		
+		// lists should be same size.
+		Assert.assertTrue(listOfActualApps.size() == listOfExpectedApps.size(), 
+				          "Error in size checks. List of actual size = " + listOfActualApps.size() + " List of expected size = " + listOfExpectedApps.size()); 
+		
+		// lists should be same order.
+		for(ApplicationClass appClass :  listOfActualApps)
+		{
+			Assert.assertTrue(appClass.m_Key.equals(listOfExpectedApps.get(x).m_Key));
+			Assert.assertTrue(appClass.m_Name.equals(listOfExpectedApps.get(x).m_Name));
+			Assert.assertTrue(appClass.m_Description.equals(listOfExpectedApps.get(x).m_Description));
+			Assert.assertTrue(appClass.m_Enabled == listOfExpectedApps.get(x).m_Enabled);
+			
+			x++;
+		}
+
+		// this is for when the list objects are not in the same order. 
+		/*
+		for(ApplicationClass appClass :  listOfActualApps)
+		{
+			
+			for(int x = 0; x < listOfExpectedApps.size(); x++)
+			{
+				if(appClass.m_Key.equals(listOfExpectedApps.get(x).m_Key))
+				{
+					ShowText(appClass.m_Key + " " + listOfExpectedApps.get(x).m_Key);
+					Assert.assertTrue(appClass.m_Name.equals(listOfExpectedApps.get(x).m_Name));
+					Assert.assertTrue(appClass.m_Description.equals(listOfExpectedApps.get(x).m_Description));
+					Assert.assertTrue(appClass.m_Enabled == listOfExpectedApps.get(x).m_Enabled);
+					bFoundInLoop = true;
+				}
+			}
+			
+			if(!bFoundInLoop)
+			{
+				ShowText("Fail in method 'VerifyApplicationsCollectionsExpectedAndActual'");
+				message = "Fail in method 'VerifyApplicationsCollectionsExpectedAndActual'. ";
+				Assert.fail(message + "Application class with key: "  +  appClass.m_Key + " not found");
+			}
+			bFoundInLoop = false;
+		}
+		*/
+	}	
 	
 	public static void ShowApplicationsActualAndExpectedCollection()
 	{
@@ -326,6 +510,34 @@ public class Applications extends BaseMain
 		return totalPages;
 	}	
 	
+	static public void SetUiPageSizeSelector(int index) throws InterruptedException
+	{
+		if(index > 4 || index < 1)
+		{
+			Assert.fail("Bad index number sent to 'SetPageSize' method in Applicatiins page class.");
+		}
+		
+		// set page size to max.
+		WaitForElementClickable(By.xpath("(//span/label)[" + index + "]"), 5, "");
+		driver.findElement(By.xpath("(//span/label)[" + index + "]")).click(); 		
+		Thread.sleep(1000);
+	}
+	
+	public static void ApiRequestWithPageSize(String url, String apiType, int pageSize) throws IOException, JSONException, InterruptedException
+	{
+		listOfActualApps.clear();
+		listOfExpectedApps.clear();
+		JSONArray jArray;
+
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// update URL for page setting and get application list from API.
+		url = applicationsURL + "?pageSize=" +  String.valueOf(pageSize);
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+						
+		AddJsonArrayToExpectedList(jArray);
+		//ShowApplicationsActualAndExpectedCollection();
+	}
 	
 	
 }

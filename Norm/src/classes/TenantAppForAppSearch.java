@@ -5,7 +5,7 @@ import java.util.List;
 
 public class TenantAppForAppSearch 
 {
-	public String m_TenantName = "";
+	public String m_TenantName =  "";
 	
 	List<ApplicationClass> listOfAppsForTenant = new ArrayList<ApplicationClass>();
 	

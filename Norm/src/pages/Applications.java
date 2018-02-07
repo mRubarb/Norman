@@ -145,7 +145,7 @@ public class Applications extends BaseMain
 			SetUiPageSizeSelector(j + 1); // select index of page size 5 selector.
 			
 			// call info API with page size and store results from API call. store results from UI applications list.  
-			ApiRequestWithPageSize(url, apiType, pageSizes[j]);  
+			ApiRequestWithPageSize(url, apiType, pageSizes[j]); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=========================== NOTE!!! 2/7/18 - method was changed, test will fail  
 			// compare the stored results.
 			VerifyApplicationsCollectionsExpectedAndActual();
 		}
@@ -158,7 +158,7 @@ public class Applications extends BaseMain
 		VerifyCurrentPaging(token, 5);
 	}
 	
-	public static void VerifySorting() throws IOException, JSONException
+	public static void VerifySortingFullPage() throws IOException, JSONException
 	{
 		// get totalCount from metadata.
 		String url = ""; // applicationsURL + "?pageSize=300";
@@ -194,6 +194,57 @@ public class Applications extends BaseMain
 		VerifySortingHelper(url, token, apiType);
 	}
 
+
+	// bladd
+	public static void VerifySortingMultiplePages() throws IOException, JSONException, InterruptedException
+	{
+		// get all the applications from API.
+		String url = applicationsURL + "?pageSize=300";
+		String apiType = "\"applications\":";
+		String metadata = "";
+		int totalCount = 0;
+		int numberOfPages = 0;
+		
+		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
+
+		// take out totalCount 
+		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
+		
+		ShowInt(totalCount);
+		
+		int pageSize = 5;
+		numberOfPages = GetTotalPages(totalCount, pageSize);
+		
+		if(totalCount % pageSize > 0) // NOTE!!!  - put this in method above.
+		{
+			numberOfPages++;
+		}
+		
+		ShowInt(numberOfPages);
+
+		// set page size.
+		SetUiPageSizeSelector(1);
+
+		WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(3)>a"), 3, "");
+		driver.findElement(By.cssSelector(".pagination>li:nth-of-type(3)>a")).click();
+		
+		Thread.sleep(1000);
+		
+		url = applicationsURL;
+		
+		ApiRequestWithPageSize(url, apiType, pageSize);
+		
+		// store the application in UI to listOfActualApps
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		System.out.println(listOfActualApps.size());
+
+		
+		// verify actual and expected are equal.
+		VerifyApplicationsCollectionsExpectedAndActual();
+	}	
+	
+	
 	
 	// ///////////////////////////////////////////////////////////////////////////////////////////////////
 	// * go through the tenants list and call 'getAppsForTenant' for each tenant.  
@@ -320,6 +371,8 @@ public class Applications extends BaseMain
 	{
 		int numberOfRows = driver.findElements(By.cssSelector(".table.table-striped>tbody>tr")).size(); // get number of rows.
 		
+		System.out.println("Num Rows In UI. = " + numberOfRows);
+		 
 		for(int x = 1; x <= numberOfRows; x++)
 		{
 			int numberOfColumns = driver.findElements(By.cssSelector(AppTableCss + ":nth-of-type(1)>td")).size(); 
@@ -355,10 +408,6 @@ public class Applications extends BaseMain
 				{
 					enabled = false;
 				}
-				
-				
-				
-				
 				
 				// listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
 				listOfActualApps.add(new ApplicationClass(key, name, description, enabled));
@@ -529,7 +578,8 @@ public class Applications extends BaseMain
 		listOfExpectedApps.clear();
 		JSONArray jArray;
 
-		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		// NOTE !!!!!!!!!!!!!!!!!!!!!!
+		// ShowActualApplicationsOrStore(ActionForApplications.Store); // why id this here? removed 2/7/17 - will make something else fail
 		
 		// update URL for page setting and get application list from API.
 		url = applicationsURL + "?pageSize=" +  String.valueOf(pageSize);

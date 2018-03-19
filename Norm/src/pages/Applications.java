@@ -28,10 +28,14 @@ public class Applications extends BaseMain
 	public static String description;
 	public static String enabledString;
 	public static boolean enabled;
+	public static String defaultHost;	
+	public static String defaultPath;	
+	public static String defaultHostPath;
+	
 	public static String applicationsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/applications";
 	public static String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";	
 
-	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUxODgxOTAzOH0.HHgZ-BwWT1jrvo8yPLJsOA5YEP3utNDdBolJPHpbY4wcpOaBWGiXKS2ivbg-8pLvuGOb2ri6MTk3W-NqlsIEcg";
+	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyMzY1MjUwOH0.zptwBdrk3cDixUCMuhFShkFdGDSBC_LYyKrvBIevnpwMFNVX6DFRO-40EZhbzhGrni41rS4eP8VWzPcQjNWdPA";
 	
 	public static int maxItemsPerPage = 50;
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console. 
@@ -87,16 +91,21 @@ public class Applications extends BaseMain
 				break;
 			}			
 			
-			JSONObject jo = jArray.getJSONObject(x);
+			JSONObject jo = jArray.getJSONObject(x);  
 			//System.out.println(jo.getString("key"));		
 			//System.out.println(jo.getString("name"));
-			//System.out.println(jo.getString("description"));
+			//System.out.println(GetNonRequiredItem(jo, "description"));
+			//System.out.println(GetNonRequiredItem(jo, "defaultHost"));			
+			//System.out.println(GetNonRequiredItem(jo, "defaultPath"));			
+			//System.out.println(jo.getString("description"));				
 			//System.out.println(jo.getBoolean("enabled"));
 			
-			key = jo.getString("key");
+			key = jo.getString("key");  
 			name = jo.getString("name");
-			description = jo.getString("description");
+			description = GetNonRequiredItem(jo, "description"); 
 			enabled = jo.getBoolean("enabled");
+			defaultHost = GetNonRequiredItem(jo, "defaultHost");
+			defaultPath = GetNonRequiredItem(jo, "defaultPath");			
 			
 			listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
 		}		
@@ -589,5 +598,18 @@ public class Applications extends BaseMain
 		//ShowApplicationsActualAndExpectedCollection();
 	}
 	
-	
+	// move to common methods?
+	public static String GetNonRequiredItem(JSONObject jo,  String item) throws JSONException
+	{
+		try
+		{
+			jo.getString(item);				
+		}
+		catch (Exception e) 
+		{
+			return "";
+		}	
+		
+		return jo.getString(item);
+	}
 }

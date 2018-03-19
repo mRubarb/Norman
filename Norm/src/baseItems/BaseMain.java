@@ -46,14 +46,15 @@ public class BaseMain
 		driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);        
 	}
 	
-	public static void LoginOneClick()
+	public static void LoginOneClick() throws InterruptedException
 	{
-		WaitForElementClickable(By.cssSelector(".alert-link"), 5, "Failed Wait");
-		driver.findElement(By.cssSelector(".alert-link")).click();
+		WaitForElementClickable(By.cssSelector(".btn.btn-primary"), 5, "Failed Wait");
+		driver.findElement(By.cssSelector(".btn.btn-primary")).click();
 		WaitForElementClickable(By.cssSelector("#username"), 5, "Failed Wait");
 		driver.findElement(By.cssSelector("#username")).sendKeys(userName);
 		driver.findElement(By.cssSelector("#password")).sendKeys(password);
-		driver.findElement(By.cssSelector(".btn.btn-primary")).click();		
+		WaitForElementClickable(By.xpath("(//button[@class='btn btn-primary'])[2]"), 3, ""); 
+		driver.findElement(By.xpath("(//button[@class='btn btn-primary'])[2]")).click();	
 	}
 	
 	

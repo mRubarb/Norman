@@ -31,13 +31,13 @@ public class bobTest_SELENIUM extends BaseMain
 	{
 		Applications.GoToApplications();
 		CommonMethods.verifyTitle("Applications");	
-		// Applications.VerifyFullList(); // TC948 step 1.
+		Applications.VerifyFullList(); // TC948 step 1.
 		//Applications.VerifyPageSettings(); // TC948 step 2	
 		//Applications.VerifyPaging(); // TC948 step 3		
 		// Applications.VerifySortingFullPage(); // TC948 step 7
 		//Applications.VerifyFilteringByTenant(); // TC948 step 7 (tenant filter). 
 		
-		Applications.VerifySortingMultiplePages(); // start 2/7/17 -- sorting with different page sizes applications.
+		//Applications.VerifySortingMultiplePages(); // start 2/7/17 -- sorting with different page sizes applications.
 	}
 	
 	

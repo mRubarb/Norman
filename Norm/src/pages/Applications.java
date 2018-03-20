@@ -12,16 +12,20 @@ import common.CommonMethods;
 import org.testng.Assert;
 
 import java.io.IOException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 public class Applications extends BaseMain
 {
 	public static String AppTableCss = ".table.table-striped>tbody>tr";
-	public static int expectedNumberOfColumns = 5;
+	public static int expectedNumberOfColumns = 6;
 	
 	public static String key;
 	public static String name;
@@ -65,7 +69,7 @@ public class Applications extends BaseMain
 		CommonMethods.selectItemPlatformDropdown("Applications");
 	}
 	
-	// this gets all items in the collection from the API and all items from the applications UI and compares them.
+	// this gets all items in the collection from the API and all items from the applications UI and compare them.
 	public static void VerifyFullList() throws IOException, JSONException, InterruptedException
 	{
 		String url = applicationsURL + "?pageSize=300"; // get all the applications from API.
@@ -91,24 +95,11 @@ public class Applications extends BaseMain
 				break;
 			}			
 			
-			JSONObject jo = jArray.getJSONObject(x);  
-			//System.out.println(jo.getString("key"));		
-			//System.out.println(jo.getString("name"));
-			//System.out.println(GetNonRequiredItem(jo, "description"));
-			//System.out.println(GetNonRequiredItem(jo, "defaultHost"));			
-			//System.out.println(GetNonRequiredItem(jo, "defaultPath"));			
-			//System.out.println(jo.getString("description"));				
-			//System.out.println(jo.getBoolean("enabled"));
-			
-			key = jo.getString("key");  
-			name = jo.getString("name");
-			description = GetNonRequiredItem(jo, "description"); 
-			enabled = jo.getBoolean("enabled");
-			defaultHost = GetNonRequiredItem(jo, "defaultHost");
-			defaultPath = GetNonRequiredItem(jo, "defaultPath");			
-			
-			listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
+			JSONObject jo = jArray.getJSONObject(x); // get current json object from the list  
+			GetAndAddAppFromApiToExpectedList(jo); // add all the fields in the object.
 		}		
+		
+		System.out.println("Size from UI = " +     listOfExpectedApps.size() + " rows.");
 		
 		// set page size to max.
 		WaitForElementClickable(By.xpath("(//span/label)[4]"), 5, "");
@@ -117,7 +108,7 @@ public class Applications extends BaseMain
 		
 		// store the application in UI to listOfActualApps
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		// ShowApplicationsActualAndExpectedCollection();
+		// ShowApplicationsActualAndExpectedCollection(); 
 		
 		// verify actual and expected are equal.
 		VerifyApplicationsCollectionsExpectedAndActual();
@@ -154,7 +145,7 @@ public class Applications extends BaseMain
 			SetUiPageSizeSelector(j + 1); // select index of page size 5 selector.
 			
 			// call info API with page size and store results from API call. store results from UI applications list.  
-			ApiRequestWithPageSize(url, apiType, pageSizes[j]); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=========================== NOTE!!! 2/7/18 - method was changed, test will fail  
+			PassDataAndStoreApiRequest(apiType, pageSizes[j], 0, "", ""); // NEEDS WORK -- was changed --- WONT'T work in this method   
 			// compare the stored results.
 			VerifyApplicationsCollectionsExpectedAndActual();
 		}
@@ -167,52 +158,102 @@ public class Applications extends BaseMain
 		VerifyCurrentPaging(token, 5);
 	}
 	
-	public static void VerifySortingFullPage() throws IOException, JSONException
+	// verify sorting on all columns that can be sorted.
+	public static void VerifySortingFullPage() throws Exception
 	{
-		// get totalCount from metadata.
-		String url = ""; // applicationsURL + "?pageSize=300";
+		String url = ""; 
 		String apiType = "\"applications\":";
-		String sortDirection = "ASC";
+		String sortDirection = "";
 		String sortBy = "";
 		JSONArray jArray;
 
+		SetPageSizeToMax();
+	
+		ClickSorting("//span[text()='Enabled']");
+		
+		sortDirection = "ASC";
 		sortBy = "IS_ENABLED";
 		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
 		VerifySortingHelper(url, token, apiType);
-
-
-		sortBy = "KEY";
-		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
-		VerifySortingHelper(url, token, apiType);
 		
-		sortBy = "NAME";
-		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
-		VerifySortingHelper(url, token, apiType);
+		ClickSorting("//span[text()='Enabled']");
+		
 		sortDirection = "DESC";
-
 		sortBy = "IS_ENABLED";
 		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
 		VerifySortingHelper(url, token, apiType);
-
+		
+		ClickSorting("//span[text()='Key']");
+		
+		sortDirection = "ASC";
 		sortBy = "KEY";
-		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
 		VerifySortingHelper(url, token, apiType);
 		
+		ClickSorting("//span[text()='Key']");
+		
+		sortDirection = "DESC";
+		sortBy = "KEY";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+
+		
+		ClickSorting("//span[text()='Name']");
+		
+		sortDirection = "ASC";
 		sortBy = "NAME";
-		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy;
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+		
+		ClickSorting("//span[text()='Name']");
+		
+		sortDirection = "DESC";
+		sortBy = "NAME";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+		
+		ClickSorting("//span[text()='Host']");
+
+		sortDirection = "ASC";
+		sortBy = "DEFAULT_HOST";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+		
+		ClickSorting("//span[text()='Host']");
+		
+		sortDirection = "DESC";
+		sortBy = "DEFAULT_HOST";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+
+		ClickSorting("//span[text()='Path']");
+		
+		sortDirection = "ASC";
+		sortBy = "DEFAULT_PATH";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
+		VerifySortingHelper(url, token, apiType);
+		
+		ClickSorting("//span[text()='Path']");
+		
+		sortDirection = "DESC";
+		sortBy = "DEFAULT_PATH";
+		url = applicationsURL + "?pageSize=300" + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy; 
 		VerifySortingHelper(url, token, apiType);
 	}
 
 
 	// bladd
-	public static void VerifySortingMultiplePages() throws IOException, JSONException, InterruptedException
+	public static void VerifySortingMultiplePages() throws Exception
 	{
 		// get all the applications from API.
 		String url = applicationsURL + "?pageSize=300";
 		String apiType = "\"applications\":";
 		String metadata = "";
+		String sortDirection = "";
+		String sortBy = "";
 		int totalCount = 0;
 		int numberOfPages = 0;
+		int pageSize = 0;
 		
 		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
 
@@ -221,39 +262,44 @@ public class Applications extends BaseMain
 		
 		ShowInt(totalCount);
 		
-		int pageSize = 5;
+		pageSize = 5;
 		numberOfPages = GetTotalPages(totalCount, pageSize);
 		
-		if(totalCount % pageSize > 0) // NOTE!!!  - put this in method above.
-		{
-			numberOfPages++;
-		}
-		
-		ShowInt(numberOfPages);
+		System.out.println("Expected number of pages for page size = " +  pageSize + " = " + numberOfPages);
 
-		// set page size.
+		// set page size to 5.
 		SetUiPageSizeSelector(1);
+		
+		// click a sort item.
+		ClickSorting("//span[text()='Enabled']");
+		
+		// define sorting
+		sortDirection = "ASC";
+		sortBy = "IS_ENABLED";
+		
+		
+		//VerifyPagesSorting(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy)
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+		/*
+		for(int x = 0; x < numberOfPages; x++) // go through each page.
+		{
+			// click a page per x index.
+			WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a"), 3, "");
+			driver.findElement(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a")).click();
+			Thread.sleep(2000);
 
-		WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(3)>a"), 3, "");
-		driver.findElement(By.cssSelector(".pagination>li:nth-of-type(3)>a")).click();
-		
-		Thread.sleep(1000);
-		
-		url = applicationsURL;
-		
-		ApiRequestWithPageSize(url, apiType, pageSize);
-		
-		// store the application in UI to listOfActualApps
-		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		
-		System.out.println(listOfActualApps.size());
+			// this stores API info for page x + 1  into listOfExpectedApps 
+			PassDataAndStoreApiRequest(apiType, pageSize, x + 1, sortDirection, sortBy);
+			
+			// store the application info in UI to listOfActualApps
+			ShowActualApplicationsOrStore(ActionForApplications.Store);
 
-		
-		// verify actual and expected are equal.
-		VerifyApplicationsCollectionsExpectedAndActual();
+			// verify actual and expected are equal.
+			VerifyApplicationsCollectionsExpectedAndActual();
+		}
+		*/
 	}	
-	
-	
 	
 	// ///////////////////////////////////////////////////////////////////////////////////////////////////
 	// * go through the tenants list and call 'getAppsForTenant' for each tenant.  
@@ -353,9 +399,10 @@ public class Applications extends BaseMain
 		// loop through the applications in array of applications. get each application and add it to the 'TenantAppForAppSearch' object's list of applications.
 		for(int y = 0; y < jArrayOfApps.length(); y++)
 		{
-			JSONObject joObjectApplication = jArrayOfApps.getJSONObject(y); // get application. 
-			tempObj.AddAppToList(new ApplicationClass(joObjectApplication.getString("key"), joObjectApplication.getString("name"), 
-					joObjectApplication.getString("description"), joObjectApplication.getBoolean("enabled")));
+			// bladdxx
+			//JSONObject joObjectApplication = jArrayOfApps.getJSONObject(y); // get application. 
+			//tempObj.AddAppToList(new ApplicationClass(joObjectApplication.getString("key"), joObjectApplication.getString("name"), 
+			//		joObjectApplication.getString("description"), joObjectApplication.getBoolean("enabled")));
 		}
 		listOfTenantWithAppExpected.add(tempObj);
 	}	
@@ -370,9 +417,19 @@ public class Applications extends BaseMain
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
 		AddJsonArrayToExpectedList(jArray);
-		// get apps from console and add to actual list// TODO: 
-		ShowApplicationsActualAndExpectedCollection();
+		
+		// store the applications in UI to listOfActualApps
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+		// ShowApplicationsActualAndExpectedCollection();
+		
+		VerifyApplicationsCollectionsExpectedAndActual();
+		
+		
 		listOfExpectedApps.clear();
+		listOfActualApps.clear();		
+		
+		
 	}	
 	
 	// go through rows and columns and show items or add items to the list of apps.
@@ -388,7 +445,6 @@ public class Applications extends BaseMain
 			
 			Assert.assertTrue(numberOfColumns == expectedNumberOfColumns); // verify number of columns is correct.
 			
-			
 			if (action.equals(ActionForApplications.Show))
 			{
 				ShowText("----------------------------");
@@ -402,11 +458,24 @@ public class Applications extends BaseMain
 				// get items in this TD block
 				List<WebElement> eleList = driver.findElements(By.cssSelector(AppTableCss + ":nth-of-type(" + x + ")>td"));
 				
-				// store items for app
+				// store items for app - bladdxxx below changed.
 				key = eleList.get(0).getText();
 				name = eleList.get(1).getText();
-				description = eleList.get(2).getText();
-				enabledString = eleList.get(3).getText();
+				description = eleList.get(3).getText();
+				enabledString = eleList.get(4).getText();
+				defaultHostPath = eleList.get(2).getText(); // - bladdxxx
+				if(!defaultHostPath.equals(""))
+				{
+					defaultHost = defaultHostPath.split("/")[0];
+					// defaultPath = "/" + defaultHostPath.split("/")[1];
+					defaultPath = GetDefaultPath(defaultHostPath);
+				}
+				else
+				{
+					defaultHost = "";
+					defaultPath = "";
+				}
+				
 				//ShowText(enabledString);
 				//enabled = Boolean.parseBoolean(enabledString);
 				if(enabledString.equals("ENABLED"))
@@ -419,7 +488,7 @@ public class Applications extends BaseMain
 				}
 				
 				// listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
-				listOfActualApps.add(new ApplicationClass(key, name, description, enabled));
+				listOfActualApps.add(new ApplicationClass(key, name, description, enabled, defaultHost, defaultPath));
 			}
 		}
 	}
@@ -431,11 +500,13 @@ public class Applications extends BaseMain
 		{
 			JSONObject jo = jArray.getJSONObject(y);
 			
-			key = jo.getString("key");
-			name = jo.getString("name");
-			description = jo.getString("description");
-			enabled = jo.getBoolean("enabled");
-			listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));				
+			GetAndAddAppFromApiToExpectedList(jo);
+			
+			//key = jo.getString("key");
+			//name = jo.getString("name");
+			//description = jo.getString("description");
+			//enabled = jo.getBoolean("enabled");
+			//listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled, defaultHost, defaultPath));
 		}		
 	}	
 	
@@ -504,13 +575,17 @@ public class Applications extends BaseMain
 		// lists should be same order.
 		for(ApplicationClass appClass :  listOfActualApps)
 		{
+			//ShowText(appClass.m_Key);
+			//ShowText(listOfExpectedApps.get(x).m_Key);			
 			Assert.assertTrue(appClass.m_Key.equals(listOfExpectedApps.get(x).m_Key));
 			Assert.assertTrue(appClass.m_Name.equals(listOfExpectedApps.get(x).m_Name));
 			Assert.assertTrue(appClass.m_Description.equals(listOfExpectedApps.get(x).m_Description));
 			Assert.assertTrue(appClass.m_Enabled == listOfExpectedApps.get(x).m_Enabled);
-			
+			Assert.assertTrue(appClass.m_defaultHost.equals(listOfExpectedApps.get(x).m_defaultHost)); 			
+			Assert.assertTrue(appClass.m_defaultPath.equals(listOfExpectedApps.get(x).m_defaultPath)); 			
 			x++;
 		}
+
 
 		// this is for when the list objects are not in the same order. 
 		/*
@@ -568,6 +643,7 @@ public class Applications extends BaseMain
 		return totalPages;
 	}	
 	
+	// this sets page to 5, 10, 20, or 50.
 	static public void SetUiPageSizeSelector(int index) throws InterruptedException
 	{
 		if(index > 4 || index < 1)
@@ -581,35 +657,92 @@ public class Applications extends BaseMain
 		Thread.sleep(1000);
 	}
 	
-	public static void ApiRequestWithPageSize(String url, String apiType, int pageSize) throws IOException, JSONException, InterruptedException
+	// add sortBy, sortDirection
+	public static void PassDataAndStoreApiRequest(String apiType, int pageSize, int pageNumber, String sortDirection, String sortBy) throws IOException, JSONException, InterruptedException
 	{
 		listOfActualApps.clear();
 		listOfExpectedApps.clear();
 		JSONArray jArray;
+		String url = "";
 
 		// NOTE !!!!!!!!!!!!!!!!!!!!!!
 		// ShowActualApplicationsOrStore(ActionForApplications.Store); // why id this here? removed 2/7/17 - will make something else fail
 		
 		// update URL for page setting and get application list from API.
-		url = applicationsURL + "?pageSize=" +  String.valueOf(pageSize);
+		url = applicationsURL + "?pageSize=" +  String.valueOf(pageSize) + "&page=" + String.valueOf(pageNumber + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy);
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 						
 		AddJsonArrayToExpectedList(jArray);
 		//ShowApplicationsActualAndExpectedCollection();
 	}
-	
-	// move to common methods?
-	public static String GetNonRequiredItem(JSONObject jo,  String item) throws JSONException
+
+	// return the default path from a combination of host and path.  
+	public static String GetDefaultPath(String hostPath)
 	{
-		try
-		{
-			jo.getString(item);				
-		}
-		catch (Exception e) 
-		{
-			return "";
-		}	
+		int numSlashes = StringUtils.countMatches(hostPath, "/");
 		
-		return jo.getString(item);
+		// ShowText(hostPath.split("/")[0]);
+		String path = "";
+		
+		for(int x = 1; x != numSlashes + 1; x++)
+		{
+			path += "/" + hostPath.split("/")[x];
+		}
+		
+		return path;
 	}
+
+	// add expected items found in in json object jo.
+	public static void GetAndAddAppFromApiToExpectedList(JSONObject jo) throws JSONException
+	{
+		key = jo.getString("key");  
+		name = jo.getString("name");
+		description = CommonMethods.GetNonRequiredItem(jo, "description"); 
+		enabled = jo.getBoolean("enabled");
+		defaultHost = CommonMethods.GetNonRequiredItem(jo, "defaultHost");
+		defaultPath = CommonMethods.GetNonRequiredItem(jo, "defaultPath");			
+		
+		listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled, defaultHost, defaultPath));		
+	}	
+	
+	public static void SetPageSizeToMax() throws Exception
+	{
+		// set page size to max.
+		WaitForElementClickable(By.xpath("(//span/label)[4]"), 5, "");
+		driver.findElement(By.xpath("(//span/label)[4]")).click(); 		
+		Thread.sleep(1000);
+	}
+
+	public static void ShowPopup(String message)		
+	{
+		JOptionPane.showMessageDialog(null, message);
+	}
+	
+	// this clicks a column selection to set sorting mode.
+	public static void ClickSorting(String item) throws Exception		
+	{
+		WaitForElementClickable(By.xpath(item), 2, "");
+		driver.findElement(By.xpath(item)).click();
+		Thread.sleep(2000);
+	}
+	
+	public static void VerifyPagesSorting(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception		
+	{
+		for(int x = 0; x < numberOfPages; x++) // go through each page.
+		{
+			// click a page per x index.
+			WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a"), 3, "");
+			driver.findElement(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a")).click();
+			Thread.sleep(1000);
+
+			// this stores API info for page x + 1  into listOfExpectedApps 
+			PassDataAndStoreApiRequest(apiType, pageSize, x + 1, sortDirection, sortBy);
+			
+			// store the application info in UI to listOfActualApps
+			ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+			// verify actual and expected are equal.
+			VerifyApplicationsCollectionsExpectedAndActual();
+		}
+	}	
 }

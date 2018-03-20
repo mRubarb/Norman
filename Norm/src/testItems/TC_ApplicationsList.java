@@ -12,7 +12,7 @@ import baseItems.BaseMain;
 import common.CommonMethods;
 import pages.Applications;
 
-public class bobTest_SELENIUM extends BaseMain
+public class TC_ApplicationsList extends BaseMain
 {
   
 	
@@ -27,17 +27,17 @@ public class bobTest_SELENIUM extends BaseMain
 	
 	
 	@Test
-	public void SmokeTest() throws InterruptedException, IOException, JSONException 
+	public void SmokeTest() throws Exception 
 	{
 		Applications.GoToApplications();
 		CommonMethods.verifyTitle("Applications");	
-		Applications.VerifyFullList(); // TC948 step 1.
+		//Applications.VerifyFullList(); // TC948 step 1. // fixed on 3/20/18
 		//Applications.VerifyPageSettings(); // TC948 step 2	
 		//Applications.VerifyPaging(); // TC948 step 3		
-		// Applications.VerifySortingFullPage(); // TC948 step 7
+		//Applications.VerifySortingFullPage(); // fixed 3/20/18
 		//Applications.VerifyFilteringByTenant(); // TC948 step 7 (tenant filter). 
 		
-		//Applications.VerifySortingMultiplePages(); // start 2/7/17 -- sorting with different page sizes applications.
+		Applications.VerifySortingMultiplePages(); // start 2/7/17 -- sorting with different page sizes applications.
 	}
 	
 	

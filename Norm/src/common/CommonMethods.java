@@ -162,8 +162,18 @@ public class CommonMethods extends BaseMain
 		return jo.getString("id_token");
 	}    	
 	
-	
-	
-	
-	
+	// this gets an item from a json object. if there is no item found it returns "".
+	public static String GetNonRequiredItem(JSONObject jo,  String item) throws JSONException
+	{
+		try
+		{
+			jo.getString(item);				
+		}
+		catch (Exception e) 
+		{
+			return "";
+		}	
+		
+		return jo.getString(item);
+	}	
 }

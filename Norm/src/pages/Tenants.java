@@ -19,7 +19,7 @@ import common.CommonMethods;
 public class Tenants extends BaseMain
 {
 
-	public static String[] propertiesNames = {"Key", "Name", "Enabled"};
+	private static String[] propertiesNames = {"Key", "Name", "Enabled"};
 	
 	
 	public static void verifyColumnsNames() {
@@ -35,13 +35,17 @@ public class Tenants extends BaseMain
 		
 	}
 	
-	public static void verifyData() throws IOException, JSONException {
+	
+	// It verifies that the data on the UI matches the data from the API
+	public static void verifyData(int page, int pageSize) throws IOException, JSONException {
 		
 		String token = CommonMethods.GetTokenFromPost();
 		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";  //"http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";
 		String apiType = "\"" + "tenants" + "\"" + ":";
+				
+		String queryParameters = "?page=" + page + "&pageSize=" + pageSize;
 		
-		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url + queryParameters, apiType);
 		
 		List<Tenant> actualTenantsList = putJsonArrayIntoList(jsonArrayTenants);
 		List<Tenant> expectedTenantsList = addTenantsFromUItoList();
@@ -51,10 +55,11 @@ public class Tenants extends BaseMain
 			Tenant actual = actualTenantsList.get(i);
 			Tenant expected = expectedTenantsList.get(i);
 			
-			System.out.println(i+1);
+			/*System.out.println(i+1);
 			System.out.println("Actual Key: " + actual.getKey() + ", Expected Key: " + expected.getKey());
 			System.out.println("Actual Name: " + actual.getName() + ", Expected Name: " + expected.getName());
 			System.out.println("Actual isEnabled: " + actual.isEnabled() + ", Expected isEnabled: " + expected.isEnabled());
+			*/
 			
 			Assert.assertEquals(actual.getKey(), expected.getKey());
 			Assert.assertEquals(actual.getName(), expected.getName());
@@ -65,7 +70,7 @@ public class Tenants extends BaseMain
 		
 	}
 	
-	
+	// Puts the JSON response obtained from the API GET /tenants into a list.
 	private static List<Tenant> putJsonArrayIntoList(JSONArray jsonArrayTenants) throws JSONException {
 		
 		List<Tenant> actualTenantsList = new ArrayList<>();
@@ -95,6 +100,7 @@ public class Tenants extends BaseMain
 	}
 	
 
+	// It adds the tenants that are listed on the UI to a list
 	private static List<Tenant> addTenantsFromUItoList() {
 
 		List<Tenant> expectedTenantsList = new ArrayList<>();
@@ -128,6 +134,8 @@ public class Tenants extends BaseMain
 		
 	}
 
+	
+	// ENABLED/DISABLED values are converted to true/false
 	private static boolean convertToBoolean(String isEnabled) {
 		
 		if (isEnabled.equals("ENABLED")) {
@@ -149,47 +157,45 @@ public class Tenants extends BaseMain
 		System.out.println("\n  ** Sort List by Name in Ascending Order **");
 		
 		clickArrowSorting("Name", "ASC");
-		Thread.sleep(3000);
-		
+				
 		verifySorting("NAME", "ASC");
 		
 		System.out.println("\n  ** Sort List by Name in Descending Order **");
 		
 		clickArrowSorting("Name", "DESC");
-		Thread.sleep(3000);
-		
+				
 		verifySorting("NAME", "DESC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Ascending Order **");
 		
 		clickArrowSorting("Enabled", "ASC");
-		Thread.sleep(3000);
-		
+				
 		verifySorting("IS_ENABLED", "ASC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Descending Order **");
 		
 		clickArrowSorting("Enabled", "DESC");
-		Thread.sleep(3000);
-		
+				
 		verifySorting("IS_ENABLED", "DESC");
 		
 		System.out.println("\n  ** Sort List by Key in Ascending Order **");
 		
 		clickArrowSorting("Key", "ASC");
-		Thread.sleep(3000);
-		
+				
 		verifySorting("KEY", "ASC");
 		
 		System.out.println("\n  ** Sort List by Key in Descending Order **");
 		
 		clickArrowSorting("Key", "DESC");
-		Thread.sleep(3000);	
 		
 		verifySorting("KEY", "DESC");
 		
+		clickArrowSorting("Key", "ASC");
+		
 	}
 	
+	
+	// Verify that list of tenants is sorted according to the sortBy and sortDirection parameters. 
 	public static void verifySorting(String sortBy, String sortDirection) {
 		
 		List<Tenant> tenantsList = addTenantsFromUItoList();
@@ -218,7 +224,7 @@ public class Tenants extends BaseMain
 			
 		}
 		
-		Collections.sort(sortedListExpected);
+		Collections.sort(sortedListExpected, String.CASE_INSENSITIVE_ORDER);
 				
 		if (sortDirection.equals("DESC")) Collections.reverse(sortedListExpected); 
 		
@@ -242,7 +248,8 @@ public class Tenants extends BaseMain
 		
 	}
 	
-	public static void clickArrowSorting(String sortBy, String sortDirection) {
+	
+	public static void clickArrowSorting(String sortBy, String sortDirection) throws InterruptedException {
 		
 		WebElement arrow = driver.findElement(By.xpath("//div[@class='table-responsive']/table/thead/tr/th/span[text()='" + sortBy + "']/following-sibling::span"));
 		
@@ -270,8 +277,252 @@ public class Tenants extends BaseMain
 			// No clicks - already descending			
 		}
 		
+		Thread.sleep(2000);
+		
+	}
+
+
+	public static void selectSizeOfList(int size) {
+		
+		System.out.println("Size to select: " + size);
+		
+		String xpath = "//div/span[text()='Size: ']/following-sibling::span/label";
+		
+		List<WebElement> sizeRadioButtons = driver.findElements(By.xpath(xpath + "/input"));
+		
+		for (int i = 0; i < sizeRadioButtons.size(); i++) {
+			
+			WebElement radioButtonSize = sizeRadioButtons.get(i); 
+						
+			if (radioButtonSize.getAttribute("value").equals(Integer.toString(size))) {
+				
+				driver.findElement(By.xpath(xpath + "[" + (i+1) + "]")).click();
+				break;
+			}
+								
+		}
+		
+	}
+
+
+	public static void verifyDataAndSorting() throws InterruptedException, IOException, JSONException {
+
+		// Get all the "sizes" into a list
+		
+		List<WebElement> listSizesElements = driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		
+		
+		for (int i = 0; i < listSizesElements.size(); i++) {
+			
+			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
+			
+			selectSizeOfList(pageSize);
+			
+			Thread.sleep(2000);  // -- see if it can be changed to waitfor.... 
+			
+			verifyData(1, pageSize);
+			
+			Thread.sleep(2000);
+			
+			// ** T-960:Tenants list can be sorted
+			verifyListSorted();
+			
+		}	
+		
+	}
+
+
+	public static void verifyPaging() throws InterruptedException, IOException, JSONException {
+		
+		
+		/*
+		 * 1- Select a size -- repeat for each size listed (5 / 10 / 20 / 50)
+		 * 2- Obtain the json for that pageSize and page number
+		 * 3- Obtain the list displayed on UI
+		 * 4- Compare lists
+		 * 5- if pageSize < totalCount {
+		 * 	click next page.
+		 * 	go to step 2 
+		 * }
+		 * 6- loop --> step 1
+		 * 
+		 * 
+		 * 
+		 * 	
+		 * */
+		// Get all the "sizes" into a list
+		
+		List<WebElement> listSizesElements = driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		
+		String totalCountItems = driver.findElement(By.xpath("//div/jhi-item-count")).getText();
+		
+		int index = totalCountItems.indexOf("of");
+		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
+				
+		int totalCount = Integer.parseInt(totalCountItems);
+		
+		System.out.println("totalCount: " + totalCount);		
+		
+		
+		// Verify data for each pageSize  (5 / 10 / 20 / 50)
+		
+		for (int i = 0; i < listSizesElements.size(); i++) {
+			
+			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
+			
+			System.out.println("pageSize = " + pageSize);
+			
+			selectSizeOfList(pageSize);
+			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
+			
+			int totalPages = 1;
+			
+			if ((totalCount % pageSize) > 0)
+				totalPages = (totalCount / pageSize) + 1;
+			
+			if ((totalCount % pageSize) == 0)
+				totalPages = totalCount / pageSize;
+			
+			// Go through all the pages and verify data on each page
+			
+			for (int page = 1; page <= totalPages; page++) {
+			
+				clickPageNumber(page);
+				
+				System.out.println("page = " + page);
+				verifyData(page, pageSize);
+				
+			}
+			
+				
+		}
+			
+		
+	}
+	
+	
+	public static void verifyPagingNew() throws InterruptedException, IOException, JSONException {
+		
+		
+		/*
+		 * 1- Obtain the json for the complete list of tenants
+		 * 2- Select a size -- repeat for each size listed (5 / 10 / 20 / 50)
+		 * 3- Obtain the list displayed on UI
+		 * 4- Compare the tenants listed on the UI to the tenants in the complete list 
+		 * 5- if pageSize < totalCount {
+		 * 		click next page.
+		 * 		go to step 2 
+		 * 	}
+		 * 6- loop --> step 1
+		 * 
+		 * 
+		 * 
+		 * 	
+		 * */
+		// Get all the "sizes" into a list
+		
+		List<WebElement> listSizesElements = driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		
+		String totalCountItems = driver.findElement(By.xpath("//div/jhi-item-count")).getText();
+		
+		int index = totalCountItems.indexOf("of");
+		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
+				
+		int totalCount = Integer.parseInt(totalCountItems);
+		
+		System.out.println("totalCount: " + totalCount);		
+		
+		
+		// Verify data for each pageSize  (5 / 10 / 20 / 50)
+		
+		for (int i = 0; i < listSizesElements.size(); i++) {
+			
+			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
+			
+			System.out.println("pageSize = " + pageSize);
+			
+			selectSizeOfList(pageSize);
+			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
+			
+			int totalPages = 1;
+			
+			if ((totalCount % pageSize) > 0)
+				totalPages = (totalCount / pageSize) + 1;
+			
+			if ((totalCount % pageSize) == 0)
+				totalPages = totalCount / pageSize;
+			
+			// Go through all the pages and verify data on each page
+			
+			for (int page = 1; page <= totalPages; page++) {
+			
+				clickPageNumber(page);
+				
+				System.out.println("page = " + page);
+				verifyDataNew(page, pageSize, totalCount);
+				
+			}
+			
+				
+		}
+			
+		
 	}
 
 	
+	// It verifies that the data on the UI matches the data from the API
+	public static void verifyDataNew(int page, int pageSize, int totalCount) throws IOException, JSONException {
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";  //"http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";
+		String apiType = "\"" + "tenants" + "\"" + ":";
+				
+		String queryParameters = "?page=1&pageSize=" + totalCount;
+		
+		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url + queryParameters, apiType);
+		
+		List<Tenant> actualTenantsList = putJsonArrayIntoList(jsonArrayTenants);
+		List<Tenant> expectedTenantsList = addTenantsFromUItoList();
+		
+		int indexStart = (page - 1) * pageSize;
+		int indexEnd = indexStart + pageSize - 1;
+		
+		if (indexEnd >  totalCount) 
+			indexEnd = totalCount - 1;
+				
+		int index = 0;
+		
+		for (int i = indexStart; i <= indexEnd; i++) {
+			
+			Tenant actual = actualTenantsList.get(i);
+			Tenant expected = expectedTenantsList.get(index);
+			
+			/*System.out.println(i+1);
+			System.out.println("Actual Key: " + actual.getKey() + ", Expected Key: " + expected.getKey());
+			System.out.println("Actual Name: " + actual.getName() + ", Expected Name: " + expected.getName());
+			System.out.println("Actual isEnabled: " + actual.isEnabled() + ", Expected isEnabled: " + expected.isEnabled());
+			*/
+			
+			Assert.assertEquals(actual.getKey(), expected.getKey());
+			Assert.assertEquals(actual.getName(), expected.getName());
+			Assert.assertEquals(actual.isEnabled(), expected.isEnabled());
+			
+			index++;
+			
+		}
+		
+		
+	}
+
+
+
+	// Clicks on the page number at the bottom - pagination bar
+	private static void clickPageNumber(int page) throws InterruptedException {
+		
+		driver.findElement(By.xpath("//ul[@class='pagination']/li/a[contains(text()," + "\"" + page + "\"" + ")]")).click();
+		Thread.sleep(3000);
+	}
+
+
 	
 }

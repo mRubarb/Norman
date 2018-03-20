@@ -30,7 +30,7 @@ public class TC_TenantsList extends BaseMain {
 	@Test
 	public void testCase_TenantsList() throws InterruptedException, IOException, JSONException 
 	{
-			
+				
 		/*
 		CommonMethods.selectItemPlatformDropdown("Applications");
 		CommonMethods.verifyTitle("Applications");
@@ -47,16 +47,17 @@ public class TC_TenantsList extends BaseMain {
 		
 		Thread.sleep(3000);
 		*/
+		
 		CommonMethods.selectItemPlatformDropdown("Tenants");
+		
 		CommonMethods.verifyTitle("Tenants");
-		
+		/*
 		Tenants.verifyColumnsNames();
-		Tenants.verifyData();
 		
-		// ** T-960:Tenants list can be sorted
-		Tenants.verifyListSorted();
-		
-		
+		Tenants.verifyDataAndSorting();
+		*/
+		Tenants.verifyPaging();
+			
 	}
 	
 	

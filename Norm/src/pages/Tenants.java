@@ -15,11 +15,12 @@ import org.testng.Assert;
 import baseItems.BaseMain;
 import classes.Tenant;
 import common.CommonMethods;
+import common.CommonMethodsAna;
 
 public class Tenants extends BaseMain
 {
 
-	private static String[] propertiesNames = {"Key", "Name", "Enabled"};
+	private static String[] propertiesNames = {"Key", "Name", "Default Tenant ID", "Enabled"};
 	
 	
 	public static void verifyColumnsNames() {
@@ -55,14 +56,17 @@ public class Tenants extends BaseMain
 			Tenant actual = actualTenantsList.get(i);
 			Tenant expected = expectedTenantsList.get(i);
 			
-			/*System.out.println(i+1);
+			/*
+			System.out.println(i+1);
 			System.out.println("Actual Key: " + actual.getKey() + ", Expected Key: " + expected.getKey());
 			System.out.println("Actual Name: " + actual.getName() + ", Expected Name: " + expected.getName());
+			System.out.println("Actual Default Tenant ID: " + actual.getDefaultTenantID() + ", Expected Default Tenant ID: " + expected.getDefaultTenantID());
 			System.out.println("Actual isEnabled: " + actual.isEnabled() + ", Expected isEnabled: " + expected.isEnabled());
 			*/
 			
 			Assert.assertEquals(actual.getKey(), expected.getKey());
 			Assert.assertEquals(actual.getName(), expected.getName());
+			Assert.assertEquals(actual.getDefaultTenantID(), expected.getDefaultTenantID());
 			Assert.assertEquals(actual.isEnabled(), expected.isEnabled());
 			
 		}
@@ -84,11 +88,13 @@ public class Tenants extends BaseMain
 			/*			
 			System.out.print(i+1 + "  Key: " + jo.getString("key"));
 			System.out.print(", Name: " + jo.getString("name"));
+			System.out.print(", Default Tenant ID: " + GetNonRequiredItem(jo, "defaultTenantID")
 			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
 			*/
 			
 			tenant.setKey(jo.getString("key"));
 			tenant.setName(jo.getString("name"));
+			tenant.setDefaultTenantID(CommonMethodsAna.GetNonRequiredItem(jo, "defaultTenantID"));
 			tenant.setEnabled(jo.getBoolean("enabled"));
 		
 			actualTenantsList.add(tenant);
@@ -109,7 +115,7 @@ public class Tenants extends BaseMain
 		int rowTotalCount = driver.findElements(By.xpath("//div[@class='table-responsive']/table/tbody/tr")).size();
 		
 		// System.out.println("# rows: " + rowTotalCount);
-		
+				
 		for (int i = 1; i <= rowTotalCount; i++) {
 			
 			row = driver.findElements(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td"));
@@ -119,12 +125,14 @@ public class Tenants extends BaseMain
 			/*
 			System.out.print(i + "  Key: " + row.get(0).getText());
 			System.out.print(", Name: " + row.get(1).getText());
-			System.out.println(", Enabled: " + row.get(2).getText());
+			System.out.print(", Default Tenant ID: " + row.get(2).getText());
+			System.out.println(", Enabled: " + row.get(3).getText());
 			*/
 			
 			tenant.setKey(row.get(0).getText());
 			tenant.setName(row.get(1).getText());
-			tenant.setEnabled(convertToBoolean(row.get(2).getText()));
+			tenant.setDefaultTenantID(row.get(2).getText());
+			tenant.setEnabled(CommonMethodsAna.convertToBoolean(row.get(3).getText()));
 					
 			expectedTenantsList.add(tenant);
 			
@@ -134,63 +142,59 @@ public class Tenants extends BaseMain
 		
 	}
 
-	
-	// ENABLED/DISABLED values are converted to true/false
-	private static boolean convertToBoolean(String isEnabled) {
-		
-		if (isEnabled.equals("ENABLED")) {
-	
-			return true;
-			
-		} else if (isEnabled.equals("DISABLED")) {
-			
-			return false;
-			
-		}
-		return false; 
-	
-	}
 
 	
 	public static void verifyListSorted() throws InterruptedException {		
 		
 		System.out.println("\n  ** Sort List by Name in Ascending Order **");
 		
-		clickArrowSorting("Name", "ASC");
+		CommonMethodsAna.clickArrowSorting("Name", "ASC");
 				
 		verifySorting("NAME", "ASC");
 		
 		System.out.println("\n  ** Sort List by Name in Descending Order **");
 		
-		clickArrowSorting("Name", "DESC");
+		CommonMethodsAna.clickArrowSorting("Name", "DESC");
 				
 		verifySorting("NAME", "DESC");
+	
+		System.out.println("\n  ** Sort List by Default Tenant ID in Ascending Order **");
 		
+		CommonMethodsAna.clickArrowSorting("Default Tenant ID", "ASC");
+		
+		verifySorting("DEFAULT_TENANT_ID", "ASC");
+		
+		System.out.println("\n  ** Sort List by Default Tenant ID in Descending Order **");
+		
+		CommonMethodsAna.clickArrowSorting("Default Tenant ID", "DESC");
+				
+		verifySorting("DEFAULT_TENANT_ID", "DESC");
+
 		System.out.println("\n  ** Sort List by Enabled in Ascending Order **");
 		
-		clickArrowSorting("Enabled", "ASC");
+		CommonMethodsAna.clickArrowSorting("Enabled", "ASC");
 				
 		verifySorting("IS_ENABLED", "ASC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Descending Order **");
 		
-		clickArrowSorting("Enabled", "DESC");
+		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
 				
 		verifySorting("IS_ENABLED", "DESC");
 		
 		System.out.println("\n  ** Sort List by Key in Ascending Order **");
 		
-		clickArrowSorting("Key", "ASC");
+		CommonMethodsAna.clickArrowSorting("Key", "ASC");
 				
 		verifySorting("KEY", "ASC");
 		
 		System.out.println("\n  ** Sort List by Key in Descending Order **");
 		
-		clickArrowSorting("Key", "DESC");
+		CommonMethodsAna.clickArrowSorting("Key", "DESC");
 		
 		verifySorting("KEY", "DESC");
-		
-		clickArrowSorting("Key", "ASC");
+	
+		CommonMethodsAna.clickArrowSorting("Key", "ASC");
 		
 	}
 	
@@ -215,6 +219,11 @@ public class Tenants extends BaseMain
 				sortedListActual.add(tenantsList.get(i).getName());
 				sortedListExpected.add(tenantsList.get(i).getName());
 				
+			} else if (sortBy.equals("DEFAULT_TENANT_ID")) {
+				
+				sortedListActual.add(tenantsList.get(i).getDefaultTenantID());
+				sortedListExpected.add(tenantsList.get(i).getDefaultTenantID());
+				
 			} else if (sortBy.equals("IS_ENABLED")) {
 			
 				sortedListActual.add(Boolean.toString(tenantsList.get(i).isEnabled()));
@@ -223,6 +232,10 @@ public class Tenants extends BaseMain
 			}
 			
 		}
+		
+		
+		List<String> sortedListActualTmp = new ArrayList<String>();
+		List<String> sortedListExpectedTmp = new ArrayList<String>();
 		
 		Collections.sort(sortedListExpected, String.CASE_INSENSITIVE_ORDER);
 				
@@ -236,6 +249,19 @@ public class Tenants extends BaseMain
 			
 		}
 		
+		// *** Get the Expected Sorted List with no empty values ** IN ORDER TO GET RID OF THE PROBLEM WITH THE SORTING WHEN THERE ARE NULL/EMPTY STRINGS **
+		for (int i = 0; i < sortedListExpected.size(); i++) {
+			
+			if (sortedListExpected.get(i).length() > 0) {	
+			
+				sortedListExpectedTmp.add(sortedListExpected.get(i));
+			}
+						
+		} 
+		
+		sortedListExpected = sortedListExpectedTmp;
+				
+		
 		System.out.println("Sorted List Actual");
 		
 		for (int i = 0; i < sortedListActual.size(); i++) {
@@ -244,12 +270,26 @@ public class Tenants extends BaseMain
 			
 		}
 		
+		// *** Get the Actual Sorted List with no empty values ** IN ORDER TO GET RID OF THE PROBLEM WITH THE SORTING WHEN THERE ARE NULL/EMPTY STRINGS **
+		for (int i = 0; i < sortedListActual.size(); i++) {
+			
+			if (sortedListActual.get(i).length() > 0) {	
+			
+				sortedListActualTmp.add(sortedListActual.get(i));
+			}
+			
+		} 
+		
+		sortedListActual = sortedListActualTmp;
+		
 		Assert.assertEquals(sortedListActual, sortedListExpected);
 		
 	}
 	
 	
-	public static void clickArrowSorting(String sortBy, String sortDirection) throws InterruptedException {
+	
+	// **** COMMON????
+	/*public static void clickArrowSorting(String sortBy, String sortDirection) throws InterruptedException {
 		
 		WebElement arrow = driver.findElement(By.xpath("//div[@class='table-responsive']/table/thead/tr/th/span[text()='" + sortBy + "']/following-sibling::span"));
 		
@@ -279,10 +319,37 @@ public class Tenants extends BaseMain
 		
 		Thread.sleep(2000);
 		
-	}
+	}*/
 
 
-	public static void selectSizeOfList(int size) {
+	// **** COMMON????
+	/*public static void selectSizeOfList(int size) {
+		
+		System.out.println("Size to select: " + size);
+		
+		String xpath1 = "//span/label";
+		String xpath2 = "/input[@name='pageSize']";
+		
+		List<WebElement> sizeRadioButtons = driver.findElements(By.xpath(xpath1 + "/input"));
+		
+		for (int i = 0; i < sizeRadioButtons.size(); i++) {
+			
+			WebElement radioButtonSize = sizeRadioButtons.get(i); 
+						
+			if (radioButtonSize.getAttribute("value").equals(Integer.toString(size))) {
+				
+				driver.findElement(By.xpath(xpath1 + "[" + (i+1) + "]" + xpath2 + "/..")).click();
+				//driver.findElement(By.xpath(xpath + "[" + (i+1) + "]/..")).click();
+				break;
+			}
+								
+		}
+		
+	}*/
+	
+	/*
+	 * 
+	 * public static void selectSizeOfList(int size) {
 		
 		System.out.println("Size to select: " + size);
 		
@@ -302,21 +369,21 @@ public class Tenants extends BaseMain
 								
 		}
 		
-	}
+	}*/
 
 
 	public static void verifyDataAndSorting() throws InterruptedException, IOException, JSONException {
 
 		// Get all the "sizes" into a list
 		
-		List<WebElement> listSizesElements = driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		
 		for (int i = 0; i < listSizesElements.size(); i++) {
 			
 			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
 			
-			selectSizeOfList(pageSize);
+			CommonMethodsAna.selectSizeOfList(pageSize);
 			
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor.... 
 			
@@ -352,9 +419,17 @@ public class Tenants extends BaseMain
 		 * */
 		// Get all the "sizes" into a list
 		
-		List<WebElement> listSizesElements = driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages(); // xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
-		String totalCountItems = driver.findElement(By.xpath("//div/jhi-item-count")).getText();
+		/*System.out.println("listSizesElements.size(): " + listSizesElements.size());
+		
+		for (int i = 0; i < listSizesElements.size(); i++) {
+			
+			System.out.println("listSizesElements " + i + ": " + listSizesElements.get(i).getAttribute("value"));
+			
+		}*/
+		
+		String totalCountItems = CommonMethodsAna.getTotalCountItems(); //driver.findElement(By.xpath("//div/jhi-item-count")).getText();
 		
 		int index = totalCountItems.indexOf("of");
 		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
@@ -368,11 +443,14 @@ public class Tenants extends BaseMain
 		
 		for (int i = 0; i < listSizesElements.size(); i++) {
 			
+			
+			// remove --System.out.println("pageSize = " + listSizesElements.get(i).getAttribute("value"));
+			
 			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
 			
 			System.out.println("pageSize = " + pageSize);
 			
-			selectSizeOfList(pageSize);
+			CommonMethodsAna.selectSizeOfList(pageSize);
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
 			
 			int totalPages = 1;
@@ -387,7 +465,7 @@ public class Tenants extends BaseMain
 			
 			for (int page = 1; page <= totalPages; page++) {
 			
-				clickPageNumber(page);
+				CommonMethodsAna.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
 				verifyData(page, pageSize);
@@ -401,6 +479,15 @@ public class Tenants extends BaseMain
 	}
 	
 	
+	// **** COMMON????
+	/*
+	private static List<WebElement> getSizesOfPages() {
+
+		return driver.findElements(By.xpath("//span/label/input[@name='pageSize']"));    
+		
+	}*/
+
+
 	public static void verifyPagingNew() throws InterruptedException, IOException, JSONException {
 		
 		
@@ -441,7 +528,7 @@ public class Tenants extends BaseMain
 			
 			System.out.println("pageSize = " + pageSize);
 			
-			selectSizeOfList(pageSize);
+			CommonMethodsAna.selectSizeOfList(pageSize);
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
 			
 			int totalPages = 1;
@@ -456,7 +543,7 @@ public class Tenants extends BaseMain
 			
 			for (int page = 1; page <= totalPages; page++) {
 			
-				clickPageNumber(page);
+				CommonMethodsAna.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
 				verifyDataNew(page, pageSize, totalCount);
@@ -515,14 +602,52 @@ public class Tenants extends BaseMain
 	}
 
 
+	
+	// ***************************************************
+	// **** METHODS TO BE ADDED TO COMMON METHODS ********
+	// ***************************************************
+	/*
+	public static String GetNonRequiredItem(JSONObject jo,  String item) throws JSONException
+	{
+		try
+		{
+			jo.getString(item);				
+		}
+		catch (Exception e) 
+		{
+			return "";
+		}	
+		
+		return jo.getString(item);
+	}
 
+	
+
+	// ENABLED/DISABLED values are converted to true/false
+	private static boolean convertToBoolean(String isEnabled) {
+		
+		if (isEnabled.equals("ENABLED")) {
+	
+			return true;
+			
+		} else if (isEnabled.equals("DISABLED")) {
+			
+			return false;
+			
+		}
+		return false; 
+	
+	}
+	
+	
+	// ***** COMMON METHOD??? 
 	// Clicks on the page number at the bottom - pagination bar
 	private static void clickPageNumber(int page) throws InterruptedException {
 		
 		driver.findElement(By.xpath("//ul[@class='pagination']/li/a[contains(text()," + "\"" + page + "\"" + ")]")).click();
 		Thread.sleep(3000);
 	}
-
+*/
 
 	
 }

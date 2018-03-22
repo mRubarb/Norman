@@ -4,6 +4,7 @@ public class Tenant {
 
 	private String key;
 	private String name;
+	private String defaultTenantID;
 	private boolean enabled;
 	
 	
@@ -18,6 +19,12 @@ public class Tenant {
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public String getDefaultTenantID() {
+		return defaultTenantID;
+	}
+	public void setDefaultTenantID(String defaultTenantID) {
+		this.defaultTenantID = defaultTenantID;
 	}
 	public boolean isEnabled() {
 		return enabled;

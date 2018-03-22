@@ -31,32 +31,17 @@ public class TC_TenantsList extends BaseMain {
 	public void testCase_TenantsList() throws InterruptedException, IOException, JSONException 
 	{
 				
-		/*
-		CommonMethods.selectItemPlatformDropdown("Applications");
-		CommonMethods.verifyTitle("Applications");
-		
-		CommonMethods.selectItemPlatformDropdown("Routes");
-		CommonMethods.verifyTitle("Routes");
-		
-		
-		CommonMethods.selectItemPlatformDropdown("Deployments");
-		CommonMethods.verifyTitle("Deployments");
-		
-		Deployments.verifyColumnsNames();
-		Deployments.verifyData();
-		
-		Thread.sleep(3000);
-		*/
-		
 		CommonMethods.selectItemPlatformDropdown("Tenants");
 		
 		CommonMethods.verifyTitle("Tenants");
-		/*
+		
 		Tenants.verifyColumnsNames();
 		
 		Tenants.verifyDataAndSorting();
-		*/
+		
 		Tenants.verifyPaging();
+		
+
 			
 	}
 	

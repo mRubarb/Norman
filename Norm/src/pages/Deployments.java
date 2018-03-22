@@ -3,6 +3,7 @@ package pages;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -139,26 +140,23 @@ public class Deployments extends BaseMain
 			String description = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[4]")).getText();
 			String enabled = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[5]")).getText();
 
-			
 			Deployment deployment = new Deployment();
 
-			deployment.setKey(key); //row.get(0).getText());
-			deployment.setApplicationKey(appKey); //row.get(1).getText());
-			deployment.setVersion(version); //row.get(2).getText());
-			deployment.setDescription(description); //row.get(3).getText());
-			deployment.setEnabled(CommonMethodsAna.convertToBoolean(enabled)); //row.get(4).getText()));
+			deployment.setKey(key);
+			deployment.setApplicationKey(appKey);
+			deployment.setVersion(version);
+			deployment.setDescription(description);
+			deployment.setEnabled(CommonMethodsAna.convertToBoolean(enabled));
 			
-			
-			//System.out.print(i + "  Key: " + row.get(0).getText());
-			System.out.print(i + "  Key: " + key);
-			System.out.print(", Application Key: " + appKey); //row.get(1).getText());
-			System.out.print(", Application Name: " + appName); //row.get(1).getText());
-			System.out.print(", Version: " + version); //row.get(2).getText());
-			System.out.print(", Description: " + description); //row.get(3).getText());
-			System.out.println(", Enabled: " + enabled); //row.get(4).getText());
-			
-					
 			expectedDeploymentsList.add(deployment);
+			
+			System.out.print(i + "  Key: " + key);
+			System.out.print(", Application Key: " + appKey);
+			System.out.print(", Application Name: " + appName);
+			System.out.print(", Version: " + version);
+			System.out.print(", Description: " + description);
+			System.out.println(", Enabled: " + enabled);
+			
 		}
 		
 		return expectedDeploymentsList;
@@ -168,7 +166,6 @@ public class Deployments extends BaseMain
 	public static void verifyDataAndSorting() throws InterruptedException, IOException, JSONException {
 		
 		// Get all the "sizes" into a list
-		
 		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		
@@ -237,7 +234,7 @@ public class Deployments extends BaseMain
 	
 	public static void verifyListSorted() throws InterruptedException {		
 		
-			
+	/*		
 		System.out.println("\n  ** Sort List by Version in Ascending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Version", "ASC");
@@ -261,19 +258,19 @@ public class Deployments extends BaseMain
 		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
 				
 		verifySorting("IS_ENABLED", "DESC");
-		
+		*/
 		System.out.println("\n  ** Sort List by Key in Ascending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Key", "ASC");
 				
 		verifySorting("KEY", "ASC");
-		
+		/*
 		System.out.println("\n  ** Sort List by Key in Descending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Key", "DESC");
 		
 		verifySorting("KEY", "DESC");
-	
+	*/
 		CommonMethodsAna.clickArrowSorting("Key", "ASC");
 		
 	}
@@ -284,6 +281,9 @@ public class Deployments extends BaseMain
 	public static void verifySorting(String sortBy, String sortDirection) {
 		
 		List<Deployment> deploymentsList = addDeploymentsFromUItoList();
+		List<Deployment> deploymentsListExpected = deploymentsList;
+		
+		
 		List<String> sortedListActual = new ArrayList<String>();
 		List<String> sortedListExpected = new ArrayList<String>();
 		
@@ -313,8 +313,13 @@ public class Deployments extends BaseMain
 		//List<String> sortedListActualTmp = new ArrayList<String>();
 		//List<String> sortedListExpectedTmp = new ArrayList<String>();
 		
-		Collections.sort(sortedListExpected, String.CASE_INSENSITIVE_ORDER);
-				
+		//Collections.sort(sortedListExpected, String.CASE_INSENSITIVE_ORDER);
+	
+		// Trying different approach to do sorting --- March 22
+		Collections.sort(deploymentsListExpected, Deployment.deploymentKeyComparator);
+		Assert.assertEquals(deploymentsList, deploymentsListExpected);
+		
+		
 		if (sortDirection.equals("DESC")) Collections.reverse(sortedListExpected); 
 		
 		System.out.println("Sorted List Expected");

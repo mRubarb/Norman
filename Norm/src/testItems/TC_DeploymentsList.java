@@ -33,14 +33,14 @@ public class TC_DeploymentsList extends BaseMain {
 					
 		CommonMethods.selectItemPlatformDropdown("Deployments");
 		CommonMethods.verifyTitle("Deployments");
-		
+		/*
 		Deployments.verifyColumnsNames();
 		
 		Deployments.verifyData();
-		
+		*/
 		Deployments.verifyDataAndSorting();
 		
-		Deployments.verifyPaging();
+		//Deployments.verifyPaging();
 		
 
 			

@@ -1,5 +1,7 @@
 package classes;
 
+import java.util.Comparator;
+
 public class Deployment {
 
 	private String key;
@@ -40,4 +42,25 @@ public class Deployment {
 		this.enabled = enabled;
 	}
 	
+	
+	/* Comparator for sorting the list by Key */
+    public static Comparator<Deployment> deploymentKeyComparator = new Comparator<Deployment>() {
+
+	public int compare(Deployment dep1, Deployment dep2) {
+		
+	   String deploymentKey1 = dep1.getKey().toUpperCase();
+	   String deploymentKey2 = dep2.getKey().toUpperCase();
+
+	   //ascending order
+	   return deploymentKey1.compareTo(deploymentKey2);
+
+	   //descending order
+	   //return deploymentKey2.compareTo(deploymentKey1);
+    }};
+
+    /* Comparator for sorting the list by Version */
+  
+    
+    /* Comparator for sorting the list by Enabled */
+    
 }

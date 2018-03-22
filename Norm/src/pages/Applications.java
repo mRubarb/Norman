@@ -254,6 +254,7 @@ public class Applications extends BaseMain
 		int totalCount = 0;
 		int numberOfPages = 0;
 		int pageSize = 0;
+		int pageSizeSelectorIndex = 1;
 		
 		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
 
@@ -261,15 +262,53 @@ public class Applications extends BaseMain
 		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
 		
 		ShowInt(totalCount);
-		
-		pageSize = 5;
-		numberOfPages = GetTotalPages(totalCount, pageSize);
-		
-		System.out.println("Expected number of pages for page size = " +  pageSize + " = " + numberOfPages);
 
-		// set page size to 5.
-		SetUiPageSizeSelector(1);
+		//SetUiPageSizeSelector(1);
+		for(int tempInt : pageSizes)
+		{
+			// System.out.println(tempInt);
+			SetUiPageSizeSelector(pageSizeSelectorIndex);
+			pageSize = tempInt;
+			numberOfPages = GetTotalPages(totalCount, pageSize);
+			System.out.println("Expected number of pages for page size = " +  pageSize + " = " + numberOfPages);
+			
+			// click a sort item.
+			ClickSorting("//span[text()='Enabled']");
+			
+			// define sorting
+			sortDirection = "ASC";
+			sortBy = "IS_ENABLED";
+			
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+			
+			// click a sort item.
+			ClickSorting("//span[text()='Enabled']");
+			
+			// define sorting
+			sortDirection = "DESC";
+			sortBy = "IS_ENABLED";
+			
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+
+			pageSizeSelectorIndex++;
+			
+			
+		}
 		
+		
+		//pageSize = 5;
+		//numberOfPages = GetTotalPages(totalCount, pageSize);
+		
+		//System.out.println("Expected number of pages for page size = " +  pageSize + " = " + numberOfPages);
+
+		// /////////////////////////////////////
+		// set page size to 5.
+		// /////////////////////////////////////
+		//SetUiPageSizeSelector(1);
+
+		
+		
+		/*
 		// click a sort item.
 		ClickSorting("//span[text()='Enabled']");
 		
@@ -277,27 +316,91 @@ public class Applications extends BaseMain
 		sortDirection = "ASC";
 		sortBy = "IS_ENABLED";
 		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+
+		// click a sort item.
+		ClickSorting("//span[text()='Enabled']");
 		
-		//VerifyPagesSorting(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy)
+		// define sorting
+		sortDirection = "DESC";
+		sortBy = "IS_ENABLED";
 		
 		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-		/*
-		for(int x = 0; x < numberOfPages; x++) // go through each page.
-		{
-			// click a page per x index.
-			WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a"), 3, "");
-			driver.findElement(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a")).click();
-			Thread.sleep(2000);
 
-			// this stores API info for page x + 1  into listOfExpectedApps 
-			PassDataAndStoreApiRequest(apiType, pageSize, x + 1, sortDirection, sortBy);
-			
-			// store the application info in UI to listOfActualApps
-			ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// click a sort item.
+		ClickSorting("//span[text()='Key']");
+		
+		// define sorting
+		sortDirection = "ASC";
+		sortBy = "KEY";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
 
-			// verify actual and expected are equal.
-			VerifyApplicationsCollectionsExpectedAndActual();
-		}
+		// click a sort item.
+		ClickSorting("//span[text()='Key']");
+		
+		// define sorting
+		sortDirection = "DESC";
+		sortBy = "KEY";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+
+
+		// click a sort item.
+		ClickSorting("//span[text()='Name']");
+		
+		// define sorting
+		sortDirection = "ASC";
+		sortBy = "NAME";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+
+		// click a sort item.
+		ClickSorting("//span[text()='Name']");
+		
+		// define sorting
+		sortDirection = "DESC";
+		sortBy = "NAME";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+
+		
+		// click a sort item.
+		ClickSorting("//span[text()='Host']");
+		
+		// define sorting
+		sortDirection = "ASC";
+		sortBy = "DEFAULT_HOST";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+
+		// click a sort item.
+		ClickSorting("//span[text()='Host']");
+		
+		// define sorting
+		sortDirection = "DESC";
+		sortBy = "DEFAULT_HOST";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+		
+		// click a sort item.
+		ClickSorting("//span[text()='Path']");
+		
+		// define sorting
+		sortDirection = "ASC";
+		sortBy = "DEFAULT_PATH";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+
+		// click a sort item.
+		ClickSorting("//span[text()='Path']");
+		
+		// define sorting
+		sortDirection = "DESC";
+		sortBy = "DEFAULT_PATH";
+		
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);		
 		*/
 	}	
 	

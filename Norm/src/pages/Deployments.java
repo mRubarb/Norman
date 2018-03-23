@@ -3,7 +3,6 @@ package pages;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -69,12 +68,14 @@ public class Deployments extends BaseMain
 			Deployment actual = actualDeploymentsList.get(i);
 			Deployment expected = expectedDeploymentsList.get(i);
 			
+			/*
 			System.out.println(i+1);
 			System.out.println("Actual Key: " + actual.getKey() + ", Expected Key: " + expected.getKey());
 			System.out.println("Actual Application key: " + actual.getApplicationKey() + ", Expected Application Key: " + expected.getApplicationKey());
 			System.out.println("Actual Description: " + actual.getDescription() + ", Expected Description: " + expected.getDescription());
 			System.out.println("Actual Version: " + actual.getVersion() + ", Expected Version: " + expected.getVersion());
 			System.out.println("Actual isEnabled: " + actual.isEnabled() + ", Expected isEnabled: " + expected.isEnabled());
+			*/
 			
 			Assert.assertEquals(actual.getKey(), expected.getKey());
 			Assert.assertEquals(actual.getApplicationKey(), expected.getApplicationKey());
@@ -150,13 +151,14 @@ public class Deployments extends BaseMain
 			
 			expectedDeploymentsList.add(deployment);
 			
+			/*
 			System.out.print(i + "  Key: " + key);
 			System.out.print(", Application Key: " + appKey);
 			System.out.print(", Application Name: " + appName);
 			System.out.print(", Version: " + version);
 			System.out.print(", Description: " + description);
 			System.out.println(", Enabled: " + enabled);
-			
+			*/
 		}
 		
 		return expectedDeploymentsList;
@@ -175,9 +177,9 @@ public class Deployments extends BaseMain
 			
 			CommonMethodsAna.selectSizeOfList(pageSize);
 			
-			Thread.sleep(2000);  // -- see if it can be changed to waitfor.... 
+			// Thread.sleep(2000);  // -- see if it can be changed to waitfor.... CHANGED -- added wait for in method  
 			
-			verifyData(1, pageSize);
+			//verifyData(1, pageSize);
 			
 			Thread.sleep(2000);
 			
@@ -225,7 +227,6 @@ public class Deployments extends BaseMain
 			if(expected.getDescription().endsWith("…") && expected.getDescription().length() < actual.getDescription().length()) expected.setDescription(expected.getDescription().replace("…", ""));
 			Assert.assertTrue(actual.getDescription().contains(expected.getDescription()));  
 			
-			
 		}
 		
 		
@@ -234,55 +235,122 @@ public class Deployments extends BaseMain
 	
 	public static void verifyListSorted() throws InterruptedException {		
 		
-	/*		
+		System.out.println("\n  ** Sort List by Key in Ascending Order **");
+		
+		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+				
+		verifySortingObjects("KEY", "ASC");
+		
+		System.out.println("\n  ** Sort List by Key in Descending Order **");
+		
+		CommonMethodsAna.clickArrowSorting("Key", "DESC");
+		
+		verifySortingObjects("KEY", "DESC");
+	
+		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		
 		System.out.println("\n  ** Sort List by Version in Ascending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Version", "ASC");
 		
-		verifySorting("VERSION", "ASC");
+		verifySortingObjects("VERSION", "ASC");
 		
 		System.out.println("\n  ** Sort List by Version in Descending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Version", "DESC");
 				
-		verifySorting("VERSION", "DESC");
-
+		verifySortingObjects("VERSION", "DESC");
+		
 		System.out.println("\n  ** Sort List by Enabled in Ascending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Enabled", "ASC");
 				
-		verifySorting("IS_ENABLED", "ASC");
+		verifySortingObjects("IS_ENABLED", "ASC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Descending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
 				
-		verifySorting("IS_ENABLED", "DESC");
-		*/
-		System.out.println("\n  ** Sort List by Key in Ascending Order **");
-		
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
-				
-		verifySorting("KEY", "ASC");
-		/*
-		System.out.println("\n  ** Sort List by Key in Descending Order **");
-		
-		CommonMethodsAna.clickArrowSorting("Key", "DESC");
-		
-		verifySorting("KEY", "DESC");
-	*/
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		verifySortingObjects("IS_ENABLED", "DESC");
 		
 	}
 	
+	
+	// Verify that list of deployments is sorted according to the sortBy and sortDirection parameters. 
+	public static void verifySortingObjects(String sortBy, String sortDirection) {
+		
+		List<Deployment> deploymentsListFromUI = addDeploymentsFromUItoList();
+		List<Deployment> deploymentsListSorted = deploymentsListFromUI;
+		
+		// Trying different approach to do sorting --- March 22
+		if (sortBy.equals("KEY") && sortDirection.equals("ASC")) {
+			
+			//Collections.sort(deploymentsListSorted, Deployment.keyComparatorAsc);
+			
+			// ***** MARCH 26 ******
+			// ***** This line should sort in an incorrect order ---- REVIEW!!!!!!!
+			
+			
+			Collections.sort(deploymentsListSorted, Deployment.versionComparatorAsc);
+			
+		} else if (sortBy.equals("KEY") && sortDirection.equals("DESC")) {
+			
+			Collections.sort(deploymentsListSorted, Deployment.keyComparatorDesc);
+			
+		} else if (sortBy.equals("VERSION") && sortDirection.equals("ASC")) {
+			
+			Collections.sort(deploymentsListSorted, Deployment.versionComparatorAsc);
+			
+		} else if (sortBy.equals("VERSION") && sortDirection.equals("DESC")) {
+			
+			Collections.sort(deploymentsListSorted, Deployment.versionComparatorDesc);
+			
+		} else if (sortBy.equals("IS_ENABLED") && sortDirection.equals("ASC")) {
+		
+			Collections.sort(deploymentsListSorted, Deployment.enabledComparatorAsc);
+			
+		} else if (sortBy.equals("IS_ENABLED") && sortDirection.equals("DESC")) {
+		
+			Collections.sort(deploymentsListSorted, Deployment.enabledComparatorDesc);
+			
+		}
+		
+		
+		System.out.println("Sorted List Expected");
+		
+		for (int i = 0; i < deploymentsListSorted.size(); i++) {
+			
+			System.out.print(i + "  Key: " + deploymentsListSorted.get(i).getKey());
+			System.out.print(", Application Key: " + deploymentsListSorted.get(i).getApplicationKey());
+			System.out.print(", Version: " + deploymentsListSorted.get(i).getVersion());
+			System.out.print(", Description: " + deploymentsListSorted.get(i).getDescription());
+			System.out.println(", Enabled: " + deploymentsListSorted.get(i).isEnabled());
+			
+		}
+		
+		
+		System.out.println("Sorted List Actual");
+		
+		for (int i = 0; i < deploymentsListFromUI.size(); i++) {
+			
+			System.out.print(i + "  Key: " + deploymentsListFromUI.get(i).getKey());
+			System.out.print(", Application Key: " + deploymentsListFromUI.get(i).getApplicationKey());
+			System.out.print(", Version: " + deploymentsListFromUI.get(i).getVersion());
+			System.out.print(", Description: " + deploymentsListFromUI.get(i).getDescription());
+			System.out.println(", Enabled: " + deploymentsListFromUI.get(i).isEnabled());
+			
+		}
+		
+		Assert.assertEquals(deploymentsListFromUI, deploymentsListSorted);
+				
+		
+	}
 	
 	
 	// Verify that list of deployments is sorted according to the sortBy and sortDirection parameters. 
 	public static void verifySorting(String sortBy, String sortDirection) {
 		
 		List<Deployment> deploymentsList = addDeploymentsFromUItoList();
-		List<Deployment> deploymentsListExpected = deploymentsList;
-		
 		
 		List<String> sortedListActual = new ArrayList<String>();
 		List<String> sortedListExpected = new ArrayList<String>();
@@ -308,17 +376,9 @@ public class Deployments extends BaseMain
 			}
 			
 		}
-		
-		
-		//List<String> sortedListActualTmp = new ArrayList<String>();
-		//List<String> sortedListExpectedTmp = new ArrayList<String>();
-		
-		//Collections.sort(sortedListExpected, String.CASE_INSENSITIVE_ORDER);
+						
+		Collections.sort(sortedListExpected, String.CASE_INSENSITIVE_ORDER);
 	
-		// Trying different approach to do sorting --- March 22
-		Collections.sort(deploymentsListExpected, Deployment.deploymentKeyComparator);
-		Assert.assertEquals(deploymentsList, deploymentsListExpected);
-		
 		
 		if (sortDirection.equals("DESC")) Collections.reverse(sortedListExpected); 
 		
@@ -330,19 +390,6 @@ public class Deployments extends BaseMain
 			
 		}
 		
-		/*
-		// *** Get the Expected Sorted List with no empty values ** IN ORDER TO GET RID OF THE PROBLEM WITH THE SORTING WHEN THERE ARE NULL/EMPTY STRINGS **
-		for (int i = 0; i < sortedListExpected.size(); i++) {
-			
-			if (sortedListExpected.get(i).length() > 0) {	
-			
-				sortedListExpectedTmp.add(sortedListExpected.get(i));
-			}
-						
-		} 
-		
-		sortedListExpected = sortedListExpectedTmp; */
-				
 		
 		System.out.println("Sorted List Actual");
 		
@@ -351,19 +398,6 @@ public class Deployments extends BaseMain
 			System.out.println("  * " + sortedListActual.get(i));
 			
 		}
-		
-		/*
-		// *** Get the Actual Sorted List with no empty values ** IN ORDER TO GET RID OF THE PROBLEM WITH THE SORTING WHEN THERE ARE NULL/EMPTY STRINGS **
-		for (int i = 0; i < sortedListActual.size(); i++) {
-			
-			if (sortedListActual.get(i).length() > 0) {	
-			
-				sortedListActualTmp.add(sortedListActual.get(i));
-			}
-			
-		} 
-		
-		sortedListActual = sortedListActualTmp; */
 		
 		Assert.assertEquals(sortedListActual, sortedListExpected);
 		
@@ -449,6 +483,8 @@ public class Deployments extends BaseMain
 			
 		
 	}
+
+	
 	
 		
 	

@@ -5,7 +5,10 @@ import java.util.List;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import baseItems.BaseMain;
 
@@ -74,9 +77,26 @@ public class CommonMethodsAna  extends BaseMain {
 						
 			if (radioButtonSize.getAttribute("value").equals(Integer.toString(size))) {
 				
+				By by = By.xpath(xpath1 + "[" + (i+1) + "]" + xpath2 + "/..");
+				
 				driver.findElement(By.xpath(xpath1 + "[" + (i+1) + "]" + xpath2 + "/..")).click();
 				//driver.findElement(By.xpath(xpath + "[" + (i+1) + "]/..")).click();
+				
+				// Wait for size to be selected 
+				WebDriverWait wait = new WebDriverWait(driver, 3);
+				
+				try {
+					// Sometimes the class value ends with '.. focus active' 
+					wait.until(ExpectedConditions.attributeToBe(by, "class", "btn btn-secondary btn-sm focus active"));
+					
+				} catch (TimeoutException e) {
+					// and some other times value ends with '.. active focus'
+					wait.until(ExpectedConditions.attributeToBe(by, "class", "btn btn-secondary btn-sm active focus"));
+					
+				}
+				
 				break;
+				
 			}
 								
 		}

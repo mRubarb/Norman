@@ -242,7 +242,7 @@ public class Applications extends BaseMain
 	}
 
 
-	// bladd
+	// this is for sorting all page sizes for all sortable columns.
 	public static void VerifySortingMultiplePages() throws Exception
 	{
 		// get all the applications from API.
@@ -256,152 +256,66 @@ public class Applications extends BaseMain
 		int pageSize = 0;
 		int pageSizeSelectorIndex = 1;
 		
+		// get total count.
 		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
 
-		// take out totalCount 
-		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
+		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]); // take out totalCount
 		
 		ShowInt(totalCount);
 
-		//SetUiPageSizeSelector(1);
+		// this goes through each page size in the array 'pageSizes' that holds the page sizes.
+		// 
 		for(int tempInt : pageSizes)
 		{
 			// System.out.println(tempInt);
 			SetUiPageSizeSelector(pageSizeSelectorIndex);
 			pageSize = tempInt;
 			numberOfPages = GetTotalPages(totalCount, pageSize);
-			System.out.println("Expected number of pages for page size = " +  pageSize + " = " + numberOfPages);
+			System.out.println("Expected number of pages for page size = " +  pageSize + " is " + numberOfPages);
 			
-			// click a sort item.
+			// click a sort item and verify.
 			ClickSorting("//span[text()='Enabled']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "IS_ENABLED");
 			
-			// define sorting
-			sortDirection = "ASC";
-			sortBy = "IS_ENABLED";
-			
-			VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-			
-			// click a sort item.
+			// click a sort item and verify.
 			ClickSorting("//span[text()='Enabled']");
-			
-			// define sorting
-			sortDirection = "DESC";
-			sortBy = "IS_ENABLED";
-			
-			VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "IS_ENABLED");
 
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Key']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "KEY");
+			
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Key']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "KEY");			
+			
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Name']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "NAME");
+			
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Name']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "NAME");			
+			
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Host']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "DEFAULT_HOST");
+			
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Host']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "DEFAULT_HOST");						
+			
+			
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Path']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "DEFAULT_PATH");
+			
+			// click a sort item and verify.
+			ClickSorting("//span[text()='Path']");
+			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "DEFAULT_PATH");									
+			
 			pageSizeSelectorIndex++;
-			
-			
 		}
-		
-		
-		//pageSize = 5;
-		//numberOfPages = GetTotalPages(totalCount, pageSize);
-		
-		//System.out.println("Expected number of pages for page size = " +  pageSize + " = " + numberOfPages);
-
-		// /////////////////////////////////////
-		// set page size to 5.
-		// /////////////////////////////////////
-		//SetUiPageSizeSelector(1);
-
-		
-		
-		/*
-		// click a sort item.
-		ClickSorting("//span[text()='Enabled']");
-		
-		// define sorting
-		sortDirection = "ASC";
-		sortBy = "IS_ENABLED";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-		// click a sort item.
-		ClickSorting("//span[text()='Enabled']");
-		
-		// define sorting
-		sortDirection = "DESC";
-		sortBy = "IS_ENABLED";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-		
-		// click a sort item.
-		ClickSorting("//span[text()='Key']");
-		
-		// define sorting
-		sortDirection = "ASC";
-		sortBy = "KEY";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-		// click a sort item.
-		ClickSorting("//span[text()='Key']");
-		
-		// define sorting
-		sortDirection = "DESC";
-		sortBy = "KEY";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-
-		// click a sort item.
-		ClickSorting("//span[text()='Name']");
-		
-		// define sorting
-		sortDirection = "ASC";
-		sortBy = "NAME";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-		// click a sort item.
-		ClickSorting("//span[text()='Name']");
-		
-		// define sorting
-		sortDirection = "DESC";
-		sortBy = "NAME";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-		
-		// click a sort item.
-		ClickSorting("//span[text()='Host']");
-		
-		// define sorting
-		sortDirection = "ASC";
-		sortBy = "DEFAULT_HOST";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-		// click a sort item.
-		ClickSorting("//span[text()='Host']");
-		
-		// define sorting
-		sortDirection = "DESC";
-		sortBy = "DEFAULT_HOST";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-		
-		// click a sort item.
-		ClickSorting("//span[text()='Path']");
-		
-		// define sorting
-		sortDirection = "ASC";
-		sortBy = "DEFAULT_PATH";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);
-
-		// click a sort item.
-		ClickSorting("//span[text()='Path']");
-		
-		// define sorting
-		sortDirection = "DESC";
-		sortBy = "DEFAULT_PATH";
-		
-		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);		
-		*/
 	}	
 	
 	// ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -848,4 +762,11 @@ public class Applications extends BaseMain
 			VerifyApplicationsCollectionsExpectedAndActual();
 		}
 	}	
+
+	public static void VerifySortingForItemAndDirection(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception
+	{
+		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);	
+	}
+
+
 }

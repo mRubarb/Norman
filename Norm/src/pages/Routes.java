@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.omg.CORBA.portable.ValueOutputStream;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
@@ -51,15 +52,14 @@ public class Routes extends BaseMain
 	public static List<RouteClass> listOfExpectedRoutes = new ArrayList<RouteClass>();
 	public static List<RouteClass> listOfActualRoutes = new ArrayList<RouteClass>();	
 	
-	// this gets all items in the collection from the API and all items from the applications UI and compare them.
+	// this gets all items in the collection from the API and all items from the applications UI and compares them.
 	public static void VerifyFullList() throws IOException, JSONException, InterruptedException
 	{
-		String url = RoutesURL + "?pageSize=300&includeTenant=true&&includeDeployment=true&includeApplication=true"; // get all the applications from API.
-		// String apiType = "\"routes\":";
+		String url = RoutesURL + "?pageSize=300&includeTenant=true&&includeDeployment=true&includeApplication=true"; // get all the routes from the API.
 		String metadata = "";
 		int totalCount = 0;
 		
-		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
+		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType); // metadata
 
 		// take out totalCount 
 		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
@@ -81,7 +81,7 @@ public class Routes extends BaseMain
 			GetAndAddRouteFromApiToExpectedList(jo); // add all the fields in the object.
 		}		
 		
-		//System.out.println("Size from UI = " +     listOfExpectedApps.size() + " rows.");
+		System.out.println("Size from API = " +  listOfExpectedRoutes.size() + " rows.");
 		
 		// set page size to max.
 		WaitForElementClickable(By.xpath("(//span/label)[4]"), 5, "");
@@ -89,7 +89,7 @@ public class Routes extends BaseMain
 		Thread.sleep(1000);
 		
 		// store the application in UI to listOfActualApps
-		//ShowActualApplicationsOrStore(ActionForApplications.Store);
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		// ShowApplicationsActualAndExpectedCollection(); 
 		
 		// verify actual and expected are equal.
@@ -109,7 +109,7 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	
-	// add expected items found in in json object jo.
+	// add expected items found in json object jo to variables in this class.
 	public static void GetAndAddRouteFromApiToExpectedList(JSONObject jo) throws JSONException
 	{
 		key = jo.getString("key");  
@@ -132,8 +132,8 @@ public class Routes extends BaseMain
 		myJobj =  jo.getJSONObject("deployment");
 		deployKey = (String) myJobj.get("key");
 		deployVersion = (String) myJobj.get("version");
-		ShowText(deployKey);
-		ShowText(deployVersion);
+		//ShowText(deployKey);
+		//ShowText(deployVersion);
 		
 		
 		//appKey = jo.getString("applicationKey");
@@ -146,7 +146,7 @@ public class Routes extends BaseMain
 		disabledReason = CommonMethods.GetNonRequiredItem(jo, "disabledReason"); 
 		description = CommonMethods.GetNonRequiredItem(jo, "description");
 		
-		// listOfExpectedRoutes.add(new RouteClass(key, tenantKey, appKey, deployKey, tenantId, description, enabled, disabledReason, allowServiceCalls, host, path));
+		listOfExpectedRoutes.add(new RouteClass(key, tenantKey, tenantName, appKey, appName, deployKey, deployVersion, tenantId, description, enabled, disabledReason, allowServiceCalls, host, path));
 	}		
 	
 	// Call into API and get json array back.  
@@ -209,6 +209,7 @@ public class Routes extends BaseMain
 		int numberOfRows = driver.findElements(By.cssSelector(".table.table-striped>tbody>tr")).size(); // get number of rows.
 		int numberOfColumns = 0;
 		String tempString = "";
+		String tempStringTwo = "";
 		
 		System.out.println("Num Rows In UI. = " + numberOfRows);
 		
@@ -244,72 +245,43 @@ public class Routes extends BaseMain
 				path = GetDefaultPath(tempString); // assign path, everything after first "/".
 
 				tenantId = eleList.get(1).getText().split("\n")[1];
-				
-				
 				tenantKey = eleList.get(2).getText().split("\n")[0];
-				
-				tenantName = eleList.get(2).getText().split("\n")[0];
-				
-				// tenantName = eleList.get(2).getText().split("\n")[1];				
-				
-				
-				
+				tenantName = eleList.get(2).getText().split("\n")[1];
+				appKey = eleList.get(3).getText().split("\n")[0];
+				appName = eleList.get(3).getText().split("\n")[1];				
+				deployKey = eleList.get(4).getText().split("\n")[0];
+				deployVersion = eleList.get(4).getText().split("\n")[1];				
+				//enabled = Boolean.valueOf(eleList.get(5).getText().split("\n")[0]);
 
-						
-				
-				
-				
-				/*
-				ShowText("...");
-				ShowText(eleList.get(1).getText());
-				ShowText("...");
-				ShowText(eleList.get(2).getText());
-				ShowText("...");
-				ShowText(eleList.get(3).getText());
-				ShowText("...");
-				ShowText(eleList.get(4).getText());
-				ShowText("...");
-				ShowText(eleList.get(5).getText()); // this can have one or two 
-				ShowText("...");
-				ShowText(eleList.get(6).getText());
-				*/
-
-				
-				// store items for app - bladdxxx below changed.
-				// key = eleList.get(0).getText();
-
-				
-				
-				
-				/*
-				name = eleList.get(1).getText();
-				description = eleList.get(3).getText();
-				enabledString = eleList.get(4).getText();
-				defaultHostPath = eleList.get(2).getText(); // - bladdxxx
-				if(!defaultHostPath.equals(""))
+				tempString = eleList.get(5).getText().split("\n")[0];
+				if(tempString.equals("DISABLED"))
 				{
-					defaultHost = defaultHostPath.split("/")[0];
-					// defaultPath = "/" + defaultHostPath.split("/")[1];
-					defaultPath = GetDefaultPath(defaultHostPath);
-				}
-				else
-				{
-					defaultHost = "";
-					defaultPath = "";
-				}
-				*/
-				/*
-				//ShowText(enabledString);
-				//enabled = Boolean.parseBoolean(enabledString);
-				if(enabledString.equals("ENABLED"))
-				{
-					enabled = true;
-				}
-				else
-				{
+					disabledReason = eleList.get(5).getText().split("\n")[1];		
 					enabled = false;
 				}
-				*/
+				else
+				{
+					disabledReason = "N/A";
+					enabled = true;
+				}
+				
+				tempStringTwo = eleList.get(6).getText(); // .split("\n")[0];
+				
+				
+				ShowText("...");				
+				ShowText(key);
+				ShowText(host);
+				ShowText(path);
+				ShowText(tenantId);
+				ShowText(tenantKey);
+				ShowText(tenantName);
+				ShowText(appKey);				
+				ShowText(appName);
+				ShowText(deployKey);				
+				ShowText(deployVersion);
+				ShowText(String.valueOf(enabled));				
+				ShowText(disabledReason);
+				ShowText(tempStringTwo);			
 				// listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
 				// listOfActualRoutes.add(new ApplicationClass(key, name, description, enabled, defaultHost, defaultPath));
 			}			

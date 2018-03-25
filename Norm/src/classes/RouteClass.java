@@ -24,24 +24,36 @@ public class RouteClass
 		m_tennantKey = tennantKey;	
 		m_tennantName = tennantName;		
 		m_appKey = appKey;	
+		m_appname = appName;		
 		m_deployKey = deployKey;
+		m_deployVersion = deployVersion;
 		m_tenantId = tenantId;
 		m_description = description;
-		m_enabled = enabled;	
-		m_disabledReason = disabledReason;	
+		m_enabled = enabled;
+		m_disabledReason = disabledReason;
 		m_allowServiceCalls = allowServiceCalls;
 		m_host = host;
 		m_path = path;
 	}
 
-	public void ShowApp()
+	public void ShowRoute()
 	{
 		System.out.println("----------------------------");
-		System.out.println("Key: " + m_Key);
-		//System.out.println("Name: " + m_Name);
-		//System.out.println("Default Host: " + m_defaultHost);		
-		//System.out.println("Default Path: " + m_defaultPath);		
-		//System.out.println("Description: " + m_Description);
-		//System.out.println("Enabled: " + m_Enabled);
+		System.out.println("key: " + m_Key);
+		System.out.println("host: " + m_host);
+		System.out.println("path: " + m_path);
+		System.out.println("tenantID: " + m_tenantId);		
+		System.out.println("tenantKey: " + m_tennantKey);		
+		System.out.println("tenantName: " + m_tennantName);
+		System.out.println("appKey: " + m_appKey);	
+		System.out.println("appName: " + m_appname);		
+		System.out.println("deployKey: " + m_deployKey);		
+		System.out.println("deployVersion: " + m_deployVersion);
+		System.out.println("enabled: " + m_enabled);
+		System.out.println("reason: " + m_disabledReason);		
+		System.out.println("allowServiceCall: " + m_allowServiceCalls);		
+		
+	//m_appKey
+	
 	}	
 }

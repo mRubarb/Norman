@@ -19,6 +19,7 @@ import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
+import classes.ApplicationClass;
 import classes.RouteClass;
 import common.CommonMethods;
 import pages.Applications.ActionForApplications;
@@ -52,7 +53,9 @@ public class Routes extends BaseMain
 	public static List<RouteClass> listOfExpectedRoutes = new ArrayList<RouteClass>();
 	public static List<RouteClass> listOfActualRoutes = new ArrayList<RouteClass>();	
 	
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// this gets all items in the collection from the API and all items from the applications UI and compares them.
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	public static void VerifyFullList() throws IOException, JSONException, InterruptedException
 	{
 		String url = RoutesURL + "?pageSize=300&includeTenant=true&&includeDeployment=true&includeApplication=true"; // get all the routes from the API.
@@ -90,11 +93,10 @@ public class Routes extends BaseMain
 		
 		// store the application in UI to listOfActualApps
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		// ShowApplicationsActualAndExpectedCollection(); 
+		ShowApplicationsActualAndExpectedCollection(); 
 		
 		// verify actual and expected are equal.
-		//VerifyApplicationsCollectionsExpectedAndActual();
-
+		VerifyApplicationsCollectionsExpectedAndActual();
 	}		
 	
 	public static void GoToRoutes()
@@ -109,7 +111,8 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
 	
-	// add expected items found in json object jo to variables in this class.
+	// add expected items found in json object jo passed in to variables in this class.
+	// make a route class and add it to the 'listOfExpectedRoutes' list 
 	public static void GetAndAddRouteFromApiToExpectedList(JSONObject jo) throws JSONException
 	{
 		key = jo.getString("key");  
@@ -234,8 +237,8 @@ public class Routes extends BaseMain
 				List<WebElement> eleList = driver.findElements(By.cssSelector(RoutesTableCss + ":nth-of-type(" + x + ")>td"));
 
 				
-				System.out.println("------ " + eleList.size());
-				ShowText("...");
+				//System.out.println("------ " + eleList.size());
+				//ShowText("...");
 				
 				key = eleList.get(0).getText();
 				
@@ -261,13 +264,13 @@ public class Routes extends BaseMain
 				}
 				else
 				{
-					disabledReason = "N/A";
+					disabledReason = "";
 					enabled = true;
 				}
 				
 				tempStringTwo = eleList.get(6).getText(); // .split("\n")[0];
 				
-				
+				/*
 				ShowText("...");				
 				ShowText(key);
 				ShowText(host);
@@ -281,14 +284,61 @@ public class Routes extends BaseMain
 				ShowText(deployVersion);
 				ShowText(String.valueOf(enabled));				
 				ShowText(disabledReason);
-				ShowText(tempStringTwo);			
+				ShowText(tempStringTwo);
+				*/			
 				// listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled));
-				// listOfActualRoutes.add(new ApplicationClass(key, name, description, enabled, defaultHost, defaultPath));
+				listOfActualRoutes.add(new RouteClass(key, tenantKey, tenantName, appKey, appName, deployKey, deployVersion, tenantId, description, enabled, disabledReason, allowServiceCalls, host, path));
 			}			
-			
-			
 		}
 	}	
+	
+	public static void ShowApplicationsActualAndExpectedCollection()
+	{
+		ShowText(" ********** Actual Apps **********");
+		for(RouteClass routeClass : listOfActualRoutes)
+		{
+			routeClass.ShowRoute();
+		}
+
+		ShowText(" ********** Expected Apps **********");
+		for(RouteClass routeClass : listOfExpectedRoutes)
+		{
+			routeClass.ShowRoute();
+		}
+	}
+	
+	// compare the list of apps from the API call to the list of apps from the UI.
+	// both lists should be in the same order.
+	public static void VerifyApplicationsCollectionsExpectedAndActual()
+	{
+		boolean bFoundInLoop = false;
+		String message = "";
+		int x = 0;
+		
+		// lists should be same size.
+		Assert.assertTrue(listOfActualRoutes.size() == listOfExpectedRoutes.size(), 
+				          "Error in size checks. List of actual size = " + listOfActualRoutes.size() + " List of expected size = " + listOfExpectedRoutes.size()); 
+		
+		// lists should be same order.
+		for(RouteClass routeClass :  listOfActualRoutes)
+		{
+			//ShowText(appClass.m_Key);
+			//ShowText(listOfExpectedApps.get(x).m_Key);			
+			Assert.assertTrue(routeClass.m_Key.equals(listOfExpectedRoutes.get(x).m_Key));
+			Assert.assertTrue(routeClass.m_tennantKey .equals(listOfExpectedRoutes.get(x).m_tennantKey));
+			Assert.assertTrue(routeClass.m_tennantName.equals(listOfExpectedRoutes.get(x).m_tennantName));
+			Assert.assertTrue(routeClass.m_appKey.equals(listOfExpectedRoutes.get(x).m_appKey));
+			Assert.assertTrue(routeClass.m_appname.equals(listOfExpectedRoutes.get(x).m_appname)); 	
+			Assert.assertTrue(routeClass.m_deployKey.equals(listOfExpectedRoutes.get(x).m_deployKey));			
+			Assert.assertTrue(routeClass.m_deployVersion.equals(listOfExpectedRoutes.get(x).m_deployVersion));		
+			
+			Assert.assertTrue(routeClass.m_tenantId.equals(listOfExpectedRoutes.get(x).m_tenantId));			
+			//Assert.assertTrue(routeClass.m_description.equals(listOfExpectedRoutes.get(x).m_description)); // no description shown in the UI.		
+			
+			Assert.assertTrue(routeClass.m_path .equals(listOfExpectedRoutes.get(x).m_path ));
+			x++;
+		}
+	}
 	
 	
 }

@@ -48,9 +48,19 @@ public class Deployment {
 
 		public int compare(Deployment dep1, Deployment dep2) {
 			
-		   String deploymentKey1 = dep1.getKey().toUpperCase();
-		   String deploymentKey2 = dep2.getKey().toUpperCase();
+		   String deploymentKey1 = dep1.getKey().toLowerCase(); 
+		   String deploymentKey2 = dep2.getKey().toLowerCase();
 	
+		   // Set deployment keys lowercase, because they can contain underscores 
+		   // Underscores go before lowercase letters and after uppercase letters,
+		   // and this seems to be approach taken to select items on UI: 1st underscore, then letter. 
+		   // E.g.: Sort by Key in ASC order:
+		   // ....
+		   // DEP_RVM_1
+		   // DEP_RVM_2
+		   // DEPLOYMENTNEW
+		   // ....
+		   
 		   //ascending order
 		   return deploymentKey1.compareTo(deploymentKey2);
 	
@@ -90,8 +100,8 @@ public class Deployment {
 
 		public int compare(Deployment dep1, Deployment dep2) {
 			
-		   String deploymentKey1 = dep1.getKey().toUpperCase();
-		   String deploymentKey2 = dep2.getKey().toUpperCase();
+		   String deploymentKey1 = dep1.getKey().toLowerCase();
+		   String deploymentKey2 = dep2.getKey().toLowerCase();
 	
 		   //descending order
 		   return deploymentKey2.compareTo(deploymentKey1);

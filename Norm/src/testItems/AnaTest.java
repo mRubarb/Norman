@@ -12,7 +12,15 @@ public class AnaTest extends BaseMain {
 
 	public static void main(String args[]) {
 		
-		testList();
+		String empty = "";
+		String blankspace1 = " ";
+		String blankspaces = "    ";
+		
+		System.out.println("String empty length: " + empty.length());
+		System.out.println("String blankspace1 length: " + blankspace1.length());
+		System.out.println("String blankspaces length: " + blankspaces.length());
+	 	
+		// testList();
 		
 	}
 	
@@ -51,6 +59,7 @@ public class AnaTest extends BaseMain {
 		list2.add(deployment3);
 		list2.add(deployment1);
 	
+		/*
 		System.out.println("  ** Lists not sorted ** ");
 		
 		System.out.println("  ** List 1 ** ");
@@ -125,6 +134,79 @@ public class AnaTest extends BaseMain {
 			System.out.println("lists are equal");
 		} else {
 			System.out.println("lists are NOT equal");
+		}
+		*/
+		
+		System.out.println("  ** Original List 2 ** ");
+		
+		for (int i = 0; i < 3; i++) {
+			
+			System.out.println("dep " + (i+1) + " - key: " + list2.get(i).getKey());
+			System.out.println("dep " + (i+1) + " - key: " + list2.get(i).getApplicationKey());
+			System.out.println("dep " + (i+1) + " - key: " + list2.get(i).getDescription());
+			System.out.println("dep " + (i+1) + " - key: " + list2.get(i).getVersion());
+			System.out.println("dep " + (i+1) + " - key: " + list2.get(i).isEnabled());
+			
+		}
+		
+		System.out.println("  ** List 2 Sorted by KEY ASC ** ");
+		
+		Collections.sort(list2, Deployment.keyComparatorAsc);
+		
+		for (int i = 0; i < 3; i++) {
+			
+			System.out.println("Key: " + list2.get(i).getKey());
+						
+		}
+		
+		System.out.println("  ** List 2 Sorted by VERSION ASC ** ");
+		
+		Collections.sort(list2, Deployment.versionComparatorAsc);
+		
+		for (int i = 0; i < 3; i++) {
+			
+			System.out.println("Version: " + list2.get(i).getVersion());
+			
+		}
+		
+		System.out.println("  ** List 2 Sorted by ENABLED ASC ** ");
+		
+		Collections.sort(list2, Deployment.enabledComparatorAsc);
+		
+		for (int i = 0; i < 3; i++) {
+			
+			System.out.println("Is Enabled: " + list2.get(i).isEnabled());
+			
+		}
+	
+		System.out.println("  ** List 2 Sorted by KEY DESC** ");
+		
+		Collections.sort(list2, Deployment.keyComparatorDesc);
+		
+		for (int i = 0; i < 3; i++) {
+			
+			System.out.println("Key: " + list2.get(i).getKey());
+						
+		}
+		
+		System.out.println("  ** List 2 Sorted by VERSION DESC** ");
+		
+		Collections.sort(list2, Deployment.versionComparatorDesc);
+		
+		for (int i = 0; i < 3; i++) {
+			
+			System.out.println("Version: " + list2.get(i).getVersion());
+			
+		}
+		
+		System.out.println("  ** List 2 Sorted by ENABLED DESC** ");
+		
+		Collections.sort(list2, Deployment.enabledComparatorDesc);
+		
+		for (int i = 0; i < 3; i++) {
+			
+			System.out.println("Is Enabled: " + list2.get(i).isEnabled());
+			
 		}
 		
 	}

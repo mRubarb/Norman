@@ -13,6 +13,7 @@ import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
+import classes.Deployment;
 import classes.Tenant;
 import common.CommonMethods;
 import common.CommonMethodsAna;
@@ -40,7 +41,7 @@ public class Tenants extends BaseMain
 	
 	
 	// It verifies that the data on the UI matches the data from the API
-	public static void verifyData(int page, int pageSize) throws IOException, JSONException {
+	public static void verifyDataFromUIMatchesAPI(int page, int pageSize) throws IOException, JSONException {
 		
 		String token = CommonMethods.GetTokenFromPost();
 		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";  //"http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";
@@ -124,18 +125,21 @@ public class Tenants extends BaseMain
 			
 			Tenant tenant = new Tenant();
 			
-			/*
+			
 			System.out.print(i + "  Key: " + row.get(0).getText());
 			System.out.print(", Name: " + row.get(1).getText());
 			System.out.print(", Default Tenant ID: " + row.get(2).getText());
 			System.out.println(", Enabled: " + row.get(3).getText());
-			*/
+			
 			
 			tenant.setKey(row.get(0).getText());
 			tenant.setName(row.get(1).getText());
-			tenant.setDefaultTenantID(row.get(2).getText());
+			if (row.get(2).getText().isEmpty()) { tenant.setDefaultTenantID(" "); }
+			else { tenant.setDefaultTenantID(row.get(2).getText()); }
 			tenant.setEnabled(CommonMethodsAna.convertToBoolean(row.get(3).getText()));
-					
+			
+			System.out.println(" Default Tenant ID length: " + tenant.getDefaultTenantID().length());
+			
 			expectedTenantsList.add(tenant);
 			
 		}
@@ -152,51 +156,132 @@ public class Tenants extends BaseMain
 		
 		CommonMethodsAna.clickArrowSorting("Name", "ASC");
 				
-		verifySorting("NAME", "ASC");
+		verifySortingObjects("NAME", "ASC");
 		
 		System.out.println("\n  ** Sort List by Name in Descending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Name", "DESC");
 				
-		verifySorting("NAME", "DESC");
+		verifySortingObjects("NAME", "DESC");
 	
 		System.out.println("\n  ** Sort List by Default Tenant ID in Ascending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Default Tenant ID", "ASC");
 		
-		verifySorting("DEFAULT_TENANT_ID", "ASC");
+		verifySortingObjects("DEFAULT_TENANT_ID", "ASC");
 		
 		System.out.println("\n  ** Sort List by Default Tenant ID in Descending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Default Tenant ID", "DESC");
 				
-		verifySorting("DEFAULT_TENANT_ID", "DESC");
+		verifySortingObjects("DEFAULT_TENANT_ID", "DESC");
 
 		System.out.println("\n  ** Sort List by Enabled in Ascending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Enabled", "ASC");
 				
-		verifySorting("IS_ENABLED", "ASC");
+		verifySortingObjects("IS_ENABLED", "ASC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Descending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
 				
-		verifySorting("IS_ENABLED", "DESC");
+		verifySortingObjects("IS_ENABLED", "DESC");
 		
 		System.out.println("\n  ** Sort List by Key in Ascending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Key", "ASC");
 				
-		verifySorting("KEY", "ASC");
+		verifySortingObjects("KEY", "ASC");
 		
 		System.out.println("\n  ** Sort List by Key in Descending Order **");
 		
 		CommonMethodsAna.clickArrowSorting("Key", "DESC");
 		
-		verifySorting("KEY", "DESC");
+		verifySortingObjects("KEY", "DESC");
 	
 		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		
+	}
+	
+	
+	// Verify that list of tenants is sorted according to the sortBy and sortDirection parameters. 
+	// This method sorts the list of tenants (objects), not only the String representing the sortBy criteria
+	public static void verifySortingObjects(String sortBy, String sortDirection) {
+		
+		List<Tenant> tenantsListFromUI = addTenantsFromUItoList();
+		List<Tenant> tenantsListSorted = new ArrayList<>();
+		
+		for (int i = 0; i < tenantsListFromUI.size(); i++) {
+			
+			tenantsListSorted.add(tenantsListFromUI.get(i));
+			
+		}
+		
+		
+		// Trying different approach to do sorting --- March 22
+		// Using Comparator so the list with the tenants is sorted, 
+		// and not only the property to be sorted by is sorted 
+		if (sortBy.equals("KEY") && sortDirection.equals("ASC")) {
+			
+			Collections.sort(tenantsListSorted, Tenant.keyComparatorAsc);			
+			
+		} else if (sortBy.equals("KEY") && sortDirection.equals("DESC")) {
+			
+			Collections.sort(tenantsListSorted, Tenant.keyComparatorDesc);
+			
+		} else if (sortBy.equals("NAME") && sortDirection.equals("ASC")) {
+			
+			Collections.sort(tenantsListSorted, Tenant.nameComparatorAsc);
+			
+		} else if (sortBy.equals("NAME") && sortDirection.equals("DESC")) {
+			
+			Collections.sort(tenantsListSorted, Tenant.nameComparatorDesc);
+			
+		} else if (sortBy.equals("DEFAULT_TENANT_ID") && sortDirection.equals("ASC")) {
+			
+			Collections.sort(tenantsListSorted, Tenant.tenantIDComparatorAsc);
+			
+		} else if (sortBy.equals("DEFAULT_TENANT_ID") && sortDirection.equals("DESC")) {
+			
+			Collections.sort(tenantsListSorted, Tenant.tenantIDComparatorDesc);
+			
+		} else if (sortBy.equals("IS_ENABLED") && sortDirection.equals("ASC")) {
+		
+			Collections.sort(tenantsListSorted, Tenant.enabledComparatorAsc);
+			
+		} else if (sortBy.equals("IS_ENABLED") && sortDirection.equals("DESC")) {
+		
+			Collections.sort(tenantsListSorted, Tenant.enabledComparatorDesc);
+			
+		}
+		
+		System.out.println("Sorted List Expected");
+		
+		for (int i = 0; i < tenantsListSorted.size(); i++) {
+			
+			System.out.print(i + "  Key: " + tenantsListSorted.get(i).getKey());
+			System.out.print(", Name: " + tenantsListSorted.get(i).getName());
+			System.out.print(", Default Tenant ID: " + tenantsListSorted.get(i).getDefaultTenantID());
+			System.out.println(", Enabled: " + tenantsListSorted.get(i).isEnabled());
+			
+		}
+		
+		System.out.println("Sorted List Actual - from UI");
+		
+		for (int i = 0; i < tenantsListFromUI.size(); i++) {
+			
+			System.out.print(i + "  Key: " + tenantsListFromUI.get(i).getKey());
+			System.out.print(", Name: " + tenantsListFromUI.get(i).getName());
+			System.out.print(", Default Tenant ID: " + tenantsListFromUI.get(i).getDefaultTenantID());
+			System.out.println(", Enabled: " + tenantsListFromUI.get(i).isEnabled());
+			
+		}
+		
+		
+		// ********** IT FAILS ****************
+		// SEE METHOD BELOW TO IGNORE EMPTY VALUES ******
+		Assert.assertEquals(tenantsListFromUI, tenantsListSorted);	
 		
 	}
 	
@@ -389,7 +474,7 @@ public class Tenants extends BaseMain
 			
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor.... 
 			
-			verifyData(1, pageSize);
+			verifyDataFromUIMatchesAPI(1, pageSize);
 			
 			Thread.sleep(2000);
 			
@@ -470,7 +555,7 @@ public class Tenants extends BaseMain
 				CommonMethodsAna.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
-				verifyData(page, pageSize);
+				verifyDataFromUIMatchesAPI(page, pageSize);
 				
 			}
 			

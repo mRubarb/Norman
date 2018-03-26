@@ -89,11 +89,19 @@ public class CommonMethodsAna  extends BaseMain {
 					// Sometimes the class value ends with '.. focus active' 
 					wait.until(ExpectedConditions.attributeToBe(by, "class", "btn btn-secondary btn-sm focus active"));
 					
-				} catch (TimeoutException e) {
-					// and some other times value ends with '.. active focus'
-					wait.until(ExpectedConditions.attributeToBe(by, "class", "btn btn-secondary btn-sm active focus"));
+					try {
+						// .. sometimes value ends with '.. active focus'
+						wait.until(ExpectedConditions.attributeToBe(by, "class", "btn btn-secondary btn-sm active focus"));
+						
+						try {
+							// .. sometimes value ends with '.. active' (no 'focus')
+							wait.until(ExpectedConditions.attributeToBe(by, "class", "btn btn-secondary btn-sm active"));
+							
+						} catch (TimeoutException e) { }
+							
+					} catch (TimeoutException e) { }
 					
-				}
+				} catch (TimeoutException e) { }
 				
 				break;
 				

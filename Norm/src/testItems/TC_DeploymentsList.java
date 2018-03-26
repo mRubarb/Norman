@@ -40,7 +40,7 @@ public class TC_DeploymentsList extends BaseMain {
 		*/
 		Deployments.verifyDataAndSorting();
 		
-		//Deployments.verifyPaging();
+		Deployments.verifyPaging();
 		
 		
 			

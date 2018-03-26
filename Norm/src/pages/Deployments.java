@@ -170,21 +170,16 @@ public class Deployments extends BaseMain
 		// Get all the "sizes" into a list
 		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
-		
 		for (int i = 0; i < listSizesElements.size(); i++) {
 			
 			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
 			
 			CommonMethodsAna.selectSizeOfList(pageSize);
 			
-			// Thread.sleep(2000);  // -- see if it can be changed to waitfor.... CHANGED -- added wait for in method  
-			
-			//verifyData(1, pageSize);
-			
-			Thread.sleep(2000);
-			
 			// ** T-960:Tenants list can be sorted
 			verifyListSorted();
+			
+			verifyDataFromUIMatchesAPI(1, pageSize);
 			
 		}	
 		
@@ -192,7 +187,7 @@ public class Deployments extends BaseMain
 	
 	
 	// It verifies that the data on the UI matches the data from the API
-	public static void verifyData(int page, int pageSize) throws IOException, JSONException {
+	public static void verifyDataFromUIMatchesAPI(int page, int pageSize) throws IOException, JSONException {
 		
 		String token = CommonMethods.GetTokenFromPost();
 		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments";  //"http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";
@@ -204,6 +199,8 @@ public class Deployments extends BaseMain
 		
 		List<Deployment> actualDeploymentsList = putJsonArrayIntoList(jsonArrayDeployments);
 		List<Deployment> expectedDeploymentsList = addDeploymentsFromUItoList();
+		
+		System.out.println("  Verify Data From UI Matches API - Page: " + page + ", Page Size: " + pageSize); 
 		
 		for (int i = 0; i < actualDeploymentsList.size(); i++) {
 			
@@ -272,26 +269,32 @@ public class Deployments extends BaseMain
 		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
 				
 		verifySortingObjects("IS_ENABLED", "DESC");
+	
+		CommonMethodsAna.clickArrowSorting("Key", "ASC");
 		
 	}
 	
 	
 	// Verify that list of deployments is sorted according to the sortBy and sortDirection parameters. 
+	// This method sorts the list of deployments (objects), not only the String representing the sortBy criteria
 	public static void verifySortingObjects(String sortBy, String sortDirection) {
 		
 		List<Deployment> deploymentsListFromUI = addDeploymentsFromUItoList();
-		List<Deployment> deploymentsListSorted = deploymentsListFromUI;
+		List<Deployment> deploymentsListSorted = new ArrayList<>();
+		
+		for (int i = 0; i < deploymentsListFromUI.size(); i++) {
+			
+			deploymentsListSorted.add(deploymentsListFromUI.get(i));
+			
+		}
+		
 		
 		// Trying different approach to do sorting --- March 22
+		// Using Comparator so the list with the deployments is sorted, 
+		// and not only the property to be sorted by is sorted 
 		if (sortBy.equals("KEY") && sortDirection.equals("ASC")) {
 			
-			//Collections.sort(deploymentsListSorted, Deployment.keyComparatorAsc);
-			
-			// ***** MARCH 26 ******
-			// ***** This line should sort in an incorrect order ---- REVIEW!!!!!!!
-			
-			
-			Collections.sort(deploymentsListSorted, Deployment.versionComparatorAsc);
+			Collections.sort(deploymentsListSorted, Deployment.keyComparatorAsc);			
 			
 		} else if (sortBy.equals("KEY") && sortDirection.equals("DESC")) {
 			
@@ -315,7 +318,6 @@ public class Deployments extends BaseMain
 			
 		}
 		
-		
 		System.out.println("Sorted List Expected");
 		
 		for (int i = 0; i < deploymentsListSorted.size(); i++) {
@@ -328,8 +330,7 @@ public class Deployments extends BaseMain
 			
 		}
 		
-		
-		System.out.println("Sorted List Actual");
+		System.out.println("Sorted List Actual - from UI");
 		
 		for (int i = 0; i < deploymentsListFromUI.size(); i++) {
 			
@@ -341,8 +342,7 @@ public class Deployments extends BaseMain
 			
 		}
 		
-		Assert.assertEquals(deploymentsListFromUI, deploymentsListSorted);
-				
+		Assert.assertEquals(deploymentsListFromUI, deploymentsListSorted);	
 		
 	}
 	
@@ -474,7 +474,7 @@ public class Deployments extends BaseMain
 				CommonMethodsAna.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
-				verifyData(page, pageSize);
+				verifyDataFromUIMatchesAPI(page, pageSize);
 				
 			}
 			
@@ -484,6 +484,28 @@ public class Deployments extends BaseMain
 		
 	}
 
+	
+	public static void printDeploymentsList(List<Deployment> deploymentsList, String sortBy) {
+		
+		for (int i = 0; i < deploymentsList.size(); i++) {
+			
+			if (sortBy.equals("KEY")) {
+				
+				System.out.println("  Key: " + deploymentsList.get(i).getKey());
+				
+			} if (sortBy.equals("VERSION")) {
+				
+				System.out.print("  Version: " + deploymentsList.get(i).getVersion());
+				
+			} if (sortBy.equals("IS_ENABLED")) {
+			
+				System.out.println("  Enabled: " + deploymentsList.get(i).isEnabled());
+			
+			}
+			
+		}
+		
+	}
 	
 	
 		

@@ -29,7 +29,8 @@ public class TC_RoutesList extends BaseMain
 		{
 			Routes.GoToRoutes();
 			CommonMethods.verifyTitle("Routes");
-			Routes.VerifyFullList();
+			// Routes.VerifyFullList();
+			Routes.VerifySortingMultiplePages();
 		}
 		
 		

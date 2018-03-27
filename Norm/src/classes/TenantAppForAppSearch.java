@@ -30,4 +30,12 @@ public class TenantAppForAppSearch
 		}
 		System.out.println("");
 	}
+	
+	public List<ApplicationClass> GetApplicationList()
+	{
+		return listOfAppsForTenant;
+	}
+	
+	
+	
 }

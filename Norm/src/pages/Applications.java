@@ -11,6 +11,8 @@ import common.CommonMethods;
 
 import org.testng.Assert;
 
+import static org.testng.Assert.assertTrue;
+
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +21,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
@@ -249,8 +253,6 @@ public class Applications extends BaseMain
 		String url = applicationsURL + "?pageSize=300";
 		String apiType = "\"applications\":";
 		String metadata = "";
-		String sortDirection = "";
-		String sortBy = "";
 		int totalCount = 0;
 		int numberOfPages = 0;
 		int pageSize = 0;
@@ -258,16 +260,15 @@ public class Applications extends BaseMain
 		
 		// get total count.
 		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
-
 		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]); // take out totalCount
-		
-		ShowInt(totalCount);
+		//ShowInt(totalCount);
 
 		// this goes through each page size in the array 'pageSizes' that holds the page sizes.
-		// 
+		// for each page size 
 		for(int tempInt : pageSizes)
 		{
-			// System.out.println(tempInt);
+			System.out.println("Verify page size: " + tempInt);
+			
 			SetUiPageSizeSelector(pageSizeSelectorIndex);
 			pageSize = tempInt;
 			numberOfPages = GetTotalPages(totalCount, pageSize);
@@ -318,14 +319,15 @@ public class Applications extends BaseMain
 		}
 	}	
 	
-	// ///////////////////////////////////////////////////////////////////////////////////////////////////
-	// * go through the tenants list and call 'getAppsForTenant' for each tenant.  
+	// /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// * go through the tenants list and then call application filtering on the tenant key to find associated apps.  
 	// * find a tenant with one application associated to it and store that tenant/application 
 	//   as an object and put the object onto a list.
 	// * find the tenant with the most applications associated to it and store that tenant/applications 
-	//   as an object and put the object onto a list. 
-	// /////////////////////////////////////////////////////////////////////////////////////////////////// 
-	public static void VerifyFilteringByTenant() throws IOException, JSONException
+	//   as an object and put the object onto a list.
+	// * filter on each of the tenants in tenants pull-down and verify results (expected/actual).
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+	public static void VerifyFilteringByTenant() throws IOException, JSONException, Exception
 	{
 		String url = ""; 
 		String apiType = "\"tenants\":";
@@ -343,21 +345,120 @@ public class Applications extends BaseMain
 		// get the list of tenants. 
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
-		// loop through tenants list. find a tenant with one associated application. store the tenant name and the application in a 
+		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
+		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list.
+		// also return the index of the tenant that has the largest number of dependent applications.  
+		indexForTenantWithMostApps = BuildList(jArray);
+		
+		// 
+		assertTrue(indexForTenantWithMostApps != 0, "Index returned in 'VerifyFilteringByTenant' method should not be zero.");
+
+		// get tenant (json object) with most associated applications from the list of .
+		jo = jArray.getJSONObject(indexForTenantWithMostApps);
+		
+		// build an application URL that will call tenant filter with the current tenant key  
+		url = applicationsURL + "?tenantKey=" + jo.getString("key") + "&pageSize=300";
+		
+		apiType = "\"applications\":";
+		
+		// call getApps passing in the tenant key. 
+		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		// store the tenant and applications as an object and store the object onto a list.
+		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
+		
+		// show tenant with one application and tenant with the most applications.
+		// for(TenantAppForAppSearch tenApp : listOfTenantWithAppExpected) {tenApp.Show();}
+		
+		// click tenants pull-down
+		driver.findElement(By.xpath("(.//*[@id='sortMenu'])[1]")).click();  
+		// send search text.		
+		WaitForElementClickable(By.xpath("//div[@class='d-flex flex-row']/input"), 3, "");
+		driver.findElement(By.xpath("//div[@class='d-flex flex-row']/input")).sendKeys(listOfTenantWithAppExpected.get(0).m_TenantName); 
+		// click the result.
+		WaitForElementClickable(By.xpath("//button[@class='dropdown-item']"), 3, "");
+		driver.findElement(By.xpath("//button[@class='dropdown-item']")).click();
+		Thread.sleep(2000);
+		
+		// store the result of the search into list of actual apps.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// get the application list found in the first tenant object.
+		List<ApplicationClass> aplList =   listOfTenantWithAppExpected.get(0).GetApplicationList();
+		
+		listOfExpectedApps.add(aplList.get(0));
+		
+		VerifyApplicationsCollectionsExpectedAndActual();
+		
+		// get the application list found in the second tenant object.
+		aplList =   listOfTenantWithAppExpected.get(1).GetApplicationList();
+		
+
+		
+		
+		
+		for(ApplicationClass aplClass: aplList)
+		{
+			
+		}
+		
+		
+		
+		
+		
+	}	
+	
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	// 															HELPERS 
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+
+	// receive a list of application(s) and a tenant name. create a 'TenantAppForAppSearch' object to hold the tenant name and all of 
+	// the applications that go with it.
+	public static void BuildTenantAppForAppSearchObject(String tenantName, JSONArray jArrayOfApps) throws JSONException
+	{
+		TenantAppForAppSearch tempObj = new TenantAppForAppSearch(tenantName); // create object that will hold tenant name and its associated applications.
+		System.out.println("Tenant name in 'BuildTenantAppForAppSearchObject' is " + tenantName);
+		
+		// loop through the applications in array of applications. get each application and add it to the 'TenantAppForAppSearch' object's list of applications.
+		for(int y = 0; y < jArrayOfApps.length(); y++)
+		{
+			JSONObject joObjectApplication = jArrayOfApps.getJSONObject(y); // get application. 
+			tempObj.AddAppToList(new ApplicationClass(joObjectApplication.getString("key"), joObjectApplication.getString("name"), 
+					             joObjectApplication.getString("description"), joObjectApplication.getBoolean("enabled"), 
+					             CommonMethods.GetNonRequiredItem(joObjectApplication, "defaultHost"), CommonMethods.GetNonRequiredItem(joObjectApplication, "defaultPath")));
+		}
+		listOfTenantWithAppExpected.add(tempObj);
+	}	
+	
+	// find a tenant with one dependent application. store the tenant name and the application in a 
+	// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list. 
+	// Find the tenant with the most dependent applications and store it's index.
+	public static int BuildList(JSONArray jArray) throws Exception 
+	{
+
+		String url = ""; 
+		String apiType = "\"tenants\":";
+		int indexForTenantWithMostApps = 0;
+		JSONObject jo;
+		JSONArray jArrayAppsFromTenantCall;
+		boolean savedTenantWithOneApp = false;		
+		
+		
+		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
 		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list. 
-		System.out.println(jArray.length());
+		// Find the tenant with the most dependent applications and store it's index.
 		for(int x = 0; x < jArray.length(); x++)
 		{
 			jo = jArray.getJSONObject(x);
-			System.out.println(" Tenant Name found -------------");
 			System.out.println(jo.getString("key"));		
-			System.out.println("");
 			
-			// build a URL that will call 'getAppsForTenant' passing in the current tenant key. 
-			url = tenantsURL + "/" + jo.getString("key") + "/applications";
+			// build an application URL that will call tenant filter with the current tenant key  
+			url = applicationsURL + "?tenantKey=" + jo.getString("key") + "&pageSize=300";
 			apiType = "\"applications\":";
 			
-			// call 'getAppsForTenant' passing in the current tenant key. receive back a list of application objects (can also be empty).
+			// call 'applications' filtering on the current tenant key. receive back a list of application objects (can also be empty).
 			jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 			
 			// if only find one application returned from getAppsForTenant call, store the tenant name and the application properties 
@@ -378,51 +479,10 @@ public class Applications extends BaseMain
 			}
 		}
 		
-		// get tenant with most associated applications.
-		jo = jArray.getJSONObject(indexForTenantWithMostApps);
-		
-		// build a URL that will call 'getAppsForTenant' using the tenant key from above. 
-		url = tenantsURL + "/" + jo.getString("key") + "/applications";
-		apiType = "\"applications\":";
-		
-		// call 'getAppsForTenant' passing in the tenant key. 
-		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
-		
-		// store the tenant and applications as an object and store the object onto a list.
-		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
-		
-		// show tenant with one application and tenant with the most applications.
-		for(TenantAppForAppSearch tenApp : listOfTenantWithAppExpected)
-		{
-			tenApp.Show();
-		}
-		
-	}	
+		return indexForTenantWithMostApps;
+	}
 	
 	
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-	// 															HELPERS 
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-
-	// receive a list of application(s) and a tenant name. create a 'TenantAppForAppSearch' object to hold the tenant name and all of 
-	// the applications that go with it.
-	public static void BuildTenantAppForAppSearchObject(String tenantName, JSONArray jArrayOfApps) throws JSONException
-	{
-		TenantAppForAppSearch tempObj = new TenantAppForAppSearch(tenantName); // create object that will hold tenant name and its associated applications.
-		System.out.println("Tenant name in 'BuildTenantAppForAppSearchObject' is " + tenantName);
-		
-		// loop through the applications in array of applications. get each application and add it to the 'TenantAppForAppSearch' object's list of applications.
-		for(int y = 0; y < jArrayOfApps.length(); y++)
-		{
-			// bladdxx
-			//JSONObject joObjectApplication = jArrayOfApps.getJSONObject(y); // get application. 
-			//tempObj.AddAppToList(new ApplicationClass(joObjectApplication.getString("key"), joObjectApplication.getString("name"), 
-			//		joObjectApplication.getString("description"), joObjectApplication.getBoolean("enabled")));
-		}
-		listOfTenantWithAppExpected.add(tempObj);
-	}	
 	
 	
 	
@@ -675,21 +735,19 @@ public class Applications extends BaseMain
 	}
 	
 	// add sortBy, sortDirection
-	public static void PassDataAndStoreApiRequest(String apiType, int pageSize, int pageNumber, String sortDirection, String sortBy) throws IOException, JSONException, InterruptedException
+	public static void PassDataAndStoreApiRequest(String apiType, int pageSize, int pageNumber, String sortDirection, String sortBy) throws IOException, JSONException 
 	{
 		listOfActualApps.clear();
 		listOfExpectedApps.clear();
 		JSONArray jArray;
 		String url = "";
 
-		// NOTE !!!!!!!!!!!!!!!!!!!!!!
-		// ShowActualApplicationsOrStore(ActionForApplications.Store); // why id this here? removed 2/7/17 - will make something else fail
-		
 		// update URL for page setting and get application list from API.
 		url = applicationsURL + "?pageSize=" +  String.valueOf(pageSize) + "&page=" + String.valueOf(pageNumber + "&sortDirection=" + sortDirection + "&sortBy=" + sortBy);
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 						
-		AddJsonArrayToExpectedList(jArray);
+		// store API list.
+		AddJsonArrayToExpectedList(jArray); 
 		//ShowApplicationsActualAndExpectedCollection();
 	}
 

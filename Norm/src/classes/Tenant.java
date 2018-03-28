@@ -48,9 +48,9 @@ public class Tenant {
 		   // and this seems to be approach taken to select items on UI: 1st underscore, then letter. 
 		   // E.g.: Sort by Key in ASC order:
 		   // ....
-		   // DEP_RVM_1
-		   // DEP_RVM_2
-		   // DEPLOYMENTNEW
+		   // TEN_1
+		   // TEN_2
+		   // TENANTABC
 		   // ....
 		   
 		   //ascending order
@@ -64,8 +64,8 @@ public class Tenant {
 
 		public int compare(Tenant tenant1, Tenant tenant2) {
 			
-		   String tenantName1 = tenant1.getName().toUpperCase();
-		   String tenantName2 = tenant2.getName().toUpperCase();
+		   String tenantName1 = tenant1.getName().toLowerCase();
+		   String tenantName2 = tenant2.getName().toLowerCase();
 		   
 		   //ascending order
 		   return tenantName1.compareTo(tenantName2);
@@ -119,8 +119,8 @@ public class Tenant {
 
 		public int compare(Tenant tenant1, Tenant tenant2) {
 			
-		   String tenantName1 = tenant1.getName().toUpperCase();
-		   String tenantName2 = tenant2.getName().toUpperCase();
+		   String tenantName1 = tenant1.getName().toLowerCase();
+		   String tenantName2 = tenant2.getName().toLowerCase();
 		   
 		   //descending order
 		   return tenantName2.compareTo(tenantName1);

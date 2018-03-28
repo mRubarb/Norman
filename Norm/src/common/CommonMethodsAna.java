@@ -150,6 +150,45 @@ public class CommonMethodsAna  extends BaseMain {
 		return driver.findElement(By.xpath("//div/jhi-item-count")).getText(); 
 		
 	}
+
+
+	public static void clickFilterDropdown(String dropdown) {
+		
+		String xpath = "//button[@id='sortMenu'][text()='" + dropdown + "']";
+		driver.findElement(By.xpath(xpath)).click();
+		
+	}
+	
+	public static void enterSearchCriteria(String dropdown, String searchCriteria) throws Exception {
+		
+		String xpathSearchField = "//button[@id='sortMenu'][text()='" + dropdown + "']/following-sibling::div/div/input";
+		String xpathValueToSelect = xpathSearchField + "/../following-sibling::div/button/span/span[1]";
+		
+		String xpathEnabledDropdown = "//button[@id='sortMenu'][text()='" + dropdown + "']/following-sibling::div/div/button/span/span[text()='" + searchCriteria + "']";
+		
+		if (dropdown.equals("Show Enabled and Disabled")) {
+			
+			WaitForElementVisible(By.xpath(xpathEnabledDropdown), 5);
+			
+			driver.findElement(By.xpath(xpathEnabledDropdown)).click();
+			
+		} else if (!dropdown.equals("Show Enabled and Disabled")) {
+		
+			WaitForElementVisible(By.xpath(xpathSearchField), 5);
+			
+			driver.findElement(By.xpath(xpathSearchField)).sendKeys(searchCriteria);
+			
+			WaitForElementPresent(By.xpath(xpathValueToSelect), 3);
+			
+			driver.findElement(By.xpath(xpathValueToSelect + "[text()='" + searchCriteria + "']")).click();   // *** FAILS HERE FOR DEPLOYMENT
+			// //jhi-deployment-selector/form/div/div/div/div[4]/button/span/span[1]
+		} 
+		
+		// Give time to the list to be refreshed after it's filtered.
+		Thread.sleep(2000);
+		
+	}
+	
 	
 	
 }

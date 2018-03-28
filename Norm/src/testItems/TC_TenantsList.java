@@ -28,19 +28,20 @@ public class TC_TenantsList extends BaseMain {
 	
 	
 	@Test
-	public void testCase_TenantsList() throws InterruptedException, IOException, JSONException 
+	public void testCase_TenantsList() throws Exception 
 	{
 				
 		CommonMethods.selectItemPlatformDropdown("Tenants");
 		
 		CommonMethods.verifyTitle("Tenants");
 		
-		Tenants.verifyColumnsNames();
+		/*Tenants.verifyColumnsNames();
 		
 		Tenants.verifyDataAndSorting();
 		
 		Tenants.verifyPaging();
-		
+		*/
+		Tenants.verifyFiltering();
 
 			
 	}

@@ -52,16 +52,6 @@ public class Applications extends BaseMain
 	public static List<ApplicationClass> listOfActualApps = new ArrayList<ApplicationClass>();	
 	public static List<TenantAppForAppSearch> listOfTenantWithAppExpected = new ArrayList<TenantAppForAppSearch>();
 	
-	/*
-    static enum PageSelections
-    {
-    	five,
-    	ten,
-    	twenty,
-    	fifty
-    }	
-	*/
-	
 	public static enum ActionForApplications
 	{
 		Show,
@@ -116,6 +106,9 @@ public class Applications extends BaseMain
 		
 		// verify actual and expected are equal.
 		VerifyApplicationsCollectionsExpectedAndActual();
+		
+		ClearActualExpectedLists();
+		
 	}	
 	
 	// this compares what the API returns to what is in the UI for each page size selection that can be tested.
@@ -245,6 +238,109 @@ public class Applications extends BaseMain
 		VerifySortingHelper(url, token, apiType);
 	}
 
+	public static void AddScenarios() throws Exception // bladd
+	{
+		String appKey = "1234567890";
+		String appName = "ZZZ_ZEBRA_XYZ";		 
+		int indexCntr = 0;
+		
+		////button[@class='btn btn-danger btn-sm']
+		SetPageSizeToMax();
+		
+		// select add, wait for title, and fill in ......... hit return. 
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
+		
+		
+		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(appKey);
+		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(appName);		
+
+		// store the actual applications.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+		
+		for(ApplicationClass appClass : listOfActualApps)
+		{
+			if(appClass.m_Key.equals(appKey))
+			{
+				break;
+			}
+			indexCntr++;
+		}
+		
+	}
+	
+	
+	public static void AddValidations() throws Exception
+	{
+		String keyTooLong = "2222222222222222222222222222222222222";
+		String nameTooLong = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+		String validKey = "123456789";
+		String defaultPathError = "Default Path must only contain letters, numbers, and underscores and must start with a forward slash";
+		String defaultHostError = "Default Host must only contain letters, numbers, and underscores";
+		String keyInUse =  "Key is already in use";
+		String  badCharacterString = "nn>?";
+		int maxKeySize = 10;
+		int maxNameSize = 50;
+		
+		SetPageSizeToMax();
+		
+		// store the actual applications.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// select add, wait for title, and select cancel, and verify back in the applications list.
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
+		ClickItem("(//button[@class='btn btn-secondary'])[2]"); // cancel 
+		CommonMethods.verifyTitle("Applications"); // back in applications list.
+
+		// select add and save, verify 'required' under key
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3);
+		ClickItem("//button[@class='btn btn-primary']/span[text()='Save']"); // save		
+		WaitForElementVisible(By.xpath("//small[text()='required']"), 3); // verify		
+		
+		// click name, non-required field, and verify 'required' under name.
+		ClickItem("//input[@formcontrolname = 'name']"); // 
+		ClickItem("//input[@formcontrolname = 'defaultPath']"); //
+		WaitForElementVisible(By.xpath("(//small[text()='required'])[2]"), 2); // verify
+		
+		// enter key with > 10 characters and verify only 10 are allowed.
+		driver.findElement(By.xpath("//input[@formcontrolname='key']")).sendKeys(keyTooLong);
+		Assert.assertTrue(driver.findElement(By.xpath("//input[@formcontrolname='key']")).getAttribute("value").length() == maxKeySize, "Text length in key text box is too long in 'AddValidations' method.");
+		
+		// enter a valid key and then enter name > 50 characters.
+		driver.findElement(By.xpath("//input[@formcontrolname='key']")).sendKeys(validKey);
+		driver.findElement(By.xpath("//input[@formcontrolname='name']")).sendKeys(nameTooLong);		
+		Assert.assertTrue(driver.findElement(By.xpath("//input[@formcontrolname='name']")).getAttribute("value").length() == maxNameSize, "Text length in name text box is too long in 'AddValidations' method.");		
+		
+		// enter a host and enter a path with no "/" at beginning, click the description text box, and verify error in default path.
+		driver.findElement(By.xpath("//input[@formcontrolname='defaultHost']")).sendKeys("goodhost");
+		driver.findElement(By.xpath("//input[@formcontrolname='defaultPath']")).sendKeys("pathNoSlash");
+		ClickItem("//textarea[@formcontrolname='description']"); 
+		Assert.assertEquals(driver.findElement(By.xpath("//div/small")).getText(), defaultPathError, "Failed to find correct error message for Default Path in 'AddValidations' method.");
+		
+		// enter bad characters into default host  and verify error in default host.
+		driver.findElement(By.xpath("//input[@formcontrolname='defaultHost']")).sendKeys(badCharacterString);
+		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[1]")).getText(), defaultHostError, "Failed to find correct error message for Default Host in 'AddValidations' method.");		
+		//ShowText(driver.findElement(By.xpath("(//div/small)[1]")).getText());
+		
+		// clear default path, enter slash and bad characters, and verify error in default path.
+		driver.findElement(By.xpath("//input[@formcontrolname='defaultPath']")).clear();
+		driver.findElement(By.xpath("//input[@formcontrolname='defaultPath']")).sendKeys("/" + badCharacterString);		
+		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[2]")).getText(), defaultPathError, "Failed to find correct error message for Default Host in 'AddValidations' method.");
+		
+		// select reset button, enter existing key into the key field, select default host, and verify message. 
+		driver.findElement(By.xpath("(//button[@class='btn btn-secondary'])[1]")).click();
+		driver.findElement(By.xpath("//input[@formcontrolname='key']")).sendKeys(listOfActualApps.get(0).m_Key);
+		driver.findElement(By.xpath("//input[@formcontrolname='defaultHost']")).click();
+		Thread.sleep(500);
+		
+		Assert.assertEquals(driver.findElement(By.xpath("//div/small")).getText(), keyInUse, "Failed to find correct error message for Key in 'AddValidations' method.");
+		ShowText(driver.findElement(By.xpath("//div/small")).getText());
+		
+
+	}
 
 	// this is for sorting all page sizes for all sortable columns.
 	public static void VerifySortingMultiplePages() throws Exception
@@ -325,7 +421,7 @@ public class Applications extends BaseMain
 	//   as an object and put the object onto a list.
 	// * find the tenant with the most applications associated to it and store that tenant/applications 
 	//   as an object and put the object onto a list.
-	// * filter on each of the tenants in tenants pull-down and verify results (expected/actual).
+	// * filter on each of the tenants listed above in tenants pull-down and verify results (expected/actual).
 	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 	public static void VerifyFilteringByTenant() throws IOException, JSONException, Exception
 	{
@@ -348,18 +444,15 @@ public class Applications extends BaseMain
 		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
 		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list.
 		// also return the index of the tenant that has the largest number of dependent applications.  
-		indexForTenantWithMostApps = BuildList(jArray);
+		indexForTenantWithMostApps = BuildListOfExpectedTenantsForFilters(jArray);
 		
-		// 
-		assertTrue(indexForTenantWithMostApps != 0, "Index returned in 'VerifyFilteringByTenant' method should not be zero.");
-
-		// get tenant (json object) with most associated applications from the list of .
+		// get and store tenant (json object) with most associated applications from the list of tenants (jArray).
 		jo = jArray.getJSONObject(indexForTenantWithMostApps);
 		
-		// build an application URL that will call tenant filter with the current tenant key  
+		// build an application URL that will call GetApps with tenant filter set to the current tenant key  
 		url = applicationsURL + "?tenantKey=" + jo.getString("key") + "&pageSize=300";
 		
-		apiType = "\"applications\":";
+		apiType = "\"applications\":"; // setup for getApps request below.
 		
 		// call getApps passing in the tenant key. 
 		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
@@ -370,42 +463,41 @@ public class Applications extends BaseMain
 		// show tenant with one application and tenant with the most applications.
 		// for(TenantAppForAppSearch tenApp : listOfTenantWithAppExpected) {tenApp.Show();}
 		
-		// click tenants pull-down
-		driver.findElement(By.xpath("(.//*[@id='sortMenu'])[1]")).click();  
-		// send search text.		
-		WaitForElementClickable(By.xpath("//div[@class='d-flex flex-row']/input"), 3, "");
-		driver.findElement(By.xpath("//div[@class='d-flex flex-row']/input")).sendKeys(listOfTenantWithAppExpected.get(0).m_TenantName); 
-		// click the result.
-		WaitForElementClickable(By.xpath("//button[@class='dropdown-item']"), 3, "");
-		driver.findElement(By.xpath("//button[@class='dropdown-item']")).click();
-		Thread.sleep(2000);
+		ClickAndSelectTenantInPulldown(0);
 		
 		// store the result of the search into list of actual apps.
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
-		// get the application list found in the first tenant object.
+		// get the application list found in the first tenant object and make sure it only holds one app.
 		List<ApplicationClass> aplList =   listOfTenantWithAppExpected.get(0).GetApplicationList();
 		
-		listOfExpectedApps.add(aplList.get(0));
+		Assert.assertTrue(aplList.size() == 1, "");
+		
+		listOfExpectedApps.add(aplList.get(0)); // add app to expected list
 		
 		VerifyApplicationsCollectionsExpectedAndActual();
+
+		ClickAndSelectTenantInPulldown(1);
 		
-		// get the application list found in the second tenant object.
+		listOfActualApps.clear();
+		listOfExpectedApps.clear();		
+		
+		// store the result of the search into list of actual applications.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// get the list of expected applications found in the second tenant object.
 		aplList =   listOfTenantWithAppExpected.get(1).GetApplicationList();
 		
-
-		
-		
-		
+		// add the expected applications to the expected list.
 		for(ApplicationClass aplClass: aplList)
 		{
-			
+			listOfExpectedApps.add(aplClass);
 		}
 		
+		// compare actual to expected.
+		VerifyApplicationsCollectionsExpectedAndActual();
 		
-		
-		
-		
+		ClearActualExpectedLists();
 	}	
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -414,6 +506,18 @@ public class Applications extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	
+	public static void ClickItem(String xpath)
+	{
+		WaitForElementClickable(By.xpath(xpath), 3, "");
+		driver.findElement(By.xpath(xpath)).click();
+	}
+	
+	public static String GetXpathForTextBox(String item)
+	{
+		return "//input[@formcontrolname='" + item + "']";
+	}
+	
 	// receive a list of application(s) and a tenant name. create a 'TenantAppForAppSearch' object to hold the tenant name and all of 
 	// the applications that go with it.
 	public static void BuildTenantAppForAppSearchObject(String tenantName, JSONArray jArrayOfApps) throws JSONException
@@ -432,10 +536,10 @@ public class Applications extends BaseMain
 		listOfTenantWithAppExpected.add(tempObj);
 	}	
 	
-	// find a tenant with one dependent application. store the tenant name and the application in a 
-	// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list. 
-	// Find the tenant with the most dependent applications and store it's index.
-	public static int BuildList(JSONArray jArray) throws Exception 
+	// loop through tenants list. find a tenant with one dependent application. store the tenant name and 
+	// the application in a 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' 
+	// list. Find the tenant with the most dependent applications and store it's index.
+	public static int BuildListOfExpectedTenantsForFilters(JSONArray jArray) throws Exception 
 	{
 
 		String url = ""; 
@@ -478,11 +582,14 @@ public class Applications extends BaseMain
 				}
 			}
 		}
-		
 		return indexForTenantWithMostApps;
 	}
 	
-	
+	public static void ClearActualExpectedLists()
+	{
+		listOfActualApps.clear();
+		listOfExpectedApps.clear();
+	}
 	
 	
 	
@@ -535,16 +642,15 @@ public class Applications extends BaseMain
 				// get items in this TD block
 				List<WebElement> eleList = driver.findElements(By.cssSelector(AppTableCss + ":nth-of-type(" + x + ")>td"));
 				
-				// store items for app - bladdxxx below changed.
+				// store items for app 
 				key = eleList.get(0).getText();
 				name = eleList.get(1).getText();
 				description = eleList.get(3).getText();
 				enabledString = eleList.get(4).getText();
-				defaultHostPath = eleList.get(2).getText(); // - bladdxxx
+				defaultHostPath = eleList.get(2).getText(); 
 				if(!defaultHostPath.equals(""))
 				{
 					defaultHost = defaultHostPath.split("/")[0];
-					// defaultPath = "/" + defaultHostPath.split("/")[1];
 					defaultPath = GetDefaultPath(defaultHostPath);
 				}
 				else
@@ -553,8 +659,6 @@ public class Applications extends BaseMain
 					defaultPath = "";
 				}
 				
-				//ShowText(enabledString);
-				//enabled = Boolean.parseBoolean(enabledString);
 				if(enabledString.equals("ENABLED"))
 				{
 					enabled = true;
@@ -783,8 +887,7 @@ public class Applications extends BaseMain
 	public static void SetPageSizeToMax() throws Exception
 	{
 		// set page size to max.
-		WaitForElementClickable(By.xpath("(//span/label)[4]"), 5, "");
-		driver.findElement(By.xpath("(//span/label)[4]")).click(); 		
+		SetUiPageSizeSelector(4);
 		Thread.sleep(1000);
 	}
 
@@ -826,5 +929,19 @@ public class Applications extends BaseMain
 		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);	
 	}
 
+	public static void ClickAndSelectTenantInPulldown(int tenantListIndex) throws Exception
+	{
+		// click tenants pull-down
+		driver.findElement(By.xpath("(.//*[@id='sortMenu'])[1]")).click();  
+		// send search text.		
+		WaitForElementClickable(By.xpath("//div[@class='d-flex flex-row']/input"), 3, "");
+		driver.findElement(By.xpath("//div[@class='d-flex flex-row']/input")).sendKeys(listOfTenantWithAppExpected.get(tenantListIndex).m_TenantName); 
+		// click the result.
+		WaitForElementClickable(By.xpath("//button[@class='dropdown-item']"), 3, "");
+		driver.findElement(By.xpath("//button[@class='dropdown-item']")).click();
+		Thread.sleep(2000);
+		
+	}
+	
 
 }

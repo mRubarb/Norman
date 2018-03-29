@@ -26,18 +26,24 @@ public class TC_ApplicationsList extends BaseMain
 	}
 	
 	
-	@Test // RMINF-154
+	@Test 
 	public void SmokeTest() throws Exception 
 	{
 		Applications.GoToApplications();
 		CommonMethods.verifyTitle("Applications");	
-		//Applications.VerifyFullList(); // TC948 step 1. // fixed on 3/20/18
-		// Applications.VerifyPageSettings(); // TC948 step 2 -- this is done in 'Applications.VerifySortingMultiplePages()' below. 	
-		// Applications.VerifyPaging(); // TC948 step 3 - never complated - this is done in 'Applications.VerifySortingMultiplePages()' below.		
-		//Applications.VerifySortingFullPage(); // fixed 3/20/18
-		Applications.VerifyFilteringByTenant(); // TC948 step 7 (tenant filter). 
 		
-		// Applications.VerifySortingMultiplePages(); // done 3/23/18 -- sorting with different page sizes applications.
+		// RMINF-154
+		//Applications.VerifyFullList(); // TC948 step 1. 
+		// ** Applications.VerifyPageSettings(); // TC948 step 2 -- this is done in 'Applications.VerifySortingMultiplePages()' below. 	
+		// ** Applications.VerifyPaging(); // TC948 step 3 - never completed - this is done in 'Applications.VerifySortingMultiplePages()' below.		
+		// ** Applications.VerifySortingFullPage(); // this is done in 'Applications.VerifySortingMultiplePages()'.
+		//Applications.VerifyFilteringByTenant(); // TC948 step 7 (tenant filter). 
+		// Applications.VerifySortingMultiplePages(); // TC1156 sorting with different page sizes applications.
+		
+		// RMINF-172 
+		//Applications.AddValidations();
+		Applications.AddScenarios();
+		
 	}
 	
 	

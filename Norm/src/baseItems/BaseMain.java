@@ -118,5 +118,35 @@ public class BaseMain
         }	    
 	    return true;
 	}			
+
+	public static boolean WaitForElementNotPresentNoThrow(By by, int timeOut) throws Exception 
+	{
+	    try
+	    {
+			WebDriverWait wait = new WebDriverWait(driver, timeOut);
+		    wait.until(ExpectedConditions.presenceOfElementLocated(by));
+		    ExpectedConditions.not(ExpectedConditions.presenceOfElementLocated(by)).apply(driver);			    
+	    }
+        catch (Exception e)
+        {
+	        return false;
+        	//System.out.println(e.toString());
+	        //throw new Exception(e.toString());
+        }	    
+	    return true;
+	}			
 	
+	public static boolean WaitForElementNotVisibleNoThrow(By by, int timeOut) throws Exception 
+	{
+	    try
+	    {
+			WebDriverWait wait = new WebDriverWait(driver, timeOut);
+		    wait.until(ExpectedConditions.invisibilityOfElementLocated(by));
+	    }
+        catch (Exception e)
+        {
+        	return false;
+        }	    
+	    return true;
+	}					
 }

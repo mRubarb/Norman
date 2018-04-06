@@ -45,6 +45,8 @@ public class Applications extends BaseMain
 
 	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyMzY1MjUwOH0.zptwBdrk3cDixUCMuhFShkFdGDSBC_LYyKrvBIevnpwMFNVX6DFRO-40EZhbzhGrni41rS4eP8VWzPcQjNWdPA";
 	
+	public static String testAppKey = "1234567890";
+	
 	public static int maxItemsPerPage = 50;
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console. 
 	
@@ -57,7 +59,7 @@ public class Applications extends BaseMain
 		Show,
 		Store
 	}	
-		
+
 	public static void GoToApplications()
 	{
 		CommonMethods.selectItemPlatformDropdown("Applications");
@@ -238,36 +240,62 @@ public class Applications extends BaseMain
 		VerifySortingHelper(url, token, apiType);
 	}
 
-	public static void AddScenarios() throws Exception // bladd
+	public static void AddScenarios() throws Exception 
 	{
-		String appKey = "1234567890";
+		// String appKey = "1234567890";
 		String appName = "ZZZ_ZEBRA_XYZ";		 
 		int indexCntr = 0;
+		boolean foundAdd = false;
 		
-		////button[@class='btn btn-danger btn-sm']
+		ShowText("Run AddScenarios --- .");
+		
+		listOfActualApps.clear();
+		
 		SetPageSizeToMax();
-		
-		// select add, wait for title, and fill in ......... hit return. 
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
-		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
-		
-		
-		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(appKey);
-		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(appName);		
 
-		// store the actual applications.
+		// store the actual applications, see if test application exists. 
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 
+		indexCntr = FindIndexExistingApp(testAppKey);
+
+		ShowInt(indexCntr);
 		
-		for(ApplicationClass appClass : listOfActualApps)
+		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleyed.
 		{
-			if(appClass.m_Key.equals(appKey))
-			{
-				break;
-			}
-			indexCntr++;
+			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]");  // select delete application list row with appKey.
+			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']"); // approve delete.
+			ClickItem("//button[@class='btn btn-danger']"); // delete.
+			// Thread.sleep(2000);
+			WaitForElementNotVisibleNoThrow(By.xpath("//button[@class='btn btn-danger']"), 4);
+			
+			listOfActualApps.clear();
+
+			// store the actual applications.
+			ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+			Assert.assertTrue(FindIndexExistingApp(testAppKey) == -1, "Error in 'AddScenarios' test. Test app was supposed to be deleted.");
 		}
 		
+		// select add, wait for title, fill in key and name, and hit return. 
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
+
+		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
+		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(appName);		
+
+		ClickItem("//button[@class='btn btn-primary']"); // save		
+		
+		// wait for page after save.
+		WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[15]"), 4);
+		
+		// verify application was added.
+		listOfActualApps.clear();
+		
+		// store the actual applications 
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+		// verify add.
+		Assert.assertTrue(FindIndexExistingApp(testAppKey) > 0, "Error in 'AddScenarios' test. Test app was supposed to be present.");
 	}
 	
 	
@@ -283,7 +311,10 @@ public class Applications extends BaseMain
 		int maxKeySize = 10;
 		int maxNameSize = 50;
 		
-		SetPageSizeToMax();
+		ShowText("Run AddValidations --- .");
+		
+		// make sure test application is not on the list.
+		DeleteAppByKey(testAppKey);
 		
 		// store the actual applications.
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
@@ -338,6 +369,9 @@ public class Applications extends BaseMain
 		
 		Assert.assertEquals(driver.findElement(By.xpath("//div/small")).getText(), keyInUse, "Failed to find correct error message for Key in 'AddValidations' method.");
 		ShowText(driver.findElement(By.xpath("//div/small")).getText());
+		
+		// close add UI
+		ClickItem("(//button[@class='btn btn-secondary'])[2]"); // cancel
 		
 
 	}
@@ -431,7 +465,7 @@ public class Applications extends BaseMain
 		JSONObject jo;
 		JSONArray jArray;
 		JSONArray jArrayAppsFromTenantCall;
-		boolean savedTenantWithOneApp = false;
+		// boolean savedTenantWithOneApp = false;
 		
 		//CommonMethods.showResponse = false;
 		
@@ -499,6 +533,10 @@ public class Applications extends BaseMain
 		
 		ClearActualExpectedLists();
 	}	
+
+	public static void VerifyFilteringByEnabled()  
+	{
+	}
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -506,6 +544,61 @@ public class Applications extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	public static void DeleteAppByKey(String appKey) throws Exception
+	{
+
+		int indexCntr = 0;
+		
+		listOfActualApps.clear();
+		
+		SetPageSizeToMax();
+
+		// store the actual applications, see if test application exists. 
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+		indexCntr = FindIndexExistingApp(appKey);
+
+		//ShowInt(indexCntr);
+		
+		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleyed.
+		{
+			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]");  // select delete application list row with appKey.
+			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']"); // approve delete.
+			ClickItem("//button[@class='btn btn-danger']"); // delete.
+			// Thread.sleep(2000);
+			WaitForElementNotVisibleNoThrow(By.xpath("//button[@class='btn btn-danger']"), 4);
+			
+			listOfActualApps.clear();
+
+			// store the actual applications.
+			ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+			Assert.assertTrue(FindIndexExistingApp(appKey) == -1, "Error in 'AddScenarios' test. Test app was supposed to be deleted.");
+		}		
+	}
+	
+	// see if an application key exists in the actual list from UI. // bladd
+	public static int FindIndexExistingApp(String appKey)
+	{
+		boolean foundAdd = false;
+		int indexCntr = 1;
+	
+		for(ApplicationClass appClass : listOfActualApps)
+		{
+			if(appClass.m_Key.equals(appKey))
+			{
+				foundAdd = true;
+				break;
+			}
+			indexCntr++;
+		}
+		
+		if(!foundAdd)
+		{
+			return -1;
+		}
+		return indexCntr;
+	}		
 	
 	public static void ClickItem(String xpath)
 	{

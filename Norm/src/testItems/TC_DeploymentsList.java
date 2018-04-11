@@ -11,10 +11,10 @@ import org.testng.annotations.Test;
 
 import baseItems.BaseMain;
 import common.CommonMethods;
-import pages.Tenants;
+import pages.Deployments;
 
 
-public class TC_TenantsList extends BaseMain {
+public class TC_DeploymentsList extends BaseMain {
 
 	@BeforeClass
 	public static void setUp() throws Exception
@@ -28,21 +28,21 @@ public class TC_TenantsList extends BaseMain {
 	
 	
 	@Test
-	public void testCase_TenantsList() throws Exception 
+	public void testCase_DeploymentsList() throws InterruptedException, IOException, JSONException 
 	{
-				
-		CommonMethods.selectItemPlatformDropdown("Tenants");
+					
+		CommonMethods.selectItemPlatformDropdown("Deployments");
+		CommonMethods.verifyTitle("Deployments");
+		/*
+		Deployments.verifyColumnsNames();
 		
-		CommonMethods.verifyTitle("Tenants");
-		
-		/*Tenants.verifyColumnsNames();
-		
-		Tenants.verifyDataAndSorting();
-		
-		Tenants.verifyPaging();
+		Deployments.verifyData();
 		*/
-		Tenants.verifyFiltering();
-
+		Deployments.verifyDataAndSorting();
+		
+		Deployments.verifyPaging();
+		
+		
 			
 	}
 	

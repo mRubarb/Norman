@@ -758,7 +758,7 @@ public class Tenants extends BaseMain
 		filterNameMap.put("All Deployments", "deploymentKey");
 		filterNameMap.put("Show Enabled and Disabled", "enabled");
 		
-		String[] filterValue = {"RVM", "RVM_1", "Show Enabled Tenants Only"};
+		String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
 		
 		
 		for (int i = 0; i < filterNameMap.size(); i++) {

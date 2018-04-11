@@ -14,6 +14,7 @@ import baseItems.BaseMain;
 
 public class CommonMethodsAna  extends BaseMain {
 
+	public static int[] pageSizes = {5, 10, 20, 50};
 	
 	public static List<WebElement> getSizesOfPages() {
 
@@ -162,7 +163,7 @@ public class CommonMethodsAna  extends BaseMain {
 	public static void enterSearchCriteria(String dropdown, String searchCriteria) throws Exception {
 		
 		String xpathSearchField = "//button[@id='sortMenu'][text()='" + dropdown + "']/following-sibling::div/div/input";
-		String xpathValueToSelect = xpathSearchField + "/../following-sibling::div/button/span/span[1]";
+		String xpathValueToSelect = xpathSearchField + "/../following-sibling::div/button/span/span[1]";  
 		
 		String xpathEnabledDropdown = "//button[@id='sortMenu'][text()='" + dropdown + "']/following-sibling::div/div/button/span/span[text()='" + searchCriteria + "']";
 		
@@ -180,7 +181,7 @@ public class CommonMethodsAna  extends BaseMain {
 			
 			WaitForElementPresent(By.xpath(xpathValueToSelect), 3);
 			
-			driver.findElement(By.xpath(xpathValueToSelect + "[text()='" + searchCriteria + "']")).click();   // *** FAILS HERE FOR DEPLOYMENT
+			driver.findElement(By.xpath(xpathValueToSelect)).click();  // + "[text()='" + searchCriteria + "']")).click();   // *** FAILS HERE FOR DEPLOYMENT
 			// //jhi-deployment-selector/form/div/div/div/div[4]/button/span/span[1]
 		} 
 		
@@ -189,6 +190,5 @@ public class CommonMethodsAna  extends BaseMain {
 		
 	}
 	
-	
-	
+		
 }

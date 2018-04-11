@@ -45,7 +45,8 @@ public class Applications extends BaseMain
 
 	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyMzY1MjUwOH0.zptwBdrk3cDixUCMuhFShkFdGDSBC_LYyKrvBIevnpwMFNVX6DFRO-40EZhbzhGrni41rS4eP8VWzPcQjNWdPA";
 	
-	public static String testAppKey = "1234567890";
+	public static final String testAppKey = "1234567890";
+	public static final String testAppName = "ZZZ_ZEBRA_XYZ";
 	
 	public static int maxItemsPerPage = 50;
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console. 
@@ -65,7 +66,7 @@ public class Applications extends BaseMain
 		CommonMethods.selectItemPlatformDropdown("Applications");
 	}
 	
-	// this gets all items in the collection from the API and all items from the applications UI and compare them.
+	// this gets all items in the collection from the API and all items from the applications UI and compares them.
 	public static void VerifyFullList() throws IOException, JSONException, InterruptedException
 	{
 		String url = applicationsURL + "?pageSize=300"; // get all the applications from API.
@@ -242,46 +243,19 @@ public class Applications extends BaseMain
 
 	public static void AddScenarios() throws Exception 
 	{
-		// String appKey = "1234567890";
-		String appName = "ZZZ_ZEBRA_XYZ";		 
 		int indexCntr = 0;
-		boolean foundAdd = false;
 		
 		ShowText("Run AddScenarios --- .");
 		
-		listOfActualApps.clear();
-		
-		SetPageSizeToMax();
-
-		// store the actual applications, see if test application exists. 
-		ShowActualApplicationsOrStore(ActionForApplications.Store);
-
-		indexCntr = FindIndexExistingApp(testAppKey);
-
-		ShowInt(indexCntr);
-		
-		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleyed.
-		{
-			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]");  // select delete application list row with appKey.
-			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']"); // approve delete.
-			ClickItem("//button[@class='btn btn-danger']"); // delete.
-			// Thread.sleep(2000);
-			WaitForElementNotVisibleNoThrow(By.xpath("//button[@class='btn btn-danger']"), 4);
-			
-			listOfActualApps.clear();
-
-			// store the actual applications.
-			ShowActualApplicationsOrStore(ActionForApplications.Store);
-
-			Assert.assertTrue(FindIndexExistingApp(testAppKey) == -1, "Error in 'AddScenarios' test. Test app was supposed to be deleted.");
-		}
+		// make sure spp to add does not exist.
+		DeleteAppByKey(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
 		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
 
 		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
-		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(appName);		
+		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName);		
 
 		ClickItem("//button[@class='btn btn-primary']"); // save		
 		
@@ -296,6 +270,13 @@ public class Applications extends BaseMain
 
 		// verify add.
 		Assert.assertTrue(FindIndexExistingApp(testAppKey) > 0, "Error in 'AddScenarios' test. Test app was supposed to be present.");
+		
+		// get index so data can be verified. verify index is not -1.
+		indexCntr = FindIndexExistingApp(testAppKey);
+		Assert.assertTrue(indexCntr > 0, "Error in 'AddScenarios' test. Test app was supposed to be present.");
+		
+		// verify data in added app.
+		VerifyKeyNameOnly(indexCntr - 1);
 	}
 	
 	
@@ -304,8 +285,8 @@ public class Applications extends BaseMain
 		String keyTooLong = "2222222222222222222222222222222222222";
 		String nameTooLong = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 		String validKey = "123456789";
-		String defaultPathError = "Default Path must only contain letters, numbers, and underscores and must start with a forward slash";
-		String defaultHostError = "Default Host must only contain letters, numbers, and underscores";
+		String defaultPathError = "Default Path must only contain letters, numbers, periods, dashes and underscores and must start with a forward slash";
+		String defaultHostError = "Default Host must only contain letters, numbers, periods, dashes, and underscores";
 		String keyInUse =  "Key is already in use";
 		String  badCharacterString = "nn>?";
 		int maxKeySize = 10;
@@ -316,7 +297,7 @@ public class Applications extends BaseMain
 		// make sure test application is not on the list.
 		DeleteAppByKey(testAppKey);
 		
-		// store the actual applications.
+		// store the actual applications. this will be used in validation error when adding existing app key.
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
 		// select add, wait for title, and select cancel, and verify back in the applications list.
@@ -372,8 +353,6 @@ public class Applications extends BaseMain
 		
 		// close add UI
 		ClickItem("(//button[@class='btn btn-secondary'])[2]"); // cancel
-		
-
 	}
 
 	// this is for sorting all page sizes for all sortable columns.
@@ -403,7 +382,7 @@ public class Applications extends BaseMain
 			pageSize = tempInt;
 			numberOfPages = GetTotalPages(totalCount, pageSize);
 			System.out.println("Expected number of pages for page size = " +  pageSize + " is " + numberOfPages);
-			
+
 			// click a sort item and verify.
 			ClickSorting("//span[text()='Enabled']");
 			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "IS_ENABLED");
@@ -435,7 +414,6 @@ public class Applications extends BaseMain
 			// click a sort item and verify.
 			ClickSorting("//span[text()='Host']");
 			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "DEFAULT_HOST");						
-			
 			
 			// click a sort item and verify.
 			ClickSorting("//span[text()='Path']");
@@ -548,9 +526,9 @@ public class Applications extends BaseMain
 	{
 
 		int indexCntr = 0;
-		
+
+		// clear actual list and get max page size. 
 		listOfActualApps.clear();
-		
 		SetPageSizeToMax();
 
 		// store the actual applications, see if test application exists. 
@@ -560,6 +538,7 @@ public class Applications extends BaseMain
 
 		//ShowInt(indexCntr);
 		
+		// TODO: make method of this
 		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleyed.
 		{
 			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]");  // select delete application list row with appKey.
@@ -575,9 +554,11 @@ public class Applications extends BaseMain
 
 			Assert.assertTrue(FindIndexExistingApp(appKey) == -1, "Error in 'AddScenarios' test. Test app was supposed to be deleted.");
 		}		
+		
+		listOfActualApps.clear();
 	}
 	
-	// see if an application key exists in the actual list from UI. // bladd
+	// see if an application key exists in the actual list from UI. 
 	public static int FindIndexExistingApp(String appKey)
 	{
 		boolean foundAdd = false;
@@ -1033,8 +1014,19 @@ public class Applications extends BaseMain
 		WaitForElementClickable(By.xpath("//button[@class='dropdown-item']"), 3, "");
 		driver.findElement(By.xpath("//button[@class='dropdown-item']")).click();
 		Thread.sleep(2000);
-		
 	}
-	
 
+	// the actual list index should only contain a key and name.   // bladd
+	public static void VerifyKeyNameOnly(int index) throws Exception
+	{
+		String errMess = "Fail in verify 'VerifyKeyNameOnly' for ";
+		ApplicationClass temp = listOfActualApps.get(index);
+		
+		Assert.assertEquals(temp.m_Key, testAppKey, errMess + "appKey.");
+		Assert.assertEquals(temp.m_Name, testAppName, errMess + "appName.");
+		Assert.assertEquals(temp.m_defaultHost, "", errMess + "defaultHost.");		
+		Assert.assertEquals(temp.m_defaultPath, "", errMess + "defaultPath.");
+		Assert.assertEquals(temp.m_Description, "", errMess + "description.");
+		Assert.assertEquals(temp.m_Enabled, true, errMess + "enabled.");		
+	}
 }

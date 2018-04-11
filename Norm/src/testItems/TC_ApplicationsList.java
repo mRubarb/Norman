@@ -22,7 +22,7 @@ public class TC_ApplicationsList extends BaseMain
 		SetupDiver();
 		OpenConsole();
 		LoginOneClick();
-		Thread.sleep(3000);
+		//Thread.sleep(2000); // NEED FIXED.. TODO:
 	}
 	
 	
@@ -33,12 +33,12 @@ public class TC_ApplicationsList extends BaseMain
 		CommonMethods.verifyTitle("Applications");	
 		
 		// RMINF-154
-		Applications.VerifyFullList(); // TC948 step 1. 
+		//Applications.VerifyFullList(); // TC948 step 1. 
 		// ** Applications.VerifyPageSettings(); // TC948 step 2 -- this is done in 'Applications.VerifySortingMultiplePages()' below. 	
 		// ** Applications.VerifyPaging(); // TC948 step 3 - never completed - this is done in 'Applications.VerifySortingMultiplePages()' below.		
 		// ** Applications.VerifySortingFullPage(); // this is done in 'Applications.VerifySortingMultiplePages()'.
 		// Applications.VerifyFilteringByTenant(); // TC948 step 7 (tenant filter). 
-		//Applications.VerifyFilteringByEnabled(); // !! <<<<<========================================================== START HERE !!!! 4/3/18		
+		Applications.VerifyFilteringByEnabled(); // !! <<<<<========================================================== START HERE !!!! 4/3/18		
 		// Applications.VerifySortingMultiplePages(); // TC1156 sorting with different page sizes applications.
 		
 		// RMINF-172 

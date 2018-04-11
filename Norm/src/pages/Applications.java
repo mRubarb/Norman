@@ -8,6 +8,7 @@ import baseItems.BaseMain;
 import classes.ApplicationClass;
 import classes.TenantAppForAppSearch;
 import common.CommonMethods;
+import net.jcip.annotations.ThreadSafe;
 
 import org.testng.Assert;
 
@@ -21,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.server.handler.ClickElement;
 import org.openqa.selenium.support.ui.Select;
 
 import javax.swing.JFrame;
@@ -83,35 +85,20 @@ public class Applications extends BaseMain
 
 		Assert.assertTrue(jArray.length() == totalCount); // verify collection count matches metadata. 
 		
-		// store all the applications from API onto expected list.
-		for(int x = 0; x < jArray.length(); x++)
-		{
-			// the list page has a maximum number of rows. 
-			if(x == (maxItemsPerPage - 1))
-			{
-				break;
-			}			
-			
-			JSONObject jo = jArray.getJSONObject(x); // get current json object from the list  
-			GetAndAddAppFromApiToExpectedList(jo); // add all the fields in the object.
-		}		
+		AddJsonArrayToExpectedList(jArray);
 		
 		System.out.println("Size from UI = " +     listOfExpectedApps.size() + " rows.");
 		
-		// set page size to max.
-		WaitForElementClickable(By.xpath("(//span/label)[4]"), 5, "");
-		driver.findElement(By.xpath("(//span/label)[4]")).click(); 		
-		Thread.sleep(1000);
-		
+		// set maximum page size.
+		CommonMethods.selectSizeOfList(50);
+
 		// store the application in UI to listOfActualApps
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		// ShowApplicationsActualAndExpectedCollection(); 
 		
 		// verify actual and expected are equal.
 		VerifyApplicationsCollectionsExpectedAndActual();
 		
 		ClearActualExpectedLists();
-		
 	}	
 	
 	// this compares what the API returns to what is in the UI for each page size selection that can be tested.
@@ -512,8 +499,28 @@ public class Applications extends BaseMain
 		ClearActualExpectedLists();
 	}	
 
-	public static void VerifyFilteringByEnabled()  
+	public static void VerifyFilteringByEnabled() throws Exception  
 	{
+		String url = applicationsURL + "?pageSize=300&enabled=true"; // get all the applications from API.
+		String apiType = "\"applications\":";
+		// JSONObject jo;
+		JSONArray jArray;
+		
+		CommonMethods.selectSizeOfList(50);
+		Thread.sleep(1000);
+		
+		WaitForElementClickable(By.xpath("(//button[@id='sortMenu'])[2]"), 3, ""); // bladd
+		ClickItem("(//button[@id='sortMenu'])[2]");
+		Thread.sleep(1000);
+		ClickItem("(//button[@class='dropdown-item active'])[2]/..");
+		
+		// get array of enabled applications from the API and  store them.
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		AddJsonArrayToExpectedList(jArray);
+		
+		// store the actual applications in UI 
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
 	}
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -544,7 +551,6 @@ public class Applications extends BaseMain
 			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]");  // select delete application list row with appKey.
 			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']"); // approve delete.
 			ClickItem("//button[@class='btn btn-danger']"); // delete.
-			// Thread.sleep(2000);
 			WaitForElementNotVisibleNoThrow(By.xpath("//button[@class='btn btn-danger']"), 4);
 			
 			listOfActualApps.clear();
@@ -665,29 +671,24 @@ public class Applications extends BaseMain
 		listOfExpectedApps.clear();
 	}
 	
-	
-	
+
 	public static void VerifySortingHelper(String url, String token, String apiType) throws IOException, JSONException
 	{
 		JSONArray jArray;
 		
-		//  get all of the applications from API call and verify count is equal to metadata totalCount.
+		//  get all of the applications from API call (expected).
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
+		// store expected data. 
 		AddJsonArrayToExpectedList(jArray);
 		
-		// store the applications in UI to listOfActualApps
+		// store the applications in UI to listOfActualApps (actual)
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
-
-		// ShowApplicationsActualAndExpectedCollection();
 		
 		VerifyApplicationsCollectionsExpectedAndActual();
 		
-		
 		listOfExpectedApps.clear();
 		listOfActualApps.clear();		
-		
-		
 	}	
 	
 	// go through rows and columns and show items or add items to the list of apps.
@@ -748,20 +749,14 @@ public class Applications extends BaseMain
 		}
 	}
 
+	// receive Json array for applications and add it to the expected list.
 	public static void AddJsonArrayToExpectedList(JSONArray jArray) throws JSONException
 	{
 		// store all the applications from API call onto expected list.
 		for(int y = 0; y < jArray.length(); y++)
 		{
 			JSONObject jo = jArray.getJSONObject(y);
-			
 			GetAndAddAppFromApiToExpectedList(jo);
-			
-			//key = jo.getString("key");
-			//name = jo.getString("name");
-			//description = jo.getString("description");
-			//enabled = jo.getBoolean("enabled");
-			//listOfExpectedApps.add(new ApplicationClass(key, name, description, enabled, defaultHost, defaultPath));
 		}		
 	}	
 	
@@ -809,8 +804,6 @@ public class Applications extends BaseMain
 				ShowText("Verify length.");
 				ShowInt(jArray.length());
 			}
-			
-
 			// compare list // TODO:
 		}
 	}	
@@ -819,8 +812,8 @@ public class Applications extends BaseMain
 	// both lists should be in the same order.
 	public static void VerifyApplicationsCollectionsExpectedAndActual()
 	{
-		boolean bFoundInLoop = false;
-		String message = "";
+		//boolean bFoundInLoop = false;
+		//String message = "";
 		int x = 0;
 		
 		// lists should be same size.
@@ -1016,7 +1009,7 @@ public class Applications extends BaseMain
 		Thread.sleep(2000);
 	}
 
-	// the actual list index should only contain a key and name.   // bladd
+	// the actual list index should only contain a key and name.  
 	public static void VerifyKeyNameOnly(int index) throws Exception
 	{
 		String errMess = "Fail in verify 'VerifyKeyNameOnly' for ";

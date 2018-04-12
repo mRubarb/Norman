@@ -15,7 +15,6 @@ import org.testng.Assert;
 import baseItems.BaseMain;
 import classes.Deployment;
 import common.CommonMethods;
-import common.CommonMethodsAna;
 
 
 public class Deployments extends BaseMain 
@@ -108,7 +107,7 @@ public class Deployments extends BaseMain
 			*/
 			
 			deployment.setKey(jo.getString("key"));
-			deployment.setDescription(CommonMethodsAna.GetNonRequiredItem(jo, "description"));
+			deployment.setDescription(CommonMethods.GetNonRequiredItem(jo, "description"));
 			deployment.setApplicationKey(jo.getString("applicationKey"));
 			deployment.setVersion(jo.getString("version"));
 			deployment.setEnabled(jo.getBoolean("enabled"));
@@ -147,7 +146,7 @@ public class Deployments extends BaseMain
 			deployment.setApplicationKey(appKey);
 			deployment.setVersion(version);
 			deployment.setDescription(description);
-			deployment.setEnabled(CommonMethodsAna.convertToBoolean(enabled));
+			deployment.setEnabled(CommonMethods.convertToBoolean(enabled));
 			
 			expectedDeploymentsList.add(deployment);
 			
@@ -168,13 +167,13 @@ public class Deployments extends BaseMain
 	public static void verifyDataAndSorting() throws InterruptedException, IOException, JSONException {
 		
 		// Get all the "sizes" into a list
-		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethods.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		for (int i = 0; i < listSizesElements.size(); i++) {
 			
 			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
 			
-			CommonMethodsAna.selectSizeOfList(pageSize);
+			CommonMethods.selectSizeOfList(pageSize);
 			
 			// ** T-960:Tenants list can be sorted
 			verifyListSorted();
@@ -234,43 +233,43 @@ public class Deployments extends BaseMain
 		
 		System.out.println("\n  ** Sort List by Key in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 				
 		verifySortingObjects("KEY", "ASC");
 		
 		System.out.println("\n  ** Sort List by Key in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Key", "DESC");
+		CommonMethods.clickArrowSorting("Key", "DESC");
 		
 		verifySortingObjects("KEY", "DESC");
 	
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 		
 		System.out.println("\n  ** Sort List by Version in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Version", "ASC");
+		CommonMethods.clickArrowSorting("Version", "ASC");
 		
 		verifySortingObjects("VERSION", "ASC");
 		
 		System.out.println("\n  ** Sort List by Version in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Version", "DESC");
+		CommonMethods.clickArrowSorting("Version", "DESC");
 				
 		verifySortingObjects("VERSION", "DESC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Enabled", "ASC");
+		CommonMethods.clickArrowSorting("Enabled", "ASC");
 				
 		verifySortingObjects("IS_ENABLED", "ASC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
+		CommonMethods.clickArrowSorting("Enabled", "DESC");
 				
 		verifySortingObjects("IS_ENABLED", "DESC");
 	
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 		
 	}
 	
@@ -425,7 +424,7 @@ public class Deployments extends BaseMain
 		 * */
 		// Get all the "sizes" into a list
 		
-		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages(); // xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethods.getSizesOfPages(); // xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		/*System.out.println("listSizesElements.size(): " + listSizesElements.size());
 		
@@ -435,7 +434,7 @@ public class Deployments extends BaseMain
 			
 		}*/
 		
-		String totalCountItems = CommonMethodsAna.getTotalCountItems(); //driver.findElement(By.xpath("//div/jhi-item-count")).getText();
+		String totalCountItems = CommonMethods.getTotalCountItems(); //driver.findElement(By.xpath("//div/jhi-item-count")).getText();
 		
 		int index = totalCountItems.indexOf("of");
 		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
@@ -456,7 +455,7 @@ public class Deployments extends BaseMain
 			
 			System.out.println("pageSize = " + pageSize);
 			
-			CommonMethodsAna.selectSizeOfList(pageSize);
+			CommonMethods.selectSizeOfList(pageSize);
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
 			
 			int totalPages = 1;
@@ -471,7 +470,7 @@ public class Deployments extends BaseMain
 			
 			for (int page = 1; page <= totalPages; page++) {
 			
-				CommonMethodsAna.clickPageNumber(page);
+				CommonMethods.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
 				verifyDataFromUIMatchesAPI(page, pageSize);

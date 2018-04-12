@@ -35,15 +35,23 @@ public class TC_TenantsList extends BaseMain {
 		
 		CommonMethods.verifyTitle("Tenants");
 		
-		/*Tenants.verifyColumnsNames();
+		// Tenants.verifyColumnsNames();
 		
-		Tenants.verifyDataAndSorting();
+		// Tenants.verifyDataAndSorting();
 		
-		Tenants.verifyPaging();
-		*/
-		Tenants.verifyFiltering();
+		// Tenants.verifyPaging();
+		
+		// Tenants.verifyFiltering();
 
-			
+		//Tenants.addTenant();
+		
+		Tenants.searchTenant("T_A");
+		
+		Thread.sleep(3000);
+		
+		Tenants.deleteTenant("T_AUTOM_ANA");
+		
+		
 	}
 	
 	

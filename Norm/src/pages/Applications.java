@@ -33,14 +33,15 @@ public class Applications extends BaseMain
 	public static String AppTableCss = ".table.table-striped>tbody>tr";
 	public static int expectedNumberOfColumns = 6;
 	
-	public static String key;
-	public static String name;
-	public static String description;
-	public static String enabledString;
-	public static boolean enabled;
-	public static String defaultHost;	
-	public static String defaultPath;	
-	public static String defaultHostPath;
+	public static String key = "";
+	public static String name = "";
+	public static String description = "";
+	public static String enabledString = "";
+	public static boolean enabled = false;
+	public static String defaultHost = "";
+	public static String defaultPath = "";
+	public static String defaultHostPath = "";
+	public static String tenantWithNoApp = "";
 	
 	public static String applicationsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/applications";
 	public static String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";	
@@ -440,11 +441,20 @@ public class Applications extends BaseMain
 		// get the list of tenants. 
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
 		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list.
 		// also return the index of the tenant that has the largest number of dependent applications.  
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		indexForTenantWithMostApps = BuildListOfExpectedTenantsForFilters(jArray);
+
+		// show the tenant (including applications) with one application and the tenant with the most applications.
+		// for(TenantAppForAppSearch it : listOfTenantWithAppExpected)	{it.Show();} 
 		
+		// ////////////////////////////////////
+		// 
+		// ////////////////////////////////////
+		/*
 		// get and store tenant (json object) with most associated applications from the list of tenants (jArray).
 		jo = jArray.getJSONObject(indexForTenantWithMostApps);
 		
@@ -458,24 +468,60 @@ public class Applications extends BaseMain
 		
 		// store the tenant and applications as an object and store the object onto a list.
 		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
+		*/
 		
-		// show tenant with one application and tenant with the most applications.
-		// for(TenantAppForAppSearch tenApp : listOfTenantWithAppExpected) {tenApp.Show();}
+		// ///////////////////////////////
+		//        ONE
+		// /////////////////////////////
 		
-		ClickAndSelectTenantInPulldown(0);
+		// COMMENTS FIX !!!
+		// select the tenant with one application in tenants pull-down, the '0' passed in indicates to select this tenant.   
+		// ClickAndSelectTenantInPulldown(0);
+		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(0).m_TenantName);
 		
-		// store the result of the search into list of actual apps.
+		// listOfTenantWithAppExpected.get(tenantListIndex).m_TenantName
+		
+		// store the result of the search into list of actual applications.
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
-		// get the application list found in the first tenant object and make sure it only holds one app.
+		// get the application list found in the first tenant object and make sure it only holds one application.
 		List<ApplicationClass> aplList =   listOfTenantWithAppExpected.get(0).GetApplicationList();
 		
 		Assert.assertTrue(aplList.size() == 1, "");
 		
-		listOfExpectedApps.add(aplList.get(0)); // add app to expected list
+		listOfExpectedApps.add(aplList.get(0)); // add application to expected list COMMENT !!!!!!!
 		
 		VerifyApplicationsCollectionsExpectedAndActual();
 
+		ClearActualExpectedLists();
+		
+		//listOfActualApps.clear();
+		//listOfExpectedApps.clear();		
+
+		// ///////////////////////////////
+		//        TWO
+		// /////////////////////////////
+		
+		
+		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(1).m_TenantName);
+		
+		// get the list of expected applications found in the second tenant object.
+		aplList =   listOfTenantWithAppExpected.get(1).GetApplicationList();
+		
+		// add the expected applications to the expected list.
+		for(ApplicationClass aplClass: aplList)
+		{
+			listOfExpectedApps.add(aplClass);
+		}
+
+		// store the result of the search into list of actual applications.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		VerifyApplicationsCollectionsExpectedAndActual();
+		
+		ClearActualExpectedLists();
+		
+		/*
 		ClickAndSelectTenantInPulldown(1);
 		
 		listOfActualApps.clear();
@@ -495,8 +541,12 @@ public class Applications extends BaseMain
 		
 		// compare actual to expected.
 		VerifyApplicationsCollectionsExpectedAndActual();
+		*/
 		
-		ClearActualExpectedLists();
+
+		
+		
+		
 	}	
 
 	public static void VerifyFilteringByEnabled() throws Exception  
@@ -520,6 +570,8 @@ public class Applications extends BaseMain
 		
 		// store the actual applications in UI 
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		VerifyApplicationsCollectionsExpectedAndActual();
 		
 	}
 	
@@ -619,6 +671,7 @@ public class Applications extends BaseMain
 	// loop through tenants list. find a tenant with one dependent application. store the tenant name and 
 	// the application in a 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' 
 	// list. Find the tenant with the most dependent applications and store it's index.
+	// find a tenant with no applications and store it into a variable.
 	public static int BuildListOfExpectedTenantsForFilters(JSONArray jArray) throws Exception 
 	{
 
@@ -628,6 +681,7 @@ public class Applications extends BaseMain
 		JSONObject jo;
 		JSONArray jArrayAppsFromTenantCall;
 		boolean savedTenantWithOneApp = false;		
+		boolean savedTenantWithNoApp = false;
 		
 		
 		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
@@ -661,7 +715,29 @@ public class Applications extends BaseMain
 					indexForTenantWithMostApps = x;
 				}
 			}
+			
+			if(jArrayAppsFromTenantCall.length() == 0 && !savedTenantWithNoApp)
+			{
+				ShowText(jo.getString("key") + "&&&");
+				savedTenantWithNoApp = true;
+			}
 		}
+		
+		// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// at this point the application with the most tenants is known. it is found at the json array index 'indexForTenantWithMostApps'.
+		// store the tenant and all the applications that go with it onto a 'TenantAppForAppSearch; object and then add the object to
+		// the 'listOfTenantWithAppExpected' list.
+		// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		jo = jArray.getJSONObject(indexForTenantWithMostApps);
+		url = applicationsURL + "?tenantKey=" + jo.getString("key") + "&pageSize=300";
+		apiType = "\"applications\":";
+
+		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+
+		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
+
+		
+		
 		return indexForTenantWithMostApps;
 	}
 	
@@ -1009,6 +1085,22 @@ public class Applications extends BaseMain
 		Thread.sleep(2000);
 	}
 
+	public static void ClickAndSelectTenantInPulldown(String tenantName) throws Exception
+	{
+		// click tenants pull-down
+		driver.findElement(By.xpath("(.//*[@id='sortMenu'])[1]")).click(); 
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("//div[@class='d-flex flex-row']/input"), 3, "");
+		driver.findElement(By.xpath("//div[@class='d-flex flex-row']/input")).sendKeys(tenantName); 
+		
+		// click the result.
+		WaitForElementClickable(By.xpath("//button[@class='dropdown-item']"), 3, "");
+		driver.findElement(By.xpath("//button[@class='dropdown-item']")).click();
+		Thread.sleep(2000);
+	}
+	
+	
 	// the actual list index should only contain a key and name.  
 	public static void VerifyKeyNameOnly(int index) throws Exception
 	{

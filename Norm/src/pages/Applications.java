@@ -12,6 +12,9 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.testng.Assert;
 
+import com.gargoylesoftware.htmlunit.javascript.host.dom.ShadowRoot;
+import com.google.gson.JsonObject;
+
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
@@ -415,154 +418,178 @@ public class Applications extends BaseMain
 		}
 	}	
 	
-	// /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// * go through the tenants list and then call application filtering on the tenant key to find associated apps.  
+	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// * go through the tenants list and then call application filtering on the tenant key to find 
+	//   associated application(s) for each tenant.  
 	// * find a tenant with one application associated to it and store that tenant/application 
-	//   as an object and put the object onto a list.
+	//   as an object 'TenantAppForAppSearch' and put the object onto a list 'listOfTenantWithAppExpected'.
 	// * find the tenant with the most applications associated to it and store that tenant/applications 
-	//   as an object and put the object onto a list.
+	//   as object 'TenantAppForAppSearch' and put the object onto a list 'listOfTenantWithAppExpected'.
 	// * filter on each of the tenants listed above in tenants pull-down and verify results (expected/actual).
-	// ///////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-	public static void VerifyFilteringByTenant() throws IOException, JSONException, Exception
+	// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+	public static void VerifyFilteringByTenant() throws IOException, JSONException, Exception // bladd
 	{
 		String url = ""; 
 		String apiType = "\"tenants\":";
-		int indexForTenantWithMostApps = 0;
-		JSONObject jo;
+		// JSONObject jo;
 		JSONArray jArray;
-		JSONArray jArrayAppsFromTenantCall;
+		// JSONArray jArrayAppsFromTenantCall;
 		// boolean savedTenantWithOneApp = false;
-		
-		//CommonMethods.showResponse = false;
-		
+
 		// create a URL that will get a list of all the tenants.
 		url = tenantsURL + "?pageSize=300"; 
 		
 		// get the list of tenants. 
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
-		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
-		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list.
-		// also return the index of the tenant that has the largest number of dependent applications.  
-		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		indexForTenantWithMostApps = BuildListOfExpectedTenantsForFilters(jArray);
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// this will store a tenant with one application and a tenant with the most applications as described in method description above.  
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		BuildListOfTenantsForFilterTests(jArray);
 
-		// show the tenant (including applications) with one application and the tenant with the most applications.
-		// for(TenantAppForAppSearch it : listOfTenantWithAppExpected)	{it.Show();} 
+		// ///////////////////////////////////////////////////////////////
+		// this tests filtering using the tenant with one application.       
+		// ///////////////////////////////////////////////////////////////
 		
-		// ////////////////////////////////////
-		// 
-		// ////////////////////////////////////
-		/*
-		// get and store tenant (json object) with most associated applications from the list of tenants (jArray).
-		jo = jArray.getJSONObject(indexForTenantWithMostApps);
-		
-		// build an application URL that will call GetApps with tenant filter set to the current tenant key  
-		url = applicationsURL + "?tenantKey=" + jo.getString("key") + "&pageSize=300";
-		
-		apiType = "\"applications\":"; // setup for getApps request below.
-		
-		// call getApps passing in the tenant key. 
-		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
-		
-		// store the tenant and applications as an object and store the object onto a list.
-		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
-		*/
-		
-		// ///////////////////////////////
-		//        ONE
-		// /////////////////////////////
-		
-		// COMMENTS FIX !!!
-		// select the tenant with one application in tenants pull-down, the '0' passed in indicates to select this tenant.   
-		// ClickAndSelectTenantInPulldown(0);
+		// select the tenant with one application in tenants pull-down.  
+		// the '0' passed in indicates to select the tenant with one application.   
 		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(0).m_TenantName);
 		
-		// listOfTenantWithAppExpected.get(tenantListIndex).m_TenantName
+		ShowText("Tenant filter = " + listOfTenantWithAppExpected.get(0).m_TenantName);
 		
-		// store the result of the search into list of actual applications.
+		// listOfTenantWithAppExpected.get(0).m_TenantName // DEBUG show tenant being filtered on.
+		
+		// store the result of the search onto list of actual applications.
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
 		// get the application list found in the first tenant object and make sure it only holds one application.
-		List<ApplicationClass> aplList =   listOfTenantWithAppExpected.get(0).GetApplicationList();
+		List<ApplicationClass> appExpectedlList =   listOfTenantWithAppExpected.get(0).GetApplicationList();
+
+		Assert.assertTrue(appExpectedlList.size() == 1, "Application should only have one application in 'VerifyFilteringByTenant'.");
 		
-		Assert.assertTrue(aplList.size() == 1, "");
+		listOfExpectedApps.add(appExpectedlList.get(0)); // add application to expected list.
 		
-		listOfExpectedApps.add(aplList.get(0)); // add application to expected list COMMENT !!!!!!!
-		
-		VerifyApplicationsCollectionsExpectedAndActual();
+		VerifyApplicationsCollectionsExpectedAndActual(); // verify
 
 		ClearActualExpectedLists();
 		
-		//listOfActualApps.clear();
-		//listOfExpectedApps.clear();		
-
-		// ///////////////////////////////
-		//        TWO
-		// /////////////////////////////
+		// /////////////////////////////////////////////////////////////////////
+		// this tests filtering using the tenant with the most applications.       
+		// /////////////////////////////////////////////////////////////////////
 		
-		
+		// select the tenant with the most applications in tenants pull-down.  
+		// the '1' passed in indicates to select the tenant with the most applications.   
 		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(1).m_TenantName);
 		
+		ShowText("Tenant filter = " + listOfTenantWithAppExpected.get(1).m_TenantName);		
+		
 		// get the list of expected applications found in the second tenant object.
-		aplList =   listOfTenantWithAppExpected.get(1).GetApplicationList();
+		appExpectedlList =  listOfTenantWithAppExpected.get(1).GetApplicationList();
 		
 		// add the expected applications to the expected list.
-		for(ApplicationClass aplClass: aplList)
+		for(ApplicationClass aplClass: appExpectedlList)
 		{
 			listOfExpectedApps.add(aplClass);
 		}
 
-		// store the result of the search into list of actual applications.
+		// store the result of the filter in UI into list of actual applications.
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
 		VerifyApplicationsCollectionsExpectedAndActual();
 		
 		ClearActualExpectedLists();
 		
-		/*
-		ClickAndSelectTenantInPulldown(1);
+		// select the tenant that has no associated applications and verify the UI message.  
+		ClickAndSelectTenantInPulldown(tenantWithNoApp);
 		
-		listOfActualApps.clear();
-		listOfExpectedApps.clear();		
-		
-		// store the result of the search into list of actual applications.
-		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		
-		// get the list of expected applications found in the second tenant object.
-		aplList =   listOfTenantWithAppExpected.get(1).GetApplicationList();
-		
-		// add the expected applications to the expected list.
-		for(ApplicationClass aplClass: aplList)
-		{
-			listOfExpectedApps.add(aplClass);
-		}
-		
-		// compare actual to expected.
-		VerifyApplicationsCollectionsExpectedAndActual();
-		*/
-		
-
-		
-		
-		
+		WaitForElementVisible(By.xpath("//div[text()='No applications found']"), 3); // UI message.
 	}	
 
+	// verify results from enabled and disabled filter using full list.
 	public static void VerifyFilteringByEnabled() throws Exception  
 	{
-		String url = applicationsURL + "?pageSize=300&enabled=true"; // get all the applications from API.
+		String url = applicationsURL + "?pageSize=300&enabled=true"; // get all the enabled applications from API.
 		String apiType = "\"applications\":";
-		// JSONObject jo;
-		JSONArray jArray;
 		
 		CommonMethods.selectSizeOfList(50);
 		Thread.sleep(1000);
-		
-		WaitForElementClickable(By.xpath("(//button[@id='sortMenu'])[2]"), 3, ""); // bladd
+ 
+		// set to filter enabled
 		ClickItem("(//button[@id='sortMenu'])[2]");
-		Thread.sleep(1000);
-		ClickItem("(//button[@class='dropdown-item active'])[2]/..");
+		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[1]");
+		
+		VerifyEnabledDisabled(url, apiType);
+		
+		// set back to enabled (this is needed because locators change when click enabled) and then set to filter disabled.
+		ClickItem("(//button[@id='sortMenu'])[2]");
+		ClickItem("//div[@class='dropdown show']/div/button");
+		
+		// set to disabled.
+		ClickItem("(//button[@id='sortMenu'])[2]");
+		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[2]");
+		
+		url = applicationsURL + "?pageSize=300&enabled=false"; // get all the disabled applications from API.
+
+		VerifyEnabledDisabled(url, apiType);
+	}
+	
+	public static void VerifyFilteringEnabledDisabledWithTenant() throws Exception
+	{
+		String url = ""; 
+		String apiType = "\"tenants\":";
+		JSONArray jArray;
+				
+		ClearActualExpectedLists();
+		
+		// create a URL that will get a list of all the tenants.
+		url = tenantsURL + "?pageSize=300"; 
+		
+		// get the list of tenants. 
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+	
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// this will store a tenant with one application and a tenant with the most applications as described in method description above.  
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		BuildListOfTenantsForFilterTests(jArray);
+
+		ShowText(listOfTenantWithAppExpected.get(1).m_TenantName);
+		
+		// call API and get expected for enabled true and tenant with the most applications. 
+		url = applicationsURL + "?pageSize=300&enabled=true"; 
+		apiType = "\"applications\":";
+		
+		// get the list of expected applications.
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		// put the expected applications on the expected list.
+		AddJsonArrayToExpectedList(jArray);
+		
+		
+		// set to enabled
+		ClickItem("(//button[@id='sortMenu'])[2]");
+		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[1]");
+		
+		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(1).m_TenantName);
+		
+		VerifyApplicationsCollectionsExpectedAndActual();
+
+		
+		
+		
+		
+	}
+	
+	
+	
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	// 															HELPERS 
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+
+	public static void VerifyEnabledDisabled(String url, String apiType) throws Exception
+	{
+		JSONArray jArray;
 		
 		// get array of enabled applications from the API and  store them.
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
@@ -573,14 +600,10 @@ public class Applications extends BaseMain
 		
 		VerifyApplicationsCollectionsExpectedAndActual();
 		
+		ClearActualExpectedLists();
 	}
 	
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-	// 															HELPERS 
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-
+	
 	public static void DeleteAppByKey(String appKey) throws Exception
 	{
 
@@ -672,9 +695,8 @@ public class Applications extends BaseMain
 	// the application in a 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' 
 	// list. Find the tenant with the most dependent applications and store it's index.
 	// find a tenant with no applications and store it into a variable.
-	public static int BuildListOfExpectedTenantsForFilters(JSONArray jArray) throws Exception 
+	public static int BuildListOfTenantsForFilterTests(JSONArray jArrayTenants) throws Exception 
 	{
-
 		String url = ""; 
 		String apiType = "\"tenants\":";
 		int indexForTenantWithMostApps = 0;
@@ -683,13 +705,12 @@ public class Applications extends BaseMain
 		boolean savedTenantWithOneApp = false;		
 		boolean savedTenantWithNoApp = false;
 		
-		
 		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
 		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list. 
 		// Find the tenant with the most dependent applications and store it's index.
-		for(int x = 0; x < jArray.length(); x++)
+		for(int x = 0; x < jArrayTenants.length(); x++)
 		{
-			jo = jArray.getJSONObject(x);
+			jo = jArrayTenants.getJSONObject(x);
 			System.out.println(jo.getString("key"));		
 			
 			// build an application URL that will call tenant filter with the current tenant key  
@@ -715,28 +736,28 @@ public class Applications extends BaseMain
 					indexForTenantWithMostApps = x;
 				}
 			}
-			
+
+			// store a tenat that has no associated applications.
 			if(jArrayAppsFromTenantCall.length() == 0 && !savedTenantWithNoApp)
 			{
-				ShowText(jo.getString("key") + "&&&");
+				tenantWithNoApp = jo.getString("key");
 				savedTenantWithNoApp = true;
 			}
 		}
 		
 		// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// at this point the application with the most tenants is known. it is found at the json array index 'indexForTenantWithMostApps'.
-		// store the tenant and all the applications that go with it onto a 'TenantAppForAppSearch; object and then add the object to
-		// the 'listOfTenantWithAppExpected' list.
+		// at this point the tenant with the most applications is known. it is found in the array index 'indexForTenantWithMostApps' 
+		// in the 'jArray' array of tenants. use the array index 'indexForTenantWithMostApps' to store the tenant and all the 
+		// applications that go with tenant with the most applications onto a 'TenantAppForAppSearch' object and then add the object 
+		// to the 'listOfTenantWithAppExpected' list.
 		// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		jo = jArray.getJSONObject(indexForTenantWithMostApps);
+		jo = jArrayTenants.getJSONObject(indexForTenantWithMostApps);
 		url = applicationsURL + "?tenantKey=" + jo.getString("key") + "&pageSize=300";
 		apiType = "\"applications\":";
 
 		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
 		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
-
-		
 		
 		return indexForTenantWithMostApps;
 	}
@@ -884,7 +905,7 @@ public class Applications extends BaseMain
 		}
 	}	
 
-	// compare the list of apps from the API call to the list of apps from the UI.
+	// compare the list of applications from the API call to the list of applications from the UI.
 	// both lists should be in the same order.
 	public static void VerifyApplicationsCollectionsExpectedAndActual()
 	{
@@ -1085,6 +1106,7 @@ public class Applications extends BaseMain
 		Thread.sleep(2000);
 	}
 
+	// select tenant name passed in from tenant pull-down list in UI
 	public static void ClickAndSelectTenantInPulldown(String tenantName) throws Exception
 	{
 		// click tenants pull-down

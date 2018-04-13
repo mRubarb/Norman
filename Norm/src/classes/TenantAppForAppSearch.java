@@ -14,6 +14,8 @@ public class TenantAppForAppSearch
 		m_TenantName = tenantName;
 	}
 	
+	
+	
 	public void AddAppToList(ApplicationClass appClass)
 	{
 		listOfAppsForTenant.add(appClass);

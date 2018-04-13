@@ -748,7 +748,7 @@ public class Tenants extends BaseMain
 
 
 	
-	public static void verifyFiltering() throws Exception {
+	public static void verifyFiltering(String applicationKey, String deploymentKey, String enabled) throws Exception {
 		
 		/*
 		 * 1. Filter tenant by Application / Deployment / Enabled 
@@ -766,9 +766,16 @@ public class Tenants extends BaseMain
 		filterNameMap.put("All Deployments", "deploymentKey");
 		filterNameMap.put("Show Enabled and Disabled", "enabled");
 		
-		String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
-		String[] queryParameterValues = {"RVM", "DEP_RVM_1", "true"};
+		String enabledValueForRequest = getEnabledValueForRequest(enabled);
 		
+		String[] filterValue = {applicationKey, deploymentKey, enabled};
+		String[] queryParameterValues = {applicationKey, deploymentKey, enabledValueForRequest};
+		
+		
+				
+		/*
+		 * String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
+		String[] queryParameterValues = {"RVM", "DEP_RVM_1", enabledValueForRequest};*/
 		
 		for (int i = 0; i < filterNameMap.size(); i++) {
 
@@ -781,7 +788,7 @@ public class Tenants extends BaseMain
 			CommonMethods.clickFilterDropdown(filter);
 								
 			// 1.b. Enter App Key / Name on the Search field
-			CommonMethods.enterSearchCriteria(filter, value);  // ***** IT FAILS WHEN IT NEEDS TO SELECT THE DEPLOYMENT AFTER IS FILTERED
+			CommonMethods.enterSearchCriteria(filter, value);
 			
 			
 			// 2. 
@@ -791,15 +798,18 @@ public class Tenants extends BaseMain
 			// 3.
 			int page = 1;
 			int pageSize = 10;
-			
-			String filterBy = filterNameMap.get(filter);
 				
 			String token = CommonMethods.GetTokenFromPost();
 			String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
 			String apiType = "\"" + "tenants" + "\"" + ":";
+			
+			String filterBy = filterNameMap.get(filter);
 			String queryParameterValue = queryParameterValues[i];	
 			
-			String queryParameters = "?page=" + page + "&pageSize=" + pageSize + "&" + filterBy + "=" + queryParameterValue;
+			String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
+			String queryParametersFilterPortion = "&" + filterBy + "=" + queryParameterValue;
+			
+			String queryParameters = queryParametersPagePortion + queryParametersFilterPortion; 
 			
 			System.out.println("queryParameters: " + queryParameters);
 				
@@ -824,6 +834,25 @@ public class Tenants extends BaseMain
 		}
 		
 				
+	}
+
+
+	private static String getEnabledValueForRequest(String enabled) {
+		
+		switch(enabled) {
+			
+			case "Show Enabled Tenants Only": 
+				return "true";
+			
+			case "Show Disabled Tenants Only": 
+				return "false";
+			
+			case "Show Enabled and Disabled": 
+				return "";
+			
+			default:
+				return "";
+		}
 	}
 
 

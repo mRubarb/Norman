@@ -38,9 +38,9 @@ public class TC_TenantsList extends BaseMain {
 		
 		// Tenants.verifyPaging();
 		
-		// Tenants.verifyFiltering();
+		Tenants.verifyFiltering("RVM", "DEP_RVM_1", "Show Enabled Tenants Only");
 
-		Tenants.addTenant();
+		/*Tenants.addTenant();
 		
 		Tenants.searchTenant("T_A");
 		
@@ -53,7 +53,7 @@ public class TC_TenantsList extends BaseMain {
 		Thread.sleep(3000);
 		
 		Tenants.deleteTenant("T_AUTOM_ANA");
-		
+		*/
 		
 	}
 	

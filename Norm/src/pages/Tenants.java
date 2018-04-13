@@ -29,7 +29,8 @@ public class Tenants extends BaseMain
 	private static String xpathKey = "//input[@formcontrolname='key']"; // "//div/label[text()='Key']/following-sibling::input";
 	private static String xpathName = "//input[@formcontrolname='name']"; //"//div/label[text()='Name']/following-sibling::input";
 	private static String xpathDefTenantId = "//input[@formcontrolname='defaultTenantID']";
-	
+	private static String xpathEnabled = "//label[1]/input[@formcontrolname='enabled']";
+	private static String xpathDisabled = "//label[2]/input[@formcontrolname='enabled']";
 	
 	
 	public static void verifyColumnsNames() {
@@ -857,16 +858,10 @@ public class Tenants extends BaseMain
 		WaitForElementPresent(By.xpath(xpathButtonAdd), 3);
 		
 		driver.findElement(By.xpath(xpathButtonAdd)).click();
-	
-	//	String xpathKey = "//input[@formcontrolname='key']"; // "//div/label[text()='Key']/following-sibling::input";
-		
+			
 		driver.findElement(By.xpath(xpathKey)).sendKeys("T_AUTOM_ANA");
 		
-		//String xpathName = "//input[@formcontrolname='name']"; //"//div/label[text()='Name']/following-sibling::input";
-		
 		driver.findElement(By.xpath(xpathName)).sendKeys("Automation Tenant Ana");
-		
-		//String xpathDefTenantId = "//input[@formcontrolname='defaultTenantID']";
 		
 		driver.findElement(By.xpath(xpathDefTenantId)).sendKeys("TEN-ID-AUTO");
 		
@@ -878,6 +873,7 @@ public class Tenants extends BaseMain
 		
 		driver.findElement(By.xpath(xpathButtonClose)).click();
 	}
+	
 
 	public static void searchTenant(String tenantKey) {
 		
@@ -887,6 +883,7 @@ public class Tenants extends BaseMain
 		
 		String xpathSearchTextInput = "//input[@formcontrolname='searchTextInput']";
 		
+		driver.findElement(By.xpath(xpathSearchTextInput)).clear();
 		driver.findElement(By.xpath(xpathSearchTextInput)).sendKeys(tenantKey);
 		
 	}
@@ -908,12 +905,12 @@ public class Tenants extends BaseMain
 			
 			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(tenantKey)) {
 				
-				System.out.println("Tenant found");
+				//System.out.println("Tenant found");
 				break;
 			}
-			System.out.println("Tenant NOT found");
-			// click Cancel button
+			//System.out.println("Tenant NOT found");
 			
+			// If the tenant clicked is not the tenant that we need then click Cancel button
 			driver.findElement(By.xpath("//button/span[text()='Cancel']/..")).click();
 			
 		}
@@ -923,10 +920,73 @@ public class Tenants extends BaseMain
 		
 		driver.findElement(By.xpath(xpathCheckbox)).click();
 		
-		String xpathButtonDeleteConfirm = "//button/span[text()='Delete']/..";
+		// Was getting error "... other element would receive the click..." because of the other Delete buttons in the UI
+		// Added div[@class='modal-footer']/ to the xpath to get rid of this error 
+		String xpathButtonDeleteConfirm = "//div[@class='modal-footer']/button/span[text()='Delete']/..";
 		
-		driver.findElement(By.xpath(xpathButtonDeleteConfirm)).click();
+		WaitForElementClickable(By.xpath(xpathButtonDeleteConfirm), 3, "Button Delete is not clickable");
+		
+		driver.findElement(By.xpath(xpathButtonDeleteConfirm)).submit();
 	
+		
+	}
+
+
+	public static void editTenant(String tenantKey) {
+		
+		
+		int pageSize = 10;
+		
+		// make sure that the Edit button clicked belongs to the tenant that needs to be edited
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonEdit = "//table/tbody/tr[" + i + "]/td[5]/div/button/span[text()='Edit']";
+			
+			driver.findElement(By.xpath(xpathButtonEdit)).click();	
+			
+			String xpathKeyPopUp = "//jhi-tenant-management-dialog/form/div[2]/div/dl/dd";
+			
+			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(tenantKey)) {
+				
+				System.out.println("Tenant found");
+				break;
+			}
+			System.out.println("Tenant NOT found");
+			
+			// If the tenant clicked is not the tenant that we need then click Cancel button
+			driver.findElement(By.xpath("//button/span[text()='Cancel']/..")).click();
+			
+		}
+		
+		// Modify Name
+		driver.findElement(By.xpath(xpathName)).clear();
+		driver.findElement(By.xpath(xpathName)).sendKeys("New name for edited tenant");
+	
+		// Modify Default Tenant ID
+		driver.findElement(By.xpath(xpathDefTenantId)).clear();
+		driver.findElement(By.xpath(xpathDefTenantId)).sendKeys("Def tenant ID changed");
+		
+		// Modify Enabled
+		if (driver.findElement(By.xpath(xpathEnabled)).getAttribute("value").equals("false")) {
+			
+			driver.findElement(By.xpath(xpathEnabled)).click();
+		
+		} else if (driver.findElement(By.xpath(xpathDisabled)).getAttribute("value").equals("false")) {
+		
+			driver.findElement(By.xpath(xpathDisabled)).click();
+		}
+	
+	
+		// Was getting error "... other element would receive the click..." because of the other Delete buttons in the UI
+		// Added div[@class='modal-footer']/ to the xpath to get rid of this error 
+		String xpathButtonSave = "//div[@class='modal-footer']/button/span[text()='Save']/..";
+		
+		WaitForElementClickable(By.xpath(xpathButtonSave), 3, "Button Save is not clickable");
+		
+		driver.findElement(By.xpath(xpathButtonSave)).submit();
+	
+		
 		
 	}
 	

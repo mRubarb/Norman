@@ -49,7 +49,7 @@ public class Applications extends BaseMain
 	public static String applicationsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/applications";
 	public static String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";	
 
-	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyMzY1MjUwOH0.zptwBdrk3cDixUCMuhFShkFdGDSBC_LYyKrvBIevnpwMFNVX6DFRO-40EZhbzhGrni41rS4eP8VWzPcQjNWdPA";
+	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNjMwODEwM30.0GU24pu7F8itDwHp8prFWlMwstsF53ISCxDQmteDEHCEWwXEt6V50AhnQTCLN7o6q-GQBlCQulTyeM6yn_C3bg";
 	
 	public static final String testAppKey = "1234567890";
 	public static final String testAppName = "ZZZ_ZEBRA_XYZ";
@@ -73,7 +73,7 @@ public class Applications extends BaseMain
 	}
 	
 	// this gets all items in the collection from the API and all items from the applications UI and compares them.
-	public static void VerifyFullList() throws IOException, JSONException, InterruptedException
+	public static void VerifyFullList() throws Exception
 	{
 		String url = applicationsURL + "?pageSize=300"; // get all the applications from API.
 		String apiType = "\"applications\":";
@@ -94,7 +94,7 @@ public class Applications extends BaseMain
 		System.out.println("Size from UI = " +     listOfExpectedApps.size() + " rows.");
 		
 		// set maximum page size.
-		CommonMethods.selectSizeOfList(50);
+		SetPageSizeToMax();
 
 		// store the application in UI to listOfActualApps
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
@@ -159,7 +159,7 @@ public class Applications extends BaseMain
 		JSONArray jArray;
 
 		SetPageSizeToMax();
-	
+		
 		ClickSorting("//span[text()='Enabled']");
 		
 		sortDirection = "ASC";
@@ -238,17 +238,19 @@ public class Applications extends BaseMain
 		
 		ShowText("Run AddScenarios --- .");
 		
+		//SetPageSizeToMax();
+		
 		// make sure spp to add does not exist.
 		DeleteAppByKey(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
 
 		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
 		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName);		
 
-		ClickItem("//button[@class='btn btn-primary']"); // save		
+		ClickItem("//button[@class='btn btn-primary']", 3); // save		
 		
 		// wait for page after save.
 		WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[15]"), 4);
@@ -268,6 +270,8 @@ public class Applications extends BaseMain
 		
 		// verify data in added app.
 		VerifyKeyNameOnly(indexCntr - 1);
+		
+		ClearActualExpectedLists();
 	}
 	
 	
@@ -292,20 +296,20 @@ public class Applications extends BaseMain
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
 		// select add, wait for title, and select cancel, and verify back in the applications list.
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
-		ClickItem("(//button[@class='btn btn-secondary'])[2]"); // cancel 
+		ClickItem("(//button[@class='btn btn-secondary'])[2]", 3); // cancel 
 		CommonMethods.verifyTitle("Applications"); // back in applications list.
 
 		// select add and save, verify 'required' under key
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']"); // add
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3);
-		ClickItem("//button[@class='btn btn-primary']/span[text()='Save']"); // save		
+		ClickItem("//button[@class='btn btn-primary']/span[text()='Save']", 3); // save		
 		WaitForElementVisible(By.xpath("//small[text()='required']"), 3); // verify		
 		
 		// click name, non-required field, and verify 'required' under name.
-		ClickItem("//input[@formcontrolname = 'name']"); // 
-		ClickItem("//input[@formcontrolname = 'defaultPath']"); //
+		ClickItem("//input[@formcontrolname = 'name']", 3); // 
+		ClickItem("//input[@formcontrolname = 'defaultPath']", 3); //
 		WaitForElementVisible(By.xpath("(//small[text()='required'])[2]"), 2); // verify
 		
 		// enter key with > 10 characters and verify only 10 are allowed.
@@ -320,7 +324,7 @@ public class Applications extends BaseMain
 		// enter a host and enter a path with no "/" at beginning, click the description text box, and verify error in default path.
 		driver.findElement(By.xpath("//input[@formcontrolname='defaultHost']")).sendKeys("goodhost");
 		driver.findElement(By.xpath("//input[@formcontrolname='defaultPath']")).sendKeys("pathNoSlash");
-		ClickItem("//textarea[@formcontrolname='description']"); 
+		ClickItem("//textarea[@formcontrolname='description']", 3); 
 		Assert.assertEquals(driver.findElement(By.xpath("//div/small")).getText(), defaultPathError, "Failed to find correct error message for Default Path in 'AddValidations' method.");
 		
 		// enter bad characters into default host  and verify error in default host.
@@ -343,7 +347,9 @@ public class Applications extends BaseMain
 		ShowText(driver.findElement(By.xpath("//div/small")).getText());
 		
 		// close add UI
-		ClickItem("(//button[@class='btn btn-secondary'])[2]"); // cancel
+		ClickItem("(//button[@class='btn btn-secondary'])[2]", 3); // cancel
+		
+		ClearActualExpectedLists();
 	}
 
 	// this is for sorting all page sizes for all sortable columns.
@@ -431,10 +437,7 @@ public class Applications extends BaseMain
 	{
 		String url = ""; 
 		String apiType = "\"tenants\":";
-		// JSONObject jo;
 		JSONArray jArray;
-		// JSONArray jArrayAppsFromTenantCall;
-		// boolean savedTenantWithOneApp = false;
 
 		// create a URL that will get a list of all the tenants.
 		url = tenantsURL + "?pageSize=300"; 
@@ -499,38 +502,49 @@ public class Applications extends BaseMain
 		
 		ClearActualExpectedLists();
 		
+		// //////////////////////////////////////////////////////////////////////////////////////
 		// select the tenant that has no associated applications and verify the UI message.  
+		// //////////////////////////////////////////////////////////////////////////////////////		
 		ClickAndSelectTenantInPulldown(tenantWithNoApp);
 		
 		WaitForElementVisible(By.xpath("//div[text()='No applications found']"), 3); // UI message.
+		
+		ClearActualExpectedLists();
+
+		ResetTenantPulldown();
+		
 	}	
 
 	// verify results from enabled and disabled filter using full list.
-	public static void VerifyFilteringByEnabled() throws Exception  
+	public static void VerifyFilteringByEnabledDisablede() throws Exception  
 	{
 		String url = applicationsURL + "?pageSize=300&enabled=true"; // get all the enabled applications from API.
 		String apiType = "\"applications\":";
 		
-		CommonMethods.selectSizeOfList(50);
-		Thread.sleep(1000);
- 
+		SetPageSizeToMax();
+		
 		// set to filter enabled
-		ClickItem("(//button[@id='sortMenu'])[2]");
-		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[1]");
+		ClickItem("(//button[@id='sortMenu'])[2]", 3);
+		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[1]", 3);
 		
 		VerifyEnabledDisabled(url, apiType);
 		
 		// set back to enabled (this is needed because locators change when click enabled) and then set to filter disabled.
-		ClickItem("(//button[@id='sortMenu'])[2]");
-		ClickItem("//div[@class='dropdown show']/div/button");
+		ClickItem("(//button[@id='sortMenu'])[2]", 3);
+		ClickItem("//div[@class='dropdown show']/div/button", 3);
 		
 		// set to disabled.
-		ClickItem("(//button[@id='sortMenu'])[2]");
-		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[2]");
+		ClickItem("(//button[@id='sortMenu'])[2]", 3);
+		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[2]", 3);
 		
 		url = applicationsURL + "?pageSize=300&enabled=false"; // get all the disabled applications from API.
 
 		VerifyEnabledDisabled(url, apiType);
+		
+		ClearActualExpectedLists();
+		
+		ResetEnabledPulldown();
+		
 	}
 	
 	public static void VerifyFilteringEnabledDisabledWithTenant() throws Exception
@@ -566,17 +580,14 @@ public class Applications extends BaseMain
 		
 		
 		// set to enabled
-		ClickItem("(//button[@id='sortMenu'])[2]");
-		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[1]");
+		ClickItem("(//button[@id='sortMenu'])[2]", 3);
+		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[1]", 3);
 		
 		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(1).m_TenantName);
 		
 		VerifyApplicationsCollectionsExpectedAndActual();
 
-		
-		
-		
-		
+		ClearActualExpectedLists();
 	}
 	
 	
@@ -587,6 +598,20 @@ public class Applications extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	public static void ResetTenantPulldown()
+	{
+		// set tenant pull-down to default.
+		ClickItem(".//*[@id='sortMenu']", 3);
+		ClickItem("//div[@class='dropdown-menu']/button", 3);
+	}
+	
+	public static void ResetEnabledPulldown()
+	{
+		// set enabled/disabled back to default.
+		ClickItem("(.//*[@id='sortMenu'])[2]", 3);
+		ClickItem("//span[text()='Show Enabled and Disabled']/..", 3);
+	}
+	
 	public static void VerifyEnabledDisabled(String url, String apiType) throws Exception
 	{
 		JSONArray jArray;
@@ -623,9 +648,9 @@ public class Applications extends BaseMain
 		// TODO: make method of this
 		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleyed.
 		{
-			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]");  // select delete application list row with appKey.
-			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']"); // approve delete.
-			ClickItem("//button[@class='btn btn-danger']"); // delete.
+			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]", 3);  // select delete application list row with appKey.
+			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']",3); // approve delete.
+			ClickItem("//button[@class='btn btn-danger']", 3); // delete.
 			WaitForElementNotVisibleNoThrow(By.xpath("//button[@class='btn btn-danger']"), 4);
 			
 			listOfActualApps.clear();
@@ -662,9 +687,9 @@ public class Applications extends BaseMain
 		return indexCntr;
 	}		
 	
-	public static void ClickItem(String xpath)
+	public static void ClickItem(String xpath, int timeOut)
 	{
-		WaitForElementClickable(By.xpath(xpath), 3, "");
+		WaitForElementClickable(By.xpath(xpath), timeOut, "");
 		driver.findElement(By.xpath(xpath)).click();
 	}
 	
@@ -1051,7 +1076,7 @@ public class Applications extends BaseMain
 	public static void SetPageSizeToMax() throws Exception
 	{
 		// set page size to max.
-		SetUiPageSizeSelector(4);
+		CommonMethods.selectSizeOfList(50);
 		Thread.sleep(1000);
 	}
 
@@ -1067,16 +1092,22 @@ public class Applications extends BaseMain
 		driver.findElement(By.xpath(item)).click();
 		Thread.sleep(2000);
 	}
-	
+
+	// loop starts at page number one. when loop goes into last page, have to exit. 
 	public static void VerifyPagesSorting(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception		
 	{
+		int index = 0;
+		System.out.println("Num Pages = " + numberOfPages);
 		for(int x = 0; x < numberOfPages; x++) // go through each page.
 		{
-			// click a page per x index.
-			WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a"), 3, "");
-			driver.findElement(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a")).click();
+			// click a page per x index ---- 4/14/18 - this quit working. indexing across page numbers would fail because of changing size of number clicks in DOM. 
+			//WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a"), 3, "");
+			//driver.findElement(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a")).click();
+			
+			ShowText("Verify page num " + (x + 1));
+			
 			Thread.sleep(1000);
-
+			
 			// this stores API info for page x + 1  into listOfExpectedApps 
 			PassDataAndStoreApiRequest(apiType, pageSize, x + 1, sortDirection, sortBy);
 			
@@ -1085,7 +1116,19 @@ public class Applications extends BaseMain
 
 			// verify actual and expected are equal.
 			VerifyApplicationsCollectionsExpectedAndActual();
+			
+			if(x == (numberOfPages - 1)) // last page has been verified - exit.
+			{
+				break;
+			}
+			
+			index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
+			ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
 		}
+		
+		ClickItem("(//ul[@class='pagination']/li)[1]/a", 3);
+
+		Thread.sleep(1000);
 	}	
 
 	public static void VerifySortingForItemAndDirection(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception

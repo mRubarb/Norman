@@ -53,6 +53,9 @@ public class Applications extends BaseMain
 	
 	public static final String testAppKey = "1234567890";
 	public static final String testAppName = "ZZZ_ZEBRA_XYZ";
+	public static final String testDefaultHost = "automationzz.com";
+	public static final String testDefaultPath = "/automationzz";
+	public static final String testDescription = "automation description";
 	
 	public static int maxItemsPerPage = 50;
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console. 
@@ -79,6 +82,8 @@ public class Applications extends BaseMain
 		String apiType = "\"applications\":";
 		String metadata = "";
 		int totalCount = 0;
+		
+		ShowCurrentTest("VerifyFullList");
 		
 		metadata = CommonMethods.GetMetaDataWithUrl(token, url, apiType);
 
@@ -232,11 +237,12 @@ public class Applications extends BaseMain
 		VerifySortingHelper(url, token, apiType);
 	}
 
-	public static void AddScenarios() throws Exception 
+	// create app that has only key and name.
+	public static void AddScenariosOne() throws Exception 
 	{
 		int indexCntr = 0;
 		
-		ShowText("Run AddScenarios --- .");
+		ShowCurrentTest("AddScenarios");
 		
 		//SetPageSizeToMax();
 		
@@ -274,6 +280,59 @@ public class Applications extends BaseMain
 		ClearActualExpectedLists();
 	}
 	
+	// create app that has only key, name, host. path, and enabled set to non-default (false).
+	public static void AddScenariosTwo() throws Exception 
+	{
+		int indexCntr = 0;
+		
+		ShowCurrentTest("AddScenariosTwo");
+		
+		//SetPageSizeToMax();
+		
+		// make sure spp to add does not exist.
+		DeleteAppByKey(testAppKey);
+		
+		// select add, wait for title, fill in key and name, and hit return. 
+		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
+
+		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
+		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName);
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost);
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath);
+		
+		// fill in description
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription);		
+		
+		ClickItem("//input[@value='false']", 3); // click false
+		
+		ClickItem("//button[@class='btn btn-primary']", 3); // save		
+		
+		// wait for page after save.
+		WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[15]"), 4);
+		
+		// verify application was added.
+		listOfActualApps.clear();
+		
+		// store the actual applications 
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+		// verify add.
+		Assert.assertTrue(FindIndexExistingApp(testAppKey) > 0, "Error in 'AddScenarios' test. Test app was supposed to be present.");
+		
+		// get index so data can be verified. verify index is not -1.
+		indexCntr = FindIndexExistingApp(testAppKey);
+		Assert.assertTrue(indexCntr > 0, "Error in 'AddScenarios' test. Test app was supposed to be present.");
+		
+		// verify data in added app.
+		// VerifyKeyNameOnly(indexCntr - 1);
+		
+		VerifyAllAppItems(indexCntr - 1);
+		
+		ClearActualExpectedLists();
+	}
+	
+	
 	
 	public static void AddValidations() throws Exception
 	{
@@ -287,7 +346,7 @@ public class Applications extends BaseMain
 		int maxKeySize = 10;
 		int maxNameSize = 50;
 		
-		ShowText("Run AddValidations --- .");
+		ShowCurrentTest("AddValidations");
 		
 		// make sure test application is not on the list.
 		DeleteAppByKey(testAppKey);
@@ -439,6 +498,8 @@ public class Applications extends BaseMain
 		String apiType = "\"tenants\":";
 		JSONArray jArray;
 
+		ShowCurrentTest("VerifyFilteringByTenant");
+		
 		// create a URL that will get a list of all the tenants.
 		url = tenantsURL + "?pageSize=300"; 
 		
@@ -507,7 +568,7 @@ public class Applications extends BaseMain
 		// //////////////////////////////////////////////////////////////////////////////////////		
 		ClickAndSelectTenantInPulldown(tenantWithNoApp);
 		
-		WaitForElementVisible(By.xpath("//div[text()='No applications found']"), 3); // UI message.
+		VerifyNoApplicationsPresent();
 		
 		ClearActualExpectedLists();
 
@@ -516,10 +577,12 @@ public class Applications extends BaseMain
 	}	
 
 	// verify results from enabled and disabled filter using full list.
-	public static void VerifyFilteringByEnabledDisablede() throws Exception  
+	public static void VerifyFilteringByEnabledDisabled() throws Exception  
 	{
 		String url = applicationsURL + "?pageSize=300&enabled=true"; // get all the enabled applications from API.
 		String apiType = "\"applications\":";
+		
+		ShowCurrentTest("VerifyFilteringByEnabledDisabled");
 		
 		SetPageSizeToMax();
 		
@@ -540,11 +603,8 @@ public class Applications extends BaseMain
 		url = applicationsURL + "?pageSize=300&enabled=false"; // get all the disabled applications from API.
 
 		VerifyEnabledDisabled(url, apiType);
-		
 		ClearActualExpectedLists();
-		
 		ResetEnabledPulldown();
-		
 	}
 	
 	public static void VerifyFilteringEnabledDisabledWithTenant() throws Exception
@@ -553,6 +613,8 @@ public class Applications extends BaseMain
 		String apiType = "\"tenants\":";
 		JSONArray jArray;
 				
+		ShowCurrentTest("VerifyFilteringEnabledDisabledWithTenant");
+		
 		ClearActualExpectedLists();
 		
 		// create a URL that will get a list of all the tenants.
@@ -566,10 +628,10 @@ public class Applications extends BaseMain
 		// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		BuildListOfTenantsForFilterTests(jArray);
 
-		ShowText(listOfTenantWithAppExpected.get(1).m_TenantName);
+		ShowText("Tenat for filter is " + listOfTenantWithAppExpected.get(1).m_TenantName);
 		
 		// call API and get expected for enabled true and tenant with the most applications. 
-		url = applicationsURL + "?pageSize=300&enabled=true"; 
+		url = applicationsURL + "?pageSize=300&enabled=true&tenantKey=" + listOfTenantWithAppExpected.get(1).m_TenantName; 
 		apiType = "\"applications\":";
 		
 		// get the list of expected applications.
@@ -578,19 +640,64 @@ public class Applications extends BaseMain
 		// put the expected applications on the expected list.
 		AddJsonArrayToExpectedList(jArray);
 		
-		
 		// set to enabled
 		ClickItem("(//button[@id='sortMenu'])[2]", 3);
 		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[1]", 3);
 		
+		// select tenant pull-down.
 		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(1).m_TenantName);
 		
-		VerifyApplicationsCollectionsExpectedAndActual();
+		// store UI data.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+				
+		// first see if there will be an empty list. if so, look for empty page message. first make sanity check on actual and expected sizes. lists should be same size.
+		Assert.assertTrue(listOfActualApps.size() == listOfExpectedApps.size(), "Error in size checks. List of actual size = " + listOfActualApps.size() + " List of expected size = " + listOfExpectedApps.size()); 
+		if(listOfActualApps.size() == 0)
+		{
+			VerifyNoApplicationsPresent();
+		}
+		else
+		{
+			VerifyApplicationsCollectionsExpectedAndActual();			
+		}
 
 		ClearActualExpectedLists();
+		
+		// set back to enabled (this is needed because locators change when click enabled) and then set to filter disabled.
+		ClickItem("(//button[@id='sortMenu'])[2]", 3);
+		ClickItem("//div[@class='dropdown show']/div/button", 3);
+		
+		// set to disabled.
+		ClickItem("(//button[@id='sortMenu'])[2]", 3);
+		ClickItem("(//button[@class='dropdown-item active'])[2]/following::div[2]", 3);
+		
+		// call API and get expected for enabled true and tenant with the most applications. 
+		url = applicationsURL + "?pageSize=300&enabled=false&tenantKey=" + listOfTenantWithAppExpected.get(1).m_TenantName; 
+		apiType = "\"applications\":";
+		
+		// get the list of expected applications.
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		// put the expected applications on the expected list.
+		AddJsonArrayToExpectedList(jArray);
+		
+		// store UI data.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// first see if there will be an empty list. if so, look for empty page message. first make sanity check on actual and expected sizes. lists should be same size.
+		Assert.assertTrue(listOfActualApps.size() == listOfExpectedApps.size(), "Error in size checks. List of actual size = " + listOfActualApps.size() + " List of expected size = " + listOfExpectedApps.size()); 
+		if(listOfActualApps.size() == 0)
+		{
+			VerifyNoApplicationsPresent();
+		}
+		else
+		{
+			VerifyApplicationsCollectionsExpectedAndActual();			
+		}
+		
+		ResetEnabledPulldown();
+		ResetTenantPulldown();
 	}
-	
-	
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
@@ -598,6 +705,12 @@ public class Applications extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	// verify 'no applications present' text in empty applications page.
+	public static void VerifyNoApplicationsPresent() throws Exception
+	{
+		WaitForElementVisible(By.xpath("//div[text()='No applications found']"), 3); // UI message.
+	}
+	
 	public static void ResetTenantPulldown()
 	{
 		// set tenant pull-down to default.
@@ -1179,4 +1292,30 @@ public class Applications extends BaseMain
 		Assert.assertEquals(temp.m_Description, "", errMess + "description.");
 		Assert.assertEquals(temp.m_Enabled, true, errMess + "enabled.");		
 	}
+	
+	// the actual list index should contain everything. enabled has been set to non-default (false).
+	public static void VerifyAllAppItems(int index) throws Exception
+	{
+		String errMess = "Fail in verify 'VerifyKeyNameOnly' for ";
+		ApplicationClass temp = listOfActualApps.get(index);
+		
+		Assert.assertEquals(temp.m_Key, testAppKey, errMess + "appKey.");
+		Assert.assertEquals(temp.m_Name, testAppName, errMess + "appName.");
+		Assert.assertEquals(temp.m_defaultHost, testDefaultHost, errMess + "defaultHost.");		
+		Assert.assertEquals(temp.m_defaultPath, testDefaultPath, errMess + "defaultPath.");
+		Assert.assertEquals(temp.m_Description, testDescription, errMess + "description.");
+		Assert.assertEquals(temp.m_Enabled, false, errMess + "enabled.");		
+	}	
+	
+	
+	
+	public static void ShowCurrentTest(String currentTest)
+	{
+		ShowText("******************************* Running test name " + currentTest + " **************************************************");
+	}
+	
+	
+	
+	
+	
 }

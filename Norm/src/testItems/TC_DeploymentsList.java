@@ -1,10 +1,7 @@
 package testItems;
 
-import java.io.IOException;
-
 import javax.swing.JOptionPane;
 
-import org.json.JSONException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -28,7 +25,7 @@ public class TC_DeploymentsList extends BaseMain {
 	
 	
 	@Test
-	public void testCase_DeploymentsList() throws InterruptedException, IOException, JSONException 
+	public void testCase_DeploymentsList() throws Exception 
 	{
 					
 		CommonMethods.selectItemPlatformDropdown("Deployments");
@@ -37,11 +34,37 @@ public class TC_DeploymentsList extends BaseMain {
 		Deployments.verifyColumnsNames();
 		
 		Deployments.verifyData();
-		*/
+		
 		Deployments.verifyDataAndSorting();
 		
 		Deployments.verifyPaging();
 		
+		*/
+		
+		// ******* TO DO ***************
+		
+		// Deployments.verifyFiltering("RVM", "DEP_RVM_1", "Show Enabled Deployments Only");
+
+		// Deployments.verifyFilteringCombined("RVM", "DEP_RVM_1", "Show Enabled Deployments Only");
+		
+		String deploymentKey = "DEP_AUTOM_ANA";
+				
+		String applicationKey = "CMD";
+		
+		//Deployments.addDeployment(deploymentKey, applicationKey);
+				
+		Thread.sleep(3000);
+																	// *** CONTINUE HERE ***
+		Deployments.editDeployment(deploymentKey, applicationKey);  // *** IT'S FAILING ***
+																	// *** CONTINUE HERE ***
+		
+		/*
+		
+			
+		Thread.sleep(3000);
+		
+		Deployments.deleteDeployment("T_AUTOM_ANA");
+		*/
 		
 			
 	}

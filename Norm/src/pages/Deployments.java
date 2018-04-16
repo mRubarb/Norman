@@ -20,6 +20,12 @@ import common.CommonMethods;
 public class Deployments extends BaseMain 
 {
 	
+	private static String xpathKey = "//input[@formcontrolname='key']";
+	private static String xpathVersion = "//input[@formcontrolname='version']";
+	private static String xpathDescription = "//textarea[@formcontrolname='description']";
+	private static String xpathEnabled = "//label[1]/input[@formcontrolname='enabled']";
+	private static String xpathDisabled = "//label[2]/input[@formcontrolname='enabled']";
+	
 	public static String[] propertiesNames = {"Key", "Application Key", "Name", "Version", "Description", "Enabled"};
 	
 	
@@ -505,6 +511,93 @@ public class Deployments extends BaseMain
 		}
 		
 	}
+
+	public static void addDeployment(String deploymentKey, String applicationKey) throws Exception {
+		
+		String xpathButtonAdd = "//div/h2/button[2]";
+		
+		WaitForElementPresent(By.xpath(xpathButtonAdd), 3);
+		
+		driver.findElement(By.xpath(xpathButtonAdd)).click();
+			
+		driver.findElement(By.xpath(xpathKey)).sendKeys(deploymentKey);
+		
+		CommonMethods.clickFilterDropdown("Select Application");
+		
+		CommonMethods.enterSearchCriteria("Select Application", applicationKey);
+		
+		driver.findElement(By.xpath(xpathVersion)).sendKeys("18.1.1");
+		
+		driver.findElement(By.xpath(xpathDescription)).sendKeys("Testing add deployment - automation");
+		
+		String xpathButtonSave = "//button/span[text()='Save']/..";
+		
+		driver.findElement(By.xpath(xpathButtonSave)).submit();
+	
+	}
+
+	
+	public static void editDeployment(String deploymentKey, String applicationKey) throws Exception {
+		
+		int pageSize = 10;
+		
+		CommonMethods.selectSizeOfList(pageSize);	
+		
+		// Filter by Application
+		CommonMethods.clickFilterDropdown("All Applications");
+		
+		CommonMethods.enterSearchCriteria("All Applications", applicationKey);
+		
+		// make sure that the Edit button clicked belongs to the deployment that needs to be edited
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonEdit = "//table/tbody/tr[" + i + "]/td[5]/div/button/span[text()='Edit']";
+			
+			driver.findElement(By.xpath(xpathButtonEdit)).click();	
+			
+			String xpathKeyPopUp = "//jhi-tenant-management-dialog/form/div[2]/div/dl/dd";
+			
+			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(deploymentKey)) {
+				
+				System.out.println("Deployment found");
+				break;
+			}
+			System.out.println("Deployment NOT found");
+			
+			// If the deployment clicked is not the deployment that we need then click Cancel button
+			driver.findElement(By.xpath("//button/span[text()='Cancel']/..")).click();
+			
+		}
+		
+		// Modify Version
+		driver.findElement(By.xpath(xpathVersion)).clear();
+		driver.findElement(By.xpath(xpathVersion)).sendKeys("18.1.2.3");
+	
+		// Modify Description
+		driver.findElement(By.xpath(xpathDescription)).clear();
+		driver.findElement(By.xpath(xpathDescription)).sendKeys("Changing the deployment's description - Automation!!");
+		
+		// Modify Enabled
+		if (driver.findElement(By.xpath(xpathEnabled)).getAttribute("value").equals("false")) {
+			
+			driver.findElement(By.xpath(xpathEnabled)).click();
+		
+		} else if (driver.findElement(By.xpath(xpathDisabled)).getAttribute("value").equals("false")) {
+		
+			driver.findElement(By.xpath(xpathDisabled)).click();
+		}
+	
+	
+		// Was getting error "... other element would receive the click..." because of the other Delete buttons in the UI
+		// Added div[@class='modal-footer']/ to the xpath to get rid of this error 
+		String xpathButtonSave = "//div[@class='modal-footer']/button/span[text()='Save']/..";
+		
+		WaitForElementClickable(By.xpath(xpathButtonSave), 3, "Button Save is not clickable");
+		
+		driver.findElement(By.xpath(xpathButtonSave)).submit();
+			
+	}
 	
 	
 		
@@ -512,35 +605,5 @@ public class Deployments extends BaseMain
 	// ***************************************************
 	// **** METHODS TO BE ADDED TO COMMON METHODS ********
 	// ***************************************************
-	/*
-	public static String GetNonRequiredItem(JSONObject jo,  String item) throws JSONException
-	{
-		try
-		{
-			jo.getString(item);				
-		}
-		catch (Exception e) 
-		{
-			return "";
-		}	
-		
-		return jo.getString(item);
-	}
-	
-	// ENABLED/DISABLED values are converted to true/false
-	private static boolean convertToBoolean(String isEnabled) {
-		
-		if (isEnabled.equals("ENABLED")) {
-	
-			return true;
-			
-		} else if (isEnabled.equals("DISABLED")) {
-			
-			return false;
-			
-		}
-		return false; 
-	
-	}*/
 	
 }

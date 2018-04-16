@@ -751,9 +751,9 @@ public class Tenants extends BaseMain
 	public static void verifyFiltering(String applicationKey, String deploymentKey, String enabled) throws Exception {
 		
 		/*
-		 * 1. Filter tenant by Application / Deployment / Enabled 
+		 * 1. Filter tenant by Application | Deployment | Enabled 
 		 * 2. Get results from UI
-		 * 3. Get tenants filtered by the same application from API
+		 * 3. Get tenants filtered by the same application | deployment | enabled from API
 		 * 4. Compare results 
 		 * */ 
 		
@@ -771,8 +771,16 @@ public class Tenants extends BaseMain
 		String[] filterValue = {applicationKey, deploymentKey, enabled};
 		String[] queryParameterValues = {applicationKey, deploymentKey, enabledValueForRequest};
 		
+		int page = 1;
+		int pageSize = 10;
+			
+		String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
 		
-				
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
+		String apiType = "\"" + "tenants" + "\"" + ":";
+		
+						
 		/*
 		 * String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
 		String[] queryParameterValues = {"RVM", "DEP_RVM_1", enabledValueForRequest};*/
@@ -795,18 +803,10 @@ public class Tenants extends BaseMain
 			List<Tenant> filteredListOpsConsole = addTenantsFromUItoList();
 			
 			
-			// 3.
-			int page = 1;
-			int pageSize = 10;
-				
-			String token = CommonMethods.GetTokenFromPost();
-			String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
-			String apiType = "\"" + "tenants" + "\"" + ":";
-			
+			// 3.			
 			String filterBy = filterNameMap.get(filter);
 			String queryParameterValue = queryParameterValues[i];	
 			
-			String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
 			String queryParametersFilterPortion = "&" + filterBy + "=" + queryParameterValue;
 			
 			String queryParameters = queryParametersPagePortion + queryParametersFilterPortion; 
@@ -833,9 +833,106 @@ public class Tenants extends BaseMain
 			
 		}
 		
+		// Verify combined filter
+		
+		
 				
 	}
 
+	
+	public static void verifyFilteringCombined(String applicationKey, String deploymentKey, String enabled) throws Exception {
+		
+		/*
+		 * 1. Filter tenant by Application & Deployment & Enabled 
+		 *   - Select "application" from dropdown list and append "application" query portion to queryParameters.
+		 *   - Select "deployment" from dropdown list and append "deployment" query portion to queryParameters.
+		 *   - Select "enabled" from dropdown list and append "enabled" query portion to queryParameters. 
+		 * 2. Get tenants filtered by the same application & deployment & enabled from API
+		 * 3. Get results from UI
+		 * 4. Compare results 
+		 * */ 
+		
+		String[] filterToSelect = {"All Applications", "All Deployments", "Show Enabled and Disabled"};
+		
+		
+		HashMap<String, String> filterNameMap = new HashMap<String, String>();
+		
+		filterNameMap.put("All Applications", "applicationKey");
+		filterNameMap.put("All Deployments", "deploymentKey");
+		filterNameMap.put("Show Enabled and Disabled", "enabled");
+		
+		String enabledValueForRequest = getEnabledValueForRequest(enabled);
+		
+		String[] filterValue = {applicationKey, deploymentKey, enabled};
+		String[] queryParameterValues = {applicationKey, deploymentKey, enabledValueForRequest};
+		
+		int page = 1;
+		int pageSize = 10;
+			
+		String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
+		String apiType = "\"" + "tenants" + "\"" + ":";
+
+		String queryParametersFilterPortion = "";
+		
+		// 1. 
+		
+		for (int i = 0; i < filterNameMap.size(); i++) {
+				
+			String filter = filterToSelect[i];
+			String value = filterValue[i];
+
+			System.out.println("  Filter to select: " + filter + " by value: " + value);
+			
+			// 1.a. Click filter dropdown list
+			CommonMethods.clickFilterDropdown(filter);
+								
+			// 1.b. Enter value on the Search field
+			CommonMethods.enterSearchCriteria(filter, value);
+			
+			String filterBy = filterNameMap.get(filter);
+			String queryParameterValue = queryParameterValues[i];	
+						
+			String query = "&" + filterBy + "=" + queryParameterValue;
+			
+			queryParametersFilterPortion = queryParametersFilterPortion + query;
+			
+		}
+	
+		// 2.
+		
+		String queryParameters = queryParametersPagePortion + queryParametersFilterPortion; 
+		
+		System.out.println("queryParameters: " + queryParameters);
+			
+		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url + queryParameters, apiType);
+		
+		List<Tenant> filteredListAPI = putJsonArrayIntoList(jsonArrayTenants);
+	
+		
+		// 3. 		
+		
+		List<Tenant> filteredListOpsConsole = addTenantsFromUItoList();
+				
+		
+		// 4. 
+		
+		for (int j = 0; j < filteredListOpsConsole.size(); j++) {
+			
+			Assert.assertEquals(filteredListOpsConsole.get(j).getKey(), filteredListAPI.get(j).getKey());
+			Assert.assertEquals(filteredListOpsConsole.get(j).getName(), filteredListAPI.get(j).getName());
+			Assert.assertEquals(filteredListOpsConsole.get(j).getDefaultTenantID(), filteredListAPI.get(j).getDefaultTenantID());
+			Assert.assertEquals(filteredListOpsConsole.get(j).isEnabled(), filteredListAPI.get(j).isEnabled());
+			
+		}
+		
+		// 5. Reset filters
+		resetFilters();
+			
+	}
+	
 
 	private static String getEnabledValueForRequest(String enabled) {
 		

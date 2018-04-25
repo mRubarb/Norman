@@ -45,6 +45,7 @@ public class Applications extends BaseMain
 	public static String defaultPath = "";
 	public static String defaultHostPath = "";
 	public static String tenantWithNoApp = "";
+	public static final String extraText = "NEW";
 	
 	public static String applicationsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/applications";
 	public static String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";	
@@ -56,6 +57,7 @@ public class Applications extends BaseMain
 	public static final String testDefaultHost = "automationzz.com";
 	public static final String testDefaultPath = "/automationzz";
 	public static final String testDescription = "automation description";
+	public static boolean enabledValueAfterToggle = false;
 	
 	public static int maxItemsPerPage = 50;
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console. 
@@ -237,16 +239,16 @@ public class Applications extends BaseMain
 		VerifySortingHelper(url, token, apiType);
 	}
 
-	// create app that has only key and name.
+	// create app that has only key and name and verify.
 	public static void AddScenariosOne() throws Exception 
 	{
 		int indexCntr = 0;
 		
-		ShowCurrentTest("AddScenarios");
+		ShowCurrentTest("AddScenariosOne");
 		
-		//SetPageSizeToMax();
+		SetPageSizeToMax();
 		
-		// make sure spp to add does not exist.
+		// make sure app to add does not exist.
 		DeleteAppByKey(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
@@ -258,7 +260,7 @@ public class Applications extends BaseMain
 
 		ClickItem("//button[@class='btn btn-primary']", 3); // save		
 		
-		// wait for page after save.
+		// wait for view button after page save.
 		WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[15]"), 4);
 		
 		// verify application was added.
@@ -279,17 +281,155 @@ public class Applications extends BaseMain
 		
 		ClearActualExpectedLists();
 	}
+
+	// edit existing - verify edit. this uses a test application.
+	public static void EditApplicationDeleteItemsFromRowSelect() 
+	{
+		
+	}
 	
-	// create app that has only key, name, host. path, and enabled set to non-default (false).
-	public static void AddScenariosTwo() throws Exception 
+	
+	// edit existing - verify edit. this uses a test application.
+	public static void EditApplicationFromRowEdit() throws Exception
+	{
+		int rowIndex = 0;
+		
+		ShowCurrentTest("EditApplicationFromRowEdit");
+		
+		// SetPageSizeToMax();
+		
+		// CommonMethods.selectSizeOfList(10);
+		SetUiPageSizeSelector(2);
+		
+		// store off what's in UI.
+		ClearActualExpectedLists();
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// need to use a certain automation test application so won't affect someone else's application. 
+		// if the test application is not there create it.
+		if(FindIndexExistingApp(testAppKey) == -1)
+		{
+			AddScenariosTwo(false); // sending false says to add test application but not verify data.
+		}
+
+		// store what's in UI after adding test app. 
+		ClearActualExpectedLists();
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// automation test application should be on list.
+		rowIndex = FindIndexExistingApp(testAppKey);
+		Assert.assertTrue(rowIndex != -1); // make sure found application. // TODO: intermittent fail here.
+		
+		ClickRowViewForEdit(rowIndex); // click to edit test application.
+
+		// verify expected values.
+		VerifyEnabledValues(listOfActualApps.get(rowIndex - 1).m_Enabled); // enabled
+		VerifyKey(listOfActualApps.get(rowIndex - 1).m_Key); // key
+		VerifyKnownValues(rowIndex - 1); // all others
+		
+		// clear everything and change state of enabled/disabled.
+		driver.findElement(By.xpath(GetXpathForTextBox("name"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).clear();
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).clear(); // description.				
+		
+		// enter new values and save.
+		ToggleEnabledDisabled(rowIndex); // toggle enabled
+		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName + extraText); // name
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost + extraText); // host 
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath + extraText); // path
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription + extraText); // description
+		
+		ClickItem("//button[@class='btn btn-primary']", 3); // save  
+		Thread.sleep(1000);
+		
+		// test app should be near top so only use 10 rows. 
+		CommonMethods.selectSizeOfList(10);
+
+		// store what's in UI (application list) after modifying test application. 
+		ClearActualExpectedLists();
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// verify the edits made.
+		VerifyKnownUpdatedValuesFromList(rowIndex - 1);
+		
+		// delete test application.
+		DeleteAppByKey(testAppKey);
+		
+		// after deleting application, make sure it's gone.
+		// store what's in application list.
+		ClearActualExpectedLists();
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		Assert.assertTrue(FindIndexExistingApp(testAppKey) == -1, "Check that makes sure test app is not in apps list failed.");
+	}
+	
+	// edit existing - verify reset. this uses any application that has all data populated.
+	public static void EditApplicationReset() throws Exception
+	{
+		int rowIndex = 1;
+		boolean expectedEnableDisableState = false;
+		
+		ShowCurrentTest("EditApplicationReset");
+		
+		SetPageSizeToMax();
+		
+		// find row index of an application that has all the fields populated and select 'Edit' on it.
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		for(ApplicationClass app : listOfActualApps)
+		{
+			if(app.m_Key != "" && app.m_Name != "" && app.m_defaultHost != "" && app.m_defaultPath != "" && app.m_Description != "")
+			{
+				break;
+			}
+			rowIndex++;	
+		}
+		
+		driver.findElement(By.xpath("(//button[@class='btn btn-primary btn-sm'])[" + rowIndex + "]")).click();
+		WaitForElementVisible(By.xpath("//strong[text()='Edit Application']"), 3); // title
+		
+		// verify button states - save, cancel, reset.
+		Assert.assertFalse(driver.findElement(By.xpath("(//button[@class='btn btn-secondary'])[1]")).isEnabled());
+		Assert.assertTrue(driver.findElement(By.xpath("(//button[@class='btn btn-secondary'])[2]")).isEnabled());
+		Assert.assertFalse(driver.findElement(By.xpath("//button[@class='btn btn-primary']")).isEnabled());
+		
+		// change data for everything in form.
+		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName + "bad");
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost + "bad");
+		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath + "bad");
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription + "bad"); // description		
+		
+		ToggleEnabledDisabled(rowIndex);
+		
+		// select reset button
+		ClickItem("(//button[@class='btn btn-secondary'])[1]", 2);
+		
+		//ShowText(driver.findElement(By.xpath(GetXpathForTextBox("key"))).getAttribute("value"));
+		ShowText(driver.findElement(By.xpath(GetXpathForTextBox("name"))).getAttribute("value"));
+
+		// verify original values are back after reset.
+		VerifyKnownValues(rowIndex - 1);
+		expectedEnableDisableState =  listOfActualApps.get(rowIndex - 1).m_Enabled; // get expected enable/disable selection.	
+		
+		VerifyEnabledValues(expectedEnableDisableState);
+		
+		// close pop-up UI.
+		ClickItem("(//button[@class='btn btn-secondary'])[2]", 3);
+	}
+	
+	// create test application that has key, name, host, path, and enabled set to non-default (false).
+	public static void AddScenariosTwo(boolean doVerification) throws Exception 
 	{
 		int indexCntr = 0;
 		
-		ShowCurrentTest("AddScenariosTwo");
+		if(doVerification) // this method can also just add/create the application and not verify it. 
+		{
+			ShowCurrentTest("AddScenariosTwo");			
+		}
+
+		SetPageSizeToMax();
 		
-		//SetPageSizeToMax();
-		
-		// make sure spp to add does not exist.
+		// make sure application to add does not exist.
 		DeleteAppByKey(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
@@ -301,19 +441,32 @@ public class Applications extends BaseMain
 		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost);
 		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath);
 		
-		// fill in description
-		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription);		
-		
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription); // description		
 		ClickItem("//input[@value='false']", 3); // click false
-		
 		ClickItem("//button[@class='btn btn-primary']", 3); // save		
 		
-		// wait for page after save.
+		// wait for view button after page save.
 		WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[15]"), 4);
 		
 		// verify application was added.
 		listOfActualApps.clear();
 		
+		if(doVerification)
+		{
+			// store the actual applications 
+			ShowActualApplicationsOrStore(ActionForApplications.Store);
+
+			// verify add.
+			Assert.assertTrue(FindIndexExistingApp(testAppKey) > 0, "Error in 'AddScenarios' test. Test app was supposed to be present.");
+			
+			// get index so data can be verified. verify index is not -1.
+			indexCntr = FindIndexExistingApp(testAppKey);
+			Assert.assertTrue(indexCntr > 0, "Error in 'AddScenarios' test. Test app was supposed to be present.");
+			
+			VerifyAllAppItems(indexCntr - 1);
+		}
+
+		/*
 		// store the actual applications 
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 
@@ -328,11 +481,10 @@ public class Applications extends BaseMain
 		// VerifyKeyNameOnly(indexCntr - 1);
 		
 		VerifyAllAppItems(indexCntr - 1);
+		*/
 		
 		ClearActualExpectedLists();
 	}
-	
-	
 	
 	public static void AddValidations() throws Exception
 	{
@@ -492,7 +644,7 @@ public class Applications extends BaseMain
 	//   as object 'TenantAppForAppSearch' and put the object onto a list 'listOfTenantWithAppExpected'.
 	// * filter on each of the tenants listed above in tenants pull-down and verify results (expected/actual).
 	// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
-	public static void VerifyFilteringByTenant() throws IOException, JSONException, Exception // bladd
+	public static void VerifyFilteringByTenant() throws IOException, JSONException, Exception 
 	{
 		String url = ""; 
 		String apiType = "\"tenants\":";
@@ -705,6 +857,66 @@ public class Applications extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	public static void VerifyEnabledValues(boolean expectedEnableDisableState)
+	{
+		if(expectedEnableDisableState == true)
+		{
+			Assert.assertTrue(driver.findElement(By.xpath("//input[@value='true']")).isSelected());
+			Assert.assertFalse(driver.findElement(By.xpath("//input[@value='false']")).isSelected());			
+		}
+		else
+		{
+			Assert.assertTrue(driver.findElement(By.xpath("//input[@value='false']")).isSelected());
+			Assert.assertFalse(driver.findElement(By.xpath("//input[@value='true']")).isSelected());			
+		}
+	}
+	
+	public static void VerifyKnownValues(int rowIndex)
+	{
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("name"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_Name);
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_defaultHost);		
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_defaultPath);
+		Assert.assertEquals(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value"), listOfActualApps.get(rowIndex).m_Description);
+	}
+
+	// this gets a row index that says what row in the listOfActualApps has the actual info. the expected info is stored in variables. 
+	// the 'extraText' variable was used to change the value of existing data in   
+	public static void VerifyKnownUpdatedValuesFromList(int rowIndex)
+	{
+		Assert.assertEquals(listOfActualApps.get(rowIndex).m_Key, testAppKey);
+		Assert.assertEquals(listOfActualApps.get(rowIndex).m_Name, testAppName + extraText);		
+		Assert.assertEquals(listOfActualApps.get(rowIndex).m_defaultHost, testDefaultHost + extraText.toLowerCase());		
+		Assert.assertEquals(listOfActualApps.get(rowIndex).m_defaultPath, testDefaultPath + extraText.toLowerCase());
+		Assert.assertEquals(listOfActualApps.get(rowIndex).m_Description, testDescription + extraText);		
+		Assert.assertEquals(listOfActualApps.get(rowIndex).m_Enabled, enabledValueAfterToggle);		
+	}
+	
+	
+	public static void VerifyKey(String expectedKey)
+	{
+		Assert.assertEquals((driver.findElement(By.xpath("//dt[text()='Key:']/following-sibling::dd"))).getText(), expectedKey);
+	}
+	
+	public static void ToggleEnabledDisabled(int rowIndex)
+	{
+		if (listOfActualApps.get(rowIndex - 1).m_Enabled == false)
+		{
+			ClickItem("//input[@value='true']", 3); // click true
+			enabledValueAfterToggle = true;
+		}
+		else
+		{
+			ClickItem("//input[@value='false']", 3); // click false
+			enabledValueAfterToggle = false;
+		}		
+	}
+	
+	public static void ClickRowViewForEdit(int rowIndex) throws Exception
+	{
+		driver.findElement(By.xpath("(//button[@class='btn btn-primary btn-sm'])[" + rowIndex + "]")).click();
+		WaitForElementVisible(By.xpath("//strong[text()='Edit Application']"), 3); // title
+	}
+	
 	// verify 'no applications present' text in empty applications page.
 	public static void VerifyNoApplicationsPresent() throws Exception
 	{
@@ -931,7 +1143,7 @@ public class Applications extends BaseMain
 	{
 		int numberOfRows = driver.findElements(By.cssSelector(".table.table-striped>tbody>tr")).size(); // get number of rows.
 		
-		System.out.println("Num Rows In UI. = " + numberOfRows);
+		System.out.println("Num Rows In UI to load. = " + numberOfRows);
 		 
 		for(int x = 1; x <= numberOfRows; x++)
 		{
@@ -982,6 +1194,8 @@ public class Applications extends BaseMain
 				listOfActualApps.add(new ApplicationClass(key, name, description, enabled, defaultHost, defaultPath));
 			}
 		}
+		ShowText("Page load completed.");
+	
 	}
 
 	// receive Json array for applications and add it to the expected list.
@@ -1189,8 +1403,9 @@ public class Applications extends BaseMain
 	public static void SetPageSizeToMax() throws Exception
 	{
 		// set page size to max.
-		CommonMethods.selectSizeOfList(50);
-		Thread.sleep(1000);
+		// CommonMethods.selectSizeOfList(50);
+		SetUiPageSizeSelector(4);
+		WaitForElementClickable(By.xpath("(//button[@class='btn btn-info btn-sm'])[10]"), 3, "");
 	}
 
 	public static void ShowPopup(String message)		

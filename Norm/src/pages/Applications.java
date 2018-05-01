@@ -20,6 +20,7 @@ import static org.testng.Assert.assertTrue;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.conn.routing.RouteInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,9 +48,11 @@ public class Applications extends BaseMain
 	public static String tenantWithNoApp = "";
 	public static final String extraText = "NEW";
 	
-	public static String applicationsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/applications";
-	public static String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";	
-
+	public static final String applicationsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/applications";
+	public static final String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";	
+	public static final String deploymentsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";	
+	public static final String routesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
+	
 	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNjMwODEwM30.0GU24pu7F8itDwHp8prFWlMwstsF53ISCxDQmteDEHCEWwXEt6V50AhnQTCLN7o6q-GQBlCQulTyeM6yn_C3bg";
 	
 	public static final String testAppKey = "1234567890";
@@ -249,7 +252,7 @@ public class Applications extends BaseMain
 		SetPageSizeToMax();
 		
 		// make sure app to add does not exist.
-		DeleteAppByKey(testAppKey);
+		DeleteAppByKeyFromRow(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
 		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
@@ -283,11 +286,114 @@ public class Applications extends BaseMain
 	}
 
 	// edit existing - verify edit. this uses a test application.
-	public static void EditApplicationDeleteItemsFromRowSelect() 
+	public static void EditApplicationDeleteItemsFromRowSelect() throws Exception 
 	{
+		String deployUrl = deploymentsURL + "?pageSize=300&applicationKey=";
+		String routeUrl = routesURL + "?pageSize=300&applicationKey=";		
+		String apiTypeDeploy = "\"deployments\":";
+		String apiTypeRoute = "\"routes\":";
+		String appDeleteHasAssociations = "";		
+		String appDeleteHasNoAssociations = "";
+		final String commonCaution = "Are you sure you want to delete this application?Note: This cannot be undone.";
+		JSONArray jArray;
+		int rowIndex = 0;
+		int rowIndexToUseForAssoiciatedApp = 0;
+		int rowIndexToUseForNonAssoiciatedApp = 0;
+		int numDeployements = 0;
+		int tempNumDeployements = 0;		
+		int numRoutes = 0;
+		boolean haveStoredAppWithNoDeployments = false;
+		String[] textArray;
 		
+		ShowCurrentTest("EditApplicationDeleteItemsFromRowSelect.");
+
+		SetPageSizeToMax();
+
+		// SelectDeleteRowInAppList(31); // this works.
+		
+		ClearActualExpectedLists();
+		ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// go through each application object. 
+		// this will find the application with the most routes.
+		for(ApplicationClass app : listOfActualApps)
+		{
+			jArray = CommonMethods.GetJsonArrayWithUrl(token, deployUrl + app.m_Key, apiTypeDeploy); // call deployments and filter on the application.
+			if(jArray.length() > 0)
+			{
+				tempNumDeployements = jArray.length(); 
+				jArray = CommonMethods.GetJsonArrayWithUrl(token, routeUrl + app.m_Key, apiTypeRoute); // call routes and filter on the application.
+				if(jArray.length() > 0)
+				{
+					if(jArray.length() > numRoutes) // this row has more routes than the max routes found so far. store number of deployments and routes.
+					{
+						numRoutes = jArray.length(); 
+						numDeployements = tempNumDeployements;
+						rowIndexToUseForAssoiciatedApp = rowIndex;
+						appDeleteHasAssociations = app.m_Key;
+					}
+				}
+			}
+			else // application has no associated deployments. store the first one found.
+			{
+				if(!haveStoredAppWithNoDeployments)
+				{
+					appDeleteHasAssociations = app.m_Key;
+					rowIndexToUseForNonAssoiciatedApp = rowIndex;
+					haveStoredAppWithNoDeployments = true;
+				}
+			}
+			rowIndex++;
+		}
+		
+		ShowText("-----------");
+		ShowText(appDeleteHasAssociations);
+		System.out.println("index to use associated = " + rowIndexToUseForAssoiciatedApp);
+		System.out.println("index to use non associated = " + rowIndexToUseForNonAssoiciatedApp);		
+		System.out.println("deploys = " + numDeployements);
+		System.out.println("routes = " + numRoutes);
+		
+		// need to change page sizes to be able to seklect a delete in row,
+		SetUiPageSizeSelector(1);
+		SetPageSizeToMax();
+		
+		// /////////////////////////////////////////////////////////////////////////////
+		// select delete row that will show the pop-up with no deployments or routes.
+		// /////////////////////////////////////////////////////////////////////////////
+
+		SelectDeleteRowInAppList(rowIndexToUseForNonAssoiciatedApp + 1); // select pop-up that has no deployments/routes		
+		
+		// verify caution that is always shown.
+		Assert.assertEquals(driver.findElement(By.cssSelector(".col>p")).getText().replace("\n", ""), commonCaution, "");
+		
+		// verify caution that is always shown with check box.
+		textArray =  driver.findElement(By.xpath("(//small)[1]")).getText().split("\n");
+		Assert.assertTrue(textArray.length == 1);
+		Assert.assertEquals(textArray[0], "  I understand the consequences of deleting this application");
+		
+		// select cancel.
+		ClickItem("//button[@class='btn btn-secondary']", 3);
+
+		// /////////////////////////////////////////////////////////////////////////////////
+		// now select delete row that will show the pop-up with deployments and routes. 
+		// /////////////////////////////////////////////////////////////////////////////////
+		
+		SelectDeleteRowInAppList(rowIndexToUseForAssoiciatedApp + 1); // select pop-up that has deployments/routes
+		
+		// verify caution that is always shown.
+		Assert.assertEquals(driver.findElement(By.cssSelector(".col>p")).getText().replace("\n", ""), commonCaution, "");
+		
+		// this gets all of the text in the pink box found in the UI.
+		textArray =  driver.findElement(By.xpath("(//small)[1]")).getText().split("\n");
+		
+		// verify text unique to application with deployment(s) and route(s).
+		Assert.assertTrue(textArray.length == 3);		
+
+		// 
+		Assert.assertEquals(textArray[0], "Deleting this application will also delete:", "");
+		Assert.assertEquals(textArray[1], "The " + numDeployements + " associated deployments");		
+		Assert.assertEquals(textArray[2], "The " + numRoutes + " associated routes", "");		
 	}
-	
 	
 	// edit existing - verify edit. this uses a test application.
 	public static void EditApplicationFromRowEdit() throws Exception
@@ -354,13 +460,15 @@ public class Applications extends BaseMain
 		VerifyKnownUpdatedValuesFromList(rowIndex - 1);
 		
 		// delete test application.
-		DeleteAppByKey(testAppKey);
+		DeleteAppByKeyFromRow(testAppKey);
 		
 		// after deleting application, make sure it's gone.
 		// store what's in application list.
 		ClearActualExpectedLists();
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		Assert.assertTrue(FindIndexExistingApp(testAppKey) == -1, "Check that makes sure test app is not in apps list failed.");
+		
+		ClearActualExpectedLists();
 	}
 	
 	// edit existing - verify reset. this uses any application that has all data populated.
@@ -430,7 +538,7 @@ public class Applications extends BaseMain
 		SetPageSizeToMax();
 		
 		// make sure application to add does not exist.
-		DeleteAppByKey(testAppKey);
+		DeleteAppByKeyFromRow(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
 		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
@@ -501,7 +609,7 @@ public class Applications extends BaseMain
 		ShowCurrentTest("AddValidations");
 		
 		// make sure test application is not on the list.
-		DeleteAppByKey(testAppKey);
+		DeleteAppByKeyFromRow(testAppKey);
 		
 		// store the actual applications. this will be used in validation error when adding existing app key.
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
@@ -857,6 +965,14 @@ public class Applications extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	// this will select the delete button in a specified applications list row. 
+	public static void SelectDeleteRowInAppList(int rowToSelect)
+	{
+		String xpath =  "(//button[@class='btn btn-danger btn-sm'])[" + rowToSelect + "]";
+		ClickItem(xpath, 3);
+	}
+	
+	
 	public static void VerifyEnabledValues(boolean expectedEnableDisableState)
 	{
 		if(expectedEnableDisableState == true)
@@ -954,9 +1070,8 @@ public class Applications extends BaseMain
 	}
 	
 	
-	public static void DeleteAppByKey(String appKey) throws Exception
+	public static void DeleteAppByKeyFromRow(String appKey) throws Exception
 	{
-
 		int indexCntr = 0;
 
 		// clear actual list and get max page size. 
@@ -971,9 +1086,9 @@ public class Applications extends BaseMain
 		//ShowInt(indexCntr);
 		
 		// TODO: make method of this
-		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleyed.
+		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleted.
 		{
-			ClickItem("(//button[@class='btn btn-danger btn-sm'])[" + indexCntr + "]", 3);  // select delete application list row with appKey.
+			SelectDeleteRowInAppList(indexCntr); // select delete application list row with appKey.
 			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']",3); // approve delete.
 			ClickItem("//button[@class='btn btn-danger']", 3); // delete.
 			WaitForElementNotVisibleNoThrow(By.xpath("//button[@class='btn btn-danger']"), 4);
@@ -1348,10 +1463,12 @@ public class Applications extends BaseMain
 			Assert.fail("Bad index number sent to 'SetPageSize' method in Applicatiins page class.");
 		}
 		
-		// set page size to max.
+		// set page size.
 		WaitForElementClickable(By.xpath("(//span/label)[" + index + "]"), 5, "");
 		driver.findElement(By.xpath("(//span/label)[" + index + "]")).click(); 		
-		Thread.sleep(1000);
+
+		Thread.sleep(500);
+		WaitForElementClickable(By.xpath("(//li[@class='page-item disabled'])[1]"), 5, "");
 	}
 	
 	// add sortBy, sortDirection

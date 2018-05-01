@@ -44,17 +44,17 @@ public class TC_ApplicationsList extends BaseMain
 		//Applications.VerifySortingMultiplePages(); // TC1156 sorting with different page sizes applications.
 		
 		// RMINF-172 
-		Applications.AddValidations(); // validations
-		Applications.AddScenariosOne(); // only add key and name. 
-		Applications.AddScenariosTwo(true); // add all fields.
+		//Applications.AddValidations(); // validations
+		//Applications.AddScenariosOne(); // only add key and name. 
+		//Applications.AddScenariosTwo(true); // add all fields.
 		
 		// RMINF- 197
-		Applications.EditApplicationReset(); // TC1184 - reset function and button states.
-		Applications.EditApplicationFromRowEdit(); // TC1184 - edit application.
+		//Applications.EditApplicationReset(); // TC1184 - reset function and button states.
+		//Applications.EditApplicationFromRowEdit(); // TC1184 - edit application.
 		
 		// RMINF-220 - the test above, Applications.EditApplicationFromRowEdit(), has already deleted an application with no dependencies.
 		// this test verifies the delete application operations, from the application list delete button, for an application with and w/o dependencies.
-		Applications.EditApplicationDeleteItemsFromRowSelect();
+		Applications.EditApplicationDeleteItemsFromRowSelect(); // select delete from list row and verify UI info/actions. 
 		
 		
 	}

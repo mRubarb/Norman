@@ -47,6 +47,11 @@ public class Applications extends BaseMain
 	public static String defaultHostPath = "";
 	public static String tenantWithNoApp = "";
 	public static final String extraText = "NEW";
+	public static final String approveDeleteInPoup_Locator = "//input[@class='ng-untouched ng-pristine ng-valid']";
+	public static final String selectDeleteInPoup_Locator = "//button[@class='btn btn-danger']";	
+	public static final String saveButtonPoUp_Locator = "//button[@class='btn btn-primary']";
+	public static final String addButton_Locator = "//button[@class='btn btn-primary ml-auto p-2']"; // TODO: same for routes.
+	public static final String uiCancel_Locator = "(//button[@class='btn btn-secondary'])[2]"; // TODO: same for routes.	
 	
 	public static final String applicationsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/applications";
 	public static final String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";	
@@ -83,7 +88,8 @@ public class Applications extends BaseMain
 	// this gets all items in the collection from the API and all items from the applications UI and compares them.
 	public static void VerifyFullList() throws Exception
 	{
-		String url = applicationsURL + "?pageSize=300"; // get all the applications from API.
+		int pageSize = 50;
+		String url = applicationsURL + "?pageSize=" + pageSize; // get all the applications from API.
 		String apiType = "\"applications\":";
 		String metadata = "";
 		int totalCount = 0;
@@ -94,6 +100,11 @@ public class Applications extends BaseMain
 
 		// take out totalCount 
 		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
+		
+		if(totalCount > 50)
+		{
+			totalCount = 50;
+		}
 		
 		JSONArray jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
@@ -255,16 +266,18 @@ public class Applications extends BaseMain
 		DeleteAppByKeyFromRow(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
+		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
 
 		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
 		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName);		
 
-		ClickItem("//button[@class='btn btn-primary']", 3); // save		
+		ClickItem(saveButtonPoUp_Locator, 3); // save		
+		
+		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator), 3);
 		
 		// wait for view button after page save.
-		WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[15]"), 4);
+		//WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[6]"), 4);
 		
 		// verify application was added.
 		listOfActualApps.clear();
@@ -293,7 +306,7 @@ public class Applications extends BaseMain
 		String apiTypeDeploy = "\"deployments\":";
 		String apiTypeRoute = "\"routes\":";
 		String appDeleteHasAssociations = "";		
-		String appDeleteHasNoAssociations = "";
+		// String appDeleteHasNoAssociations = "";
 		final String commonCaution = "Are you sure you want to delete this application?Note: This cannot be undone.";
 		JSONArray jArray;
 		int rowIndex = 0;
@@ -309,13 +322,13 @@ public class Applications extends BaseMain
 
 		SetPageSizeToMax();
 
-		// SelectDeleteRowInAppList(31); // this works.
-		
 		ClearActualExpectedLists();
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////
 		// go through each application object. 
-		// this will find the application with the most routes.
+		// /////////////////////////////////////////////////////////////////////////////////////////////////////
+		// this will find the application with the most routes and an application with no deployments.
 		for(ApplicationClass app : listOfActualApps)
 		{
 			jArray = CommonMethods.GetJsonArrayWithUrl(token, deployUrl + app.m_Key, apiTypeDeploy); // call deployments and filter on the application.
@@ -346,14 +359,13 @@ public class Applications extends BaseMain
 			rowIndex++;
 		}
 		
-		ShowText("-----------");
 		ShowText(appDeleteHasAssociations);
 		System.out.println("index to use associated = " + rowIndexToUseForAssoiciatedApp);
 		System.out.println("index to use non associated = " + rowIndexToUseForNonAssoiciatedApp);		
 		System.out.println("deploys = " + numDeployements);
 		System.out.println("routes = " + numRoutes);
 		
-		// need to change page sizes to be able to seklect a delete in row,
+		// need to change page sizes to be able to select a delete in row,
 		SetUiPageSizeSelector(1);
 		SetPageSizeToMax();
 		
@@ -370,7 +382,9 @@ public class Applications extends BaseMain
 		textArray =  driver.findElement(By.xpath("(//small)[1]")).getText().split("\n");
 		Assert.assertTrue(textArray.length == 1);
 		Assert.assertEquals(textArray[0], "  I understand the consequences of deleting this application");
-		
+
+		VerifyKeyAndNameInDeletePopup(rowIndexToUseForNonAssoiciatedApp); // verify correct key and name are shown.
+
 		// select cancel.
 		ClickItem("//button[@class='btn btn-secondary']", 3);
 
@@ -389,10 +403,22 @@ public class Applications extends BaseMain
 		// verify text unique to application with deployment(s) and route(s).
 		Assert.assertTrue(textArray.length == 3);		
 
-		// 
+		// verify test in pink area of UI.
 		Assert.assertEquals(textArray[0], "Deleting this application will also delete:", "");
 		Assert.assertEquals(textArray[1], "The " + numDeployements + " associated deployments");		
 		Assert.assertEquals(textArray[2], "The " + numRoutes + " associated routes", "");		
+		
+		VerifyKeyAndNameInDeletePopup(rowIndexToUseForAssoiciatedApp); // verify correct key and name are shown.
+
+		// //////////////////////////////////////////
+		// verify enabled/disable for delete button.   
+		// //////////////////////////////////////////
+		Assert.assertFalse(driver.findElement (By.xpath(selectDeleteInPoup_Locator)).isEnabled()); // delete button not enabled
+		
+		ClickItem(approveDeleteInPoup_Locator , 3); // select check box.
+		Thread.sleep(250);
+
+		Assert.assertTrue(driver.findElement (By.xpath(selectDeleteInPoup_Locator)).isEnabled());  // delete button enabled
 	}
 	
 	// edit existing - verify edit. this uses a test application.
@@ -446,7 +472,7 @@ public class Applications extends BaseMain
 		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath + extraText); // path
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription + extraText); // description
 		
-		ClickItem("//button[@class='btn btn-primary']", 3); // save  
+		ClickItem(saveButtonPoUp_Locator, 3); // save  
 		Thread.sleep(1000);
 		
 		// test app should be near top so only use 10 rows. 
@@ -498,8 +524,8 @@ public class Applications extends BaseMain
 		
 		// verify button states - save, cancel, reset.
 		Assert.assertFalse(driver.findElement(By.xpath("(//button[@class='btn btn-secondary'])[1]")).isEnabled());
-		Assert.assertTrue(driver.findElement(By.xpath("(//button[@class='btn btn-secondary'])[2]")).isEnabled());
-		Assert.assertFalse(driver.findElement(By.xpath("//button[@class='btn btn-primary']")).isEnabled());
+		Assert.assertTrue(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled());
+		Assert.assertFalse(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled());
 		
 		// change data for everything in form.
 		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName + "bad");
@@ -512,7 +538,6 @@ public class Applications extends BaseMain
 		// select reset button
 		ClickItem("(//button[@class='btn btn-secondary'])[1]", 2);
 		
-		//ShowText(driver.findElement(By.xpath(GetXpathForTextBox("key"))).getAttribute("value"));
 		ShowText(driver.findElement(By.xpath(GetXpathForTextBox("name"))).getAttribute("value"));
 
 		// verify original values are back after reset.
@@ -522,7 +547,7 @@ public class Applications extends BaseMain
 		VerifyEnabledValues(expectedEnableDisableState);
 		
 		// close pop-up UI.
-		ClickItem("(//button[@class='btn btn-secondary'])[2]", 3);
+		ClickItem(uiCancel_Locator, 3);
 	}
 	
 	// create test application that has key, name, host, path, and enabled set to non-default (false).
@@ -541,7 +566,7 @@ public class Applications extends BaseMain
 		DeleteAppByKeyFromRow(testAppKey);
 		
 		// select add, wait for title, fill in key and name, and hit return. 
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
+		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
 
 		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
@@ -551,10 +576,10 @@ public class Applications extends BaseMain
 		
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription); // description		
 		ClickItem("//input[@value='false']", 3); // click false
-		ClickItem("//button[@class='btn btn-primary']", 3); // save		
+		ClickItem(saveButtonPoUp_Locator, 3); // save		
 		
-		// wait for view button after page save.
-		WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[15]"), 4);
+		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator), 3);
+		
 		
 		// verify application was added.
 		listOfActualApps.clear();
@@ -615,13 +640,13 @@ public class Applications extends BaseMain
 		ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
 		// select add, wait for title, and select cancel, and verify back in the applications list.
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
+		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
-		ClickItem("(//button[@class='btn btn-secondary'])[2]", 3); // cancel 
+		ClickItem(uiCancel_Locator, 3); // cancel 
 		CommonMethods.verifyTitle("Applications"); // back in applications list.
 
 		// select add and save, verify 'required' under key
-		ClickItem("//button[@class='btn btn-primary ml-auto p-2']", 3); // add
+		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3);
 		ClickItem("//button[@class='btn btn-primary']/span[text()='Save']", 3); // save		
 		WaitForElementVisible(By.xpath("//small[text()='required']"), 3); // verify		
@@ -666,7 +691,7 @@ public class Applications extends BaseMain
 		ShowText(driver.findElement(By.xpath("//div/small")).getText());
 		
 		// close add UI
-		ClickItem("(//button[@class='btn btn-secondary'])[2]", 3); // cancel
+		ClickItem(uiCancel_Locator, 3); // cancel
 		
 		ClearActualExpectedLists();
 	}
@@ -758,6 +783,8 @@ public class Applications extends BaseMain
 		String apiType = "\"tenants\":";
 		JSONArray jArray;
 
+		List<ApplicationClass> appExpectedlList;
+		
 		ShowCurrentTest("VerifyFilteringByTenant");
 		
 		// create a URL that will get a list of all the tenants.
@@ -774,58 +801,74 @@ public class Applications extends BaseMain
 		// ///////////////////////////////////////////////////////////////
 		// this tests filtering using the tenant with one application.       
 		// ///////////////////////////////////////////////////////////////
-		
-		// select the tenant with one application in tenants pull-down.  
-		// the '0' passed in indicates to select the tenant with one application.   
-		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(0).m_TenantName);
-		
-		ShowText("Tenant filter = " + listOfTenantWithAppExpected.get(0).m_TenantName);
-		
-		// listOfTenantWithAppExpected.get(0).m_TenantName // DEBUG show tenant being filtered on.
-		
-		// store the result of the search onto list of actual applications.
-		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		
-		// get the application list found in the first tenant object and make sure it only holds one application.
-		List<ApplicationClass> appExpectedlList =   listOfTenantWithAppExpected.get(0).GetApplicationList();
 
-		Assert.assertTrue(appExpectedlList.size() == 1, "Application should only have one application in 'VerifyFilteringByTenant'.");
-		
-		listOfExpectedApps.add(appExpectedlList.get(0)); // add application to expected list.
-		
-		VerifyApplicationsCollectionsExpectedAndActual(); // verify
+		if(listOfTenantWithAppExpected.get(0).m_TenantName != "")
+		{
+			ShowText("Tenant filter with one application = " + listOfTenantWithAppExpected.get(0).m_TenantName);
+			
+			// select the tenant with one application in tenants pull-down.  
+			// the '0' passed in indicates to select the tenant with one application.   
+			ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(0).m_TenantName);
+			
+			// listOfTenantWithAppExpected.get(0).m_TenantName // DEBUG show tenant being filtered on.
+			
+			// store the result of the search onto list of actual applications.
+			ShowActualApplicationsOrStore(ActionForApplications.Store);
+			
+			// get the application list found in the first tenant object and make sure it only holds one application.
+			appExpectedlList =   listOfTenantWithAppExpected.get(0).GetApplicationList();
 
-		ClearActualExpectedLists();
+			Assert.assertTrue(appExpectedlList.size() == 1, "Application should only have one application in 'VerifyFilteringByTenant'.");
+			
+			listOfExpectedApps.add(appExpectedlList.get(0)); // add application to expected list.
+			
+			VerifyApplicationsCollectionsExpectedAndActual(); // verify
+
+			ClearActualExpectedLists();
+		}
+		else
+		{
+			ShowText("NOTE: not testing tenant filter with the one applications because there is no tenant with one application." );
+		}
 		
 		// /////////////////////////////////////////////////////////////////////
 		// this tests filtering using the tenant with the most applications.       
 		// /////////////////////////////////////////////////////////////////////
-		
-		// select the tenant with the most applications in tenants pull-down.  
-		// the '1' passed in indicates to select the tenant with the most applications.   
-		ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(1).m_TenantName);
-		
-		ShowText("Tenant filter = " + listOfTenantWithAppExpected.get(1).m_TenantName);		
-		
-		// get the list of expected applications found in the second tenant object.
-		appExpectedlList =  listOfTenantWithAppExpected.get(1).GetApplicationList();
-		
-		// add the expected applications to the expected list.
-		for(ApplicationClass aplClass: appExpectedlList)
-		{
-			listOfExpectedApps.add(aplClass);
-		}
 
-		// store the result of the filter in UI into list of actual applications.
-		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		
-		VerifyApplicationsCollectionsExpectedAndActual();
-		
-		ClearActualExpectedLists();
+		if(listOfTenantWithAppExpected.get(1).m_TenantName != "")
+		{
+			ShowText("Tenant filter with the most applications = " + listOfTenantWithAppExpected.get(1).m_TenantName);
+			
+			// select the tenant with the most applications in tenants pull-down.  
+			// the '1' passed in indicates to select the tenant with the most applications.   
+			ClickAndSelectTenantInPulldown(listOfTenantWithAppExpected.get(1).m_TenantName);
+			
+			// get the list of expected applications found in the second tenant object.
+			appExpectedlList =  listOfTenantWithAppExpected.get(1).GetApplicationList();
+			
+			// add the expected applications to the expected list.
+			for(ApplicationClass aplClass: appExpectedlList)
+			{
+				listOfExpectedApps.add(aplClass);
+			}
+
+			// store the result of the filter in UI into list of actual applications.
+			ShowActualApplicationsOrStore(ActionForApplications.Store);
+			
+			VerifyApplicationsCollectionsExpectedAndActual();
+			
+			ClearActualExpectedLists();
+		}
+		else
+		{
+			ShowText("NOTE: not testing tenant filter with the most applications because there is no tenant with more than one application." );
+		}
 		
 		// //////////////////////////////////////////////////////////////////////////////////////
 		// select the tenant that has no associated applications and verify the UI message.  
 		// //////////////////////////////////////////////////////////////////////////////////////		
+		ShowText("Testing tenant filter with the no applications." );
+		
 		ClickAndSelectTenantInPulldown(tenantWithNoApp);
 		
 		VerifyNoApplicationsPresent();
@@ -965,6 +1008,16 @@ public class Applications extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	// verify key and name shown matches actual key and name found in applications list. 
+	public static void VerifyKeyAndNameInDeletePopup(int index)
+	{
+		Assert.assertEquals(listOfActualApps.get(index).m_Key, driver.findElement(By.xpath("(//dd[@class='col-sm-11'])[1]")).getText(),  // key
+				            "Fail in method VerifyKeyAndNameInDeletePopup. Keys don't match.");
+
+		Assert.assertEquals(listOfActualApps.get(index).m_Name, driver.findElement(By.xpath("(//dd[@class='col-sm-11'])[2]")).getText(), // name
+	            "Fail in method VerifyKeyAndNameInDeletePopup. Names don't match.");		
+	}
+	
 	// this will select the delete button in a specified applications list row. 
 	public static void SelectDeleteRowInAppList(int rowToSelect)
 	{
@@ -1069,7 +1122,6 @@ public class Applications extends BaseMain
 		ClearActualExpectedLists();
 	}
 	
-	
 	public static void DeleteAppByKeyFromRow(String appKey) throws Exception
 	{
 		int indexCntr = 0;
@@ -1089,8 +1141,12 @@ public class Applications extends BaseMain
 		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleted.
 		{
 			SelectDeleteRowInAppList(indexCntr); // select delete application list row with appKey.
-			ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']",3); // approve delete.
-			ClickItem("//button[@class='btn btn-danger']", 3); // delete.
+			//ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']",3); // approve delete.
+			ClickItem(approveDeleteInPoup_Locator ,3); // approve delete.			
+			
+			
+			// ClickItem("//button[@class='btn btn-danger']", 3); // delete.
+			ClickItem(selectDeleteInPoup_Locator, 3); // delete.			
 			WaitForElementNotVisibleNoThrow(By.xpath("//button[@class='btn btn-danger']"), 4);
 			
 			listOfActualApps.clear();
@@ -1133,7 +1189,7 @@ public class Applications extends BaseMain
 		driver.findElement(By.xpath(xpath)).click();
 	}
 	
-	public static String GetXpathForTextBox(String item)
+	public static String GetXpathForTextBox(String item) // TODO: use in routes also
 	{
 		return "//input[@formcontrolname='" + item + "']";
 	}
@@ -1169,6 +1225,7 @@ public class Applications extends BaseMain
 		JSONArray jArrayAppsFromTenantCall;
 		boolean savedTenantWithOneApp = false;		
 		boolean savedTenantWithNoApp = false;
+		boolean savedTenantWithMoreThanOneApp = false;		
 		
 		// loop through tenants list. find a tenant with one dependent application. store the tenant name and the application in a 
 		// 'TenantAppForAppSearch' object and add the object to the 'listOfTenantWithApp' list. 
@@ -1200,9 +1257,10 @@ public class Applications extends BaseMain
 				{
 					indexForTenantWithMostApps = x;
 				}
+				savedTenantWithMoreThanOneApp = true;
 			}
 
-			// store a tenat that has no associated applications.
+			// store a tenant that has no associated applications.
 			if(jArrayAppsFromTenantCall.length() == 0 && !savedTenantWithNoApp)
 			{
 				tenantWithNoApp = jo.getString("key");
@@ -1216,15 +1274,23 @@ public class Applications extends BaseMain
 		// applications that go with tenant with the most applications onto a 'TenantAppForAppSearch' object and then add the object 
 		// to the 'listOfTenantWithAppExpected' list.
 		// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
 		jo = jArrayTenants.getJSONObject(indexForTenantWithMostApps);
 		url = applicationsURL + "?tenantKey=" + jo.getString("key") + "&pageSize=300";
 		apiType = "\"applications\":";
-
+	
 		jArrayAppsFromTenantCall = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
-
-		BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);
-		
-		return indexForTenantWithMostApps;
+	
+		if(savedTenantWithMoreThanOneApp) // if found an application with more than one tenant, setup TenantAppForAppSearch object.
+		{
+			BuildTenantAppForAppSearchObject(jo.getString("key"), jArrayAppsFromTenantCall);			
+		}
+		else // if an application was not found, set name in TenantAppForAppSearch object to "".
+		{
+			BuildTenantAppForAppSearchObject("", jArrayAppsFromTenantCall);
+		}
+	
+		return indexForTenantWithMostApps;			
 	}
 	
 	public static void ClearActualExpectedLists()
@@ -1316,8 +1382,20 @@ public class Applications extends BaseMain
 	// receive Json array for applications and add it to the expected list.
 	public static void AddJsonArrayToExpectedList(JSONArray jArray) throws JSONException
 	{
+		int loopMax = 0;
+		
+		// want to limit list sizes to 'maxItemsPerPage' because max page size is 50.
+		if(jArray.length() > maxItemsPerPage)
+		{
+			loopMax = maxItemsPerPage;
+		}
+		else
+		{
+			loopMax = jArray.length();
+		}
+		
 		// store all the applications from API call onto expected list.
-		for(int y = 0; y < jArray.length(); y++)
+		for(int y = 0; y < loopMax; y++)
 		{
 			JSONObject jo = jArray.getJSONObject(y);
 			GetAndAddAppFromApiToExpectedList(jo);
@@ -1456,7 +1534,8 @@ public class Applications extends BaseMain
 	}	
 	
 	// this sets page to 5, 10, 20, or 50.
-	static public void SetUiPageSizeSelector(int index) throws InterruptedException
+	// TODO: duplicate
+	static public void SetUiPageSizeSelector(int index) throws InterruptedException 
 	{
 		if(index > 4 || index < 1)
 		{
@@ -1522,7 +1601,7 @@ public class Applications extends BaseMain
 		// set page size to max.
 		// CommonMethods.selectSizeOfList(50);
 		SetUiPageSizeSelector(4);
-		WaitForElementClickable(By.xpath("(//button[@class='btn btn-info btn-sm'])[10]"), 3, "");
+		WaitForElementClickable(By.xpath("(//button[@class='btn btn-info btn-sm'])[5]"), 3, "");
 	}
 
 	public static void ShowPopup(String message)		
@@ -1567,15 +1646,33 @@ public class Applications extends BaseMain
 				break;
 			}
 			
-			index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
-			ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
+			// select next page.
+			//index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
+			//ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
+			SelectNextPage();
 		}
 		
-		ClickItem("(//ul[@class='pagination']/li)[1]/a", 3);
-
+		// ClickItem("(//ul[@class='pagination']/li)[1]/a", 3); // back to first page.
+		SelectFirstPage();
+		
 		Thread.sleep(1000);
 	}	
 
+	// select next page. // TODO: this is common
+	public static void SelectNextPage()
+	{
+		int index = 0;
+		index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
+		ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
+	}
+	
+	// select next page. // TODO: this is common
+	// select next page.
+	public static void SelectFirstPage()
+	{
+		ClickItem("(//ul[@class='pagination']/li)[1]/a", 3); // back to first page.	
+	}
+	
 	public static void VerifySortingForItemAndDirection(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception
 	{
 		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);	
@@ -1641,7 +1738,7 @@ public class Applications extends BaseMain
 	
 	
 	
-	public static void ShowCurrentTest(String currentTest)
+	public static void ShowCurrentTest(String currentTest) // TODO: duplicate
 	{
 		ShowText("******************************* Running test name " + currentTest + " **************************************************");
 	}

@@ -6,20 +6,19 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.xerces.parsers.CachingParserPool.ShadowedGrammarPool;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.omg.CORBA.portable.ValueOutputStream;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.seleniumhq.jetty9.server.handler.ContextHandler.Availability;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
-import classes.ApplicationClass;
 import classes.RouteClass;
 import common.CommonMethods;
 import pages.Applications.ActionForApplications;
@@ -40,13 +39,31 @@ public class Routes extends BaseMain
 	public static boolean allowServiceCalls = false;
 	public static String host = "";
 	public static String path = "";
+	public static final String addButton_Locator = "//button[@class='btn btn-primary ml-auto p-2']"; // TODO: same for routes.	
+	public static final String uiCancel_Locator = "(//button[@class='btn btn-secondary'])[2]"; // TODO: same for routes.
+	
+	// this is the real route in the QA environment - don't touch.
+	public static final String tenantDontUse = "CTTI";
+	public static final String appDontUse = "RVM";
+	public static final String deployDontUse = "RVM_DC1QA_CLUSTER_1";
+	
+	// used to see if text box is in error or not.
+	public static final String uiTextBoxInError = "form-control ng-untouched ng-pristine ng-invalid";
+	public static final String uiTextBoxNoError = "form-control ng-touched ng-dirty ng-valid";	
+	
+	// URL for temporary test route 
+	public static final String automationSubDomain= "automationSubDomain";
+	public static final String automationDomain= "automationDomain.com";
+	public static final String automationPath= "/automationPath";
+	public static final String automationfullPath= automationSubDomain + "." + automationDomain + automationPath;
+
+	public static final String automationTenantID = "selenium123";
 	
 	public static String apiType = "\"routes\":";
 	public static String RoutesTableCss = ".table.table-striped>tbody>tr";
 	public static String RoutesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
-	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyMzY1MjUwOH0.zptwBdrk3cDixUCMuhFShkFdGDSBC_LYyKrvBIevnpwMFNVX6DFRO-40EZhbzhGrni41rS4eP8VWzPcQjNWdPA";
-
-	public static int maxItemsPerPage = 50;
+	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNjMwODEwM30.0GU24pu7F8itDwHp8prFWlMwstsF53ISCxDQmteDEHCEWwXEt6V50AhnQTCLN7o6q-GQBlCQulTyeM6yn_C3bg";
+	public static final int maxItemsPerPage = 50;
 	
 	public static int expectedNumberOfColumns = 8;
 	
@@ -57,10 +74,11 @@ public class Routes extends BaseMain
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// this gets all items in the collection from the API and all items from the applications UI and compares them.
+	// this does this for one page of maxItemsPerPage or less items.
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	public static void VerifyFullList() throws IOException, JSONException, InterruptedException
+	public static void VerifyFullList() throws Exception
 	{
-		String url = RoutesURL + "?pageSize=300&includeTenant=true&&includeDeployment=true&includeApplication=true"; // get all the routes from the API.
+		String url = RoutesURL + "?pageSize=" + maxItemsPerPage + "&includeTenant=true&&includeDeployment=true&includeApplication=true"; // get all the routes from the API, up to 50.
 		String metadata = "";
 		int totalCount = 0;
 		
@@ -69,37 +87,35 @@ public class Routes extends BaseMain
 		// take out totalCount 
 		totalCount = Integer.parseInt(metadata.split(":")[2].split(",")[0]);
 		
+		if(totalCount > maxItemsPerPage)
+		{
+			totalCount = maxItemsPerPage;
+		}
+
 		// this will have the collection of routes in a JSON array.
 		JSONArray jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 
 		Assert.assertTrue(jArray.length() == totalCount); // verify collection count matches metadata. 
-		
+
 		// store all the routes from API onto expected list.
 		for(int x = 0; x < jArray.length(); x++)
 		{
-			// the list page has a maximum number of rows. 
-			if(x == (maxItemsPerPage - 1))
-			{
-				break;
-			}			
-			
 			JSONObject jo = jArray.getJSONObject(x); // get current json object from the list  
 			GetAndAddRouteFromApiToExpectedList(jo); // add all the fields into a route object.
 		}		
 		
 		System.out.println("Size from API = " +  listOfExpectedRoutes.size() + " rows.");
 		
-		// set page size to max.
-		WaitForElementClickable(By.xpath("(//span/label)[4]"), 5, "");
-		driver.findElement(By.xpath("(//span/label)[4]")).click(); 		
-		Thread.sleep(1000);
+		SetPageSizeToMax();
 		
 		// store the routes in UI to listOfActualApps
-		ShowActualApplicationsOrStore(ActionForApplications.Store);
-		// ShowApplicationsActualAndExpectedCollection(); 
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+		//ShowActualRoutesOrStore(ActionForApplications.Show);		
+		//ShowRoutesActualAndExpectedCollection(); 
 		
 		// verify actual and expected are equal.
 		VerifyRouteCollectionsExpectedAndActual();
+
 	}		
 	
 	// //////////////////////////////////////////////////////////////
@@ -241,7 +257,182 @@ public class Routes extends BaseMain
 		}	
 	}
 
-			
+	public static void AddRoute() throws Exception 
+	{
+		// select add, wait for title, and select cancel, and verify back in the applications list.
+		ClickItem(addButton_Locator, 3); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+		
+		// tenant
+		ClickItem("(.//*[@id='sortMenu'])[5]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[4]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[4]")).sendKeys("SELENIUM_TENANT");
+		
+		ClickItem("(//span[text()='SELENIUM_TENANT']/../..)[2]", 3);
+
+		// application
+		ClickItem("(.//*[@id='sortMenu'])[6]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[5]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[5]")).sendKeys("SELEN_APP");
+
+		ClickItem("(//span[text()='SELEN_APP']/../..)[2]", 2);
+		
+		// application
+		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[6]")).sendKeys("SELEN_DEPLOYMENT");
+
+		ClickItem("(//span[text()='SELEN_DEPLOYMENT ']/../..)[2]", 2);
+	}
+	
+	
+	public static void AddValidations() throws Exception 
+	{
+		String existingRoutePath = "";
+		String badPathError = "Path must only contain letters, numbers, periods, dashes and underscores and must start with a forward slash";
+		String tooManyCharsPathError = "The subdomain.domain combination must not exceed 256 characters";
+		String tenantPulldownMessage = "Select Tenant";
+		String applicationPulldownMessage = "Select Application";		
+		String deploymentPulldownMessage = "Select Deployment";
+		String errMessagesPulldown = "Failed expected message in pulldown.";
+		String subdomainNoSpecialChars = "Subdomain must only contain letters, numbers, periods, dashes and underscores";
+		String domainNoSpecialChars = "Domain must only contain letters, numbers, periods, dashes and underscores";
+		
+		
+		String[] validationMessagesAddRoute = new String[]{"Must select a tenant", "Must select an application", "Must select a deployment", "required", "required", "required", "Tenant ID is required"};
+		
+		String greaterThan256Chars = "256bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbmmmmmmmm"
+				+ "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+				+ "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbnm";
+		
+		int cntr = 0;
+		
+		ShowCurrentTest("Routes: AddValidations");
+
+		// store what's in UI list.
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+		
+		// ///////////////////////////////////////////////////////////////////////////////////
+		// first get a list of all routes in UI, considering there may be a second page.
+		// need this to make sure the route being added doesn't exist.
+		// NOTE: 5/8/18 - QA environment was made small. two pages won't happen.
+		// /////////////////////////////////////////////////////////////////////////////////// 
+		//LoadActualList(numberOfRows, ActionForApplications.Store);
+		
+		ShowText(automationfullPath);
+		
+		existingRoutePath = listOfActualRoutes.get(0).m_host + listOfActualRoutes.get(0).m_path;
+		ShowText(existingRoutePath);
+		
+		// make sure test application is not on the list.
+		// DeleteAppByKeyFromRow(testAppKey); 
+		
+		// select add, wait for title, and select cancel, and verify back in the applications list.
+		ClickItem(addButton_Locator, 3); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+		ClickItem(uiCancel_Locator, 3); // cancel
+	
+		if(!WaitForElementNotVisibleNoThrow(By.xpath(uiCancel_Locator), 3)) // verify UI closed 
+		{
+			Assert.fail("Add route UI is still showing. It should have closed after cancel.");
+		}
+		
+		// select add 
+		ClickItem(addButton_Locator, 3); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+
+		// verify text boxes are highlighted.
+		VerifyAllTextBoxConditions(false);
+		
+		// verify messages in pull-downs.
+		Assert.assertEquals(driver.findElement(By.xpath("(//button[@id='sortMenu'])[5]")).getText(), tenantPulldownMessage, errMessagesPulldown);
+		Assert.assertEquals(driver.findElement(By.xpath("(//button[@id='sortMenu'])[6]")).getText(), applicationPulldownMessage, errMessagesPulldown);
+		Assert.assertEquals(driver.findElement(By.xpath("(//button[@id='sortMenu'])[7]")).getText(), deploymentPulldownMessage, errMessagesPulldown);		
+		
+		ShowAllValidationMessages();
+		
+		// get all the validation messages and verify them.
+		List<WebElement> listOfErrorMessages =  driver.findElements(By.cssSelector(".form-text.text-danger>small")); // store validation messages.
+		
+		// verify all validation messages.
+		for(WebElement ele : listOfErrorMessages) 
+		{
+			//ShowText(ele.getText()); //ShowText(failMessagesAddRoute[cntr]);
+			Assert.assertEquals(ele.getText(), validationMessagesAddRoute[cntr], "Incorrect validation message found.");
+			//ShowText(driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).getAttribute("class"));
+			cntr++;
+		}
+
+		// fill in required text.
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(automationDomain);
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(automationSubDomain);
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath);		
+		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID);
+		
+		// verify the text boxes aren't in validation error.
+		VerifyAllTextBoxConditions(true);
+		
+		// put text into path that has no leading "/" and verify validation error.
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys("test");
+		WaitForElementVisible(By.xpath("(//div/small)[4]"), 2);
+		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[4]")).getText(), badPathError);
+		
+		// sub-domain too many characters.
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath); 
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(greaterThan256Chars);
+		WaitForElementVisible(By.xpath("(//div/small)[4]"), 2);
+		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[4]")).getText(), tooManyCharsPathError);
+		
+		// domain too many characters.
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(greaterThan256Chars);
+		WaitForElementVisible(By.xpath("(//div/small)[4]"), 2);
+		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[4]")).getText(), tooManyCharsPathError);
+
+		// //////////////////////////////////////////////////////////////////////////////////////////////////////
+		// this section verifies the max allowed characters to enter in sub-domain, domain, and path is 256
+		// //////////////////////////////////////////////////////////////////////////////////////////////////////	
+		
+		CancelOpenAddRouteUI(); // need to start at open.
+		
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys("/" + greaterThan256Chars);
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value").length(), 256);
+		
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(greaterThan256Chars);
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).getAttribute("value").length(), 256);
+		
+		CancelOpenAddRouteUI(); // need to start at open.
+		
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(greaterThan256Chars);
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(greaterThan256Chars);
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("value").length(), 256);		
+
+		// verify validation error for "*" character in sub-domain and domain fields. 
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();		
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath);
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys("*"); // special char		
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys("*"); // special char
+
+		String specialCharErrNotFound = "Special character error not found.";
+		WaitForElementVisible(By.xpath("(//div/small)[1]"), 5);
+		WaitForElementVisible(By.xpath("(//div/small)[2]"), 5);
+		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[1]")).getText(), subdomainNoSpecialChars, specialCharErrNotFound);
+		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[2]")).getText(), domainNoSpecialChars, specialCharErrNotFound);
+	}
+	
 	public static void GoToRoutes()
 	{
 		CommonMethods.selectItemPlatformDropdown("Routes");
@@ -252,6 +443,98 @@ public class Routes extends BaseMain
 	// 															HELPERS 
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+
+	public static void CancelOpenAddRouteUI() throws Exception
+	{
+		ClickItem(uiCancel_Locator, 3); // cancel
+		
+		if(!WaitForElementNotVisibleNoThrow(By.xpath(uiCancel_Locator), 3)) // verify UI closed 
+		{
+			Assert.fail("Add route UI is still showing. It should have closed after cancel.");
+		}
+
+		ClickItem(addButton_Locator, 3); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+	}
+	
+	//click pull-downs and text boxes to get all validation messages to show up.
+	public static void ShowAllValidationMessages()
+	{
+		ClickItem("//button[text()='Select Tenant']", 3);
+		ClickItem("//button[@class='dropdown-item active']/span[text()='Select Tenant']", 3);		
+		ClickItem("//button[text()='Select Application']", 3);
+		ClickItem("//button[@class='dropdown-item active']/span[text()='Select Application']", 3);		
+		ClickItem("//button[text()='Select Deployment']", 3);
+		ClickItem("//button[@class='dropdown-item active']/span[text()='Select Deployment']", 3);	
+		ClickItem(GetXpathForTextBox("subdomain"), 3);		
+		ClickItem(GetXpathForTextBox("domain"), 3);
+		ClickItem(GetXpathForTextBox("path"), 3);	
+		ClickItem(GetXpathForTextBox("tenantID"), 3);
+		ClickItem("//textarea[@formcontrolname='description']", 3);
+	}
+	
+	
+	// this verifies the four text boxes in the add route UI have or don't have the red validation-error indicator.
+	public static void VerifyAllTextBoxConditions(boolean shouldHaveNoError)
+	{
+		if(!shouldHaveNoError)
+		{
+			String errMessage = "Failed verifiication test for text boxes.";
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).getAttribute("class"), uiTextBoxInError, errMessage);
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("class"), uiTextBoxInError, errMessage);		
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("class"), uiTextBoxInError, errMessage);
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("class"), uiTextBoxInError, errMessage);			
+		}
+		else
+		{
+			String errMessage = "Failed verifiication test for text boxes.";
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).getAttribute("class"), uiTextBoxNoError, errMessage);
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("class"), uiTextBoxNoError, errMessage);		
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("class"), uiTextBoxNoError, errMessage);
+			Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("class"), uiTextBoxNoError, errMessage);						
+		}
+	}
+	
+	public static String GetXpathForTextBox(String item) // TODO: use in routes also
+	{
+		return "//input[@formcontrolname='" + item + "']";
+	}
+	
+	public static void ClickItem(String xpath, int timeOut) // TODO: this is common
+	{
+		WaitForElementClickable(By.xpath(xpath), timeOut, "");
+		driver.findElement(By.xpath(xpath)).click();
+	}
+	
+	
+	// select next page. // TODO: this is common
+	public static void SelectNextPage()
+	{
+		int index = 0;
+		index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
+		ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
+	}
+	
+	// select next page. // TODO: this is common
+	// select next page.
+	public static void SelectFirstPage()
+	{
+		ClickItem("(//ul[@class='pagination']/li)[1]/a", 3); // back to first page.	
+	}
+	
+	
+	public static void ShowCurrentTest(String currentTest) // TODO: duplicate
+	{
+		ShowText("******************************* Running test name " + currentTest + " **************************************************");
+	}	
+		
+	public static void SetPageSizeToMax() throws Exception // TODO: this is in apps page also
+	{
+		// set page size to max.
+		// CommonMethods.selectSizeOfList(50);
+		SetUiPageSizeSelector(4);
+		WaitForElementClickable(By.xpath("(//button[@class='btn btn-info btn-sm'])[5]"), 3, "");
+	}
 	
 	// this clicks a column selection to set sorting mode.
 	public static void ClickSorting(String item) throws Exception		
@@ -288,7 +571,7 @@ public class Routes extends BaseMain
 			PassDataAndStoreApiRequest(apiType, pageSize, x + 1, sortDirection, sortBy);
 			
 			// store the application info in UI to listOfActualApps
-			ShowActualApplicationsOrStore(ActionForApplications.Store);
+			ShowActualRoutesOrStore(ActionForApplications.Store);
 
 			// verify actual and expected are equal.
 			VerifyRouteCollectionsExpectedAndActual();
@@ -415,9 +698,9 @@ public class Routes extends BaseMain
 	}	
 	
 	// /////////////////////////////////////////////////////////////////////////////////////////
-	// go through rows and columns and show items or add items to the list of route objects
+	// go through rows and columns and show items or add items to the list of route objects.
 	// /////////////////////////////////////////////////////////////////////////////////////////
-	public static void ShowActualApplicationsOrStore(ActionForApplications action)
+	public static void ShowActualRoutesOrStore(ActionForApplications action)
 	{
 		int numberOfRows = driver.findElements(By.cssSelector(".table.table-striped>tbody>tr")).size(); // get number of rows.
 		int numberOfColumns = 0;
@@ -425,7 +708,15 @@ public class Routes extends BaseMain
 		
 		System.out.println("Num Rows In UI. = " + numberOfRows);
 		
-
+		LoadActualList(numberOfRows, action);
+	}	
+	
+	// this loads the items in the current page in the UI onto the actual list.
+	public static void LoadActualList(int numberOfRows, ActionForApplications action)
+	{
+		String tempString = "";
+		int numberOfColumns = 0;
+		
 		for(int x = 1; x <= numberOfRows; x++)
 		{
 			numberOfColumns = driver.findElements(By.cssSelector(RoutesTableCss + ":nth-of-type(1)>td")).size(); 
@@ -487,10 +778,12 @@ public class Routes extends BaseMain
 				// add current route to actual list.
 				listOfActualRoutes.add(new RouteClass(key, tenantKey, tenantName, appKey, appName, deployKey, deployVersion, tenantId, description, enabled, disabledReason, allowServiceCalls, host, path));
 			}			
-		}
-	}	
+		}		
+	}
 	
-	public static void ShowApplicationsActualAndExpectedCollection()
+	
+	
+	public static void ShowRoutesActualAndExpectedCollection()
 	{
 		ShowText(" ********** Actual Apps **********");
 		for(RouteClass routeClass : listOfActualRoutes)

@@ -29,41 +29,38 @@ public class TC_DeploymentsList extends BaseMain {
 	{
 					
 		CommonMethods.selectItemPlatformDropdown("Deployments");
-		CommonMethods.verifyTitle("Deployments");
-		/*
-		Deployments.verifyColumnsNames();
 		
-		Deployments.verifyData();
+		// CommonMethods.verifyTitle("Deployments");
 		
-		Deployments.verifyDataAndSorting();
+		// Deployments.verifyColumnsNames();
 		
-		Deployments.verifyPaging();
+		// Deployments.verifyData();
 		
-		*/
+		// Deployments.verifyDataAndSorting();
 		
+		// Deployments.verifyPaging();
+		
+				
 		// ******* TO DO ***************
 		
-		// Deployments.verifyFiltering("RVM", "DEP_RVM_1", "Show Enabled Deployments Only");
+		Deployments.verifyFiltering("APR", "RVM", "Show Enabled Deployments Only");
 
-		// Deployments.verifyFilteringCombined("RVM", "DEP_RVM_1", "Show Enabled Deployments Only");
-		
-		String deploymentKey = "DEP_AUTOM_ANA";
-				
-		String applicationKey = "CMD";
-		
-		//Deployments.addDeployment(deploymentKey, applicationKey);
-				
-		Thread.sleep(3000);
-																	// *** CONTINUE HERE ***
-		Deployments.editDeployment(deploymentKey, applicationKey);  // *** IT'S FAILING ***
-																	// *** CONTINUE HERE ***
+		Deployments.verifyFilteringCombined("APR", "RVM", "Show Enabled Deployments Only");
 		
 		/*
+		String deploymentKey = "DEP_AUTOM_ANA";
+				
+		String applicationKey = "RVM";
 		
+		Deployments.addDeployment(deploymentKey, applicationKey);
+				
+		Thread.sleep(5000);
+		
+		Deployments.editDeployment(deploymentKey, applicationKey);  // *** IT WORKS :) ***
 			
 		Thread.sleep(3000);
 		
-		Deployments.deleteDeployment("T_AUTOM_ANA");
+		Deployments.deleteDeployment(deploymentKey); // OK!
 		*/
 		
 			

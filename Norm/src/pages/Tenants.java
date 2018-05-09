@@ -17,6 +17,7 @@ import org.testng.Assert;
 import baseItems.BaseMain;
 import classes.Tenant;
 import common.CommonMethods;
+import common.CommonMethodsAna;
 
 
 public class Tenants extends BaseMain
@@ -829,12 +830,9 @@ public class Tenants extends BaseMain
 			}
 			
 			// 5. Reset filters
-			resetFilters();
+			CommonMethods.resetFilters();
 			
 		}
-		
-		// Verify combined filter
-		
 		
 				
 	}
@@ -929,11 +927,12 @@ public class Tenants extends BaseMain
 		}
 		
 		// 5. Reset filters
-		resetFilters();
+		CommonMethods.resetFilters();
 			
 	}
 	
 
+	
 	private static String getEnabledValueForRequest(String enabled) {
 		
 		switch(enabled) {
@@ -953,6 +952,7 @@ public class Tenants extends BaseMain
 	}
 
 
+	// **** METHOD TO BE ADDED TO COMMON METHODS ********
 	private static void resetFilters() throws InterruptedException {
 		
 		String xpathApp = "//jhi-application-selector/form/div/div/button[@id='sortMenu']";

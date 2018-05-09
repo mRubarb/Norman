@@ -14,6 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -344,4 +345,92 @@ public class CommonMethods extends BaseMain
 		
 	}
 	
+	
+	// Set filter 'Tenants' back to "All Tenants" value
+	// Set filter 'Applications' back to "All Applications" value
+	// Set filter 'Deployments' back to "All Deployments" value
+	// Set filter 'Enabled/Disabled' back to "Show Enabled and Disabled" value
+	public static void resetFilters() throws InterruptedException {
+		
+		String xpathTenant = "//jhi-tenant-selector/form/div/div/button[@id='sortMenu']";
+		String xpathAllTenants = "//jhi-tenant-selector/form/div/div/div/button/span[text()='All Tenants']";
+		
+		String xpathApp = "//jhi-application-selector/form/div/div/button[@id='sortMenu']";
+		String xpathAllApp = "//jhi-application-selector/form/div/div/div/button/span[text()='All Applications']";
+		
+		String xpathDep = "//jhi-deployment-selector/form/div/div/button[@id='sortMenu']";
+		String xpathAllDep = "//jhi-deployment-selector/form/div/div/div/button/span[text()='All Deployments']";
+		
+		String xpathEnabled = "//jhi-value-selector/div/div/button[@id='sortMenu']";
+		String xpathAllEnabled = "//jhi-value-selector/div/div/div/button/span[text()='Show Enabled and Disabled']";
+		
+		
+		// Set filter 'Tenants' back to "All Tenants" value
+		try {
+			
+			if (!driver.findElement(By.xpath(xpathTenant)).getText().equals("All Tenants")) {
+				
+				driver.findElement(By.xpath(xpathTenant)).click();
+				driver.findElement(By.xpath(xpathAllTenants)).click();
+				System.out.println(".. Tenant filter reseted .. ");
+			
+			} else {
+
+				System.out.println(".. Tenant filter DOES NOT need to be reseted .. ");
+			}
+			
+		} catch (NoSuchElementException e) { }
+		
+		// Set filter 'Applications' back to "All Applications" value
+		try {
+			
+			if (!driver.findElement(By.xpath(xpathApp)).getText().equals("All Applications")) {
+				
+				driver.findElement(By.xpath(xpathApp)).click();
+				driver.findElement(By.xpath(xpathAllApp)).click();
+				System.out.println(".. Application filter reseted .. ");
+			
+			} else {
+				
+				System.out.println(".. Application filter DOES NOT need to be reseted .. ");
+			}
+			
+		} catch (NoSuchElementException e) { }
+		
+		// Set filter 'Deployments' back to "All Deployments" value
+		try {
+		
+			if (!driver.findElement(By.xpath(xpathDep)).getText().equals("All Deployments")) {
+			
+				driver.findElement(By.xpath(xpathDep)).click();
+				driver.findElement(By.xpath(xpathAllDep)).click();
+				System.out.println(".. Deployment filter reseted .. ");
+				
+			} else {
+
+				System.out.println(".. Deployment filter DOES NOT need to be reseted .. ");
+			}
+			
+		} catch (NoSuchElementException e) { }
+		
+		// Set filter 'Enabled/Disabled' back to "Show Enabled and Disabled" value
+		try {
+		
+			if (!driver.findElement(By.xpath(xpathEnabled)).getText().equals("Show Enabled and Disabled")) {
+				
+				driver.findElement(By.xpath(xpathEnabled)).click();
+				driver.findElement(By.xpath(xpathAllEnabled)).click();
+				System.out.println(".. Enabled filter reseted .. ");
+			
+			} else {
+
+				System.out.println(".. Enabled filter DOES NOT need to be reseted .. ");
+			}
+						
+		} catch (NoSuchElementException e) { }
+		
+			
+		Thread.sleep(2000); 
+		
+	}
 }

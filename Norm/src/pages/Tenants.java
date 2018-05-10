@@ -11,18 +11,26 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
 import classes.Tenant;
 import common.CommonMethods;
-import common.CommonMethodsAna;
 
 
 public class Tenants extends BaseMain
 {
 
 	private static String[] propertiesNames = {"Key", "Name", "Default Tenant ID", "Enabled"};
+	
+	// xpaths 
+	
+	private static String xpathKey = "//input[@formcontrolname='key']"; // "//div/label[text()='Key']/following-sibling::input";
+	private static String xpathName = "//input[@formcontrolname='name']"; //"//div/label[text()='Name']/following-sibling::input";
+	private static String xpathDefTenantId = "//input[@formcontrolname='defaultTenantID']";
+	private static String xpathEnabled = "//label[1]/input[@formcontrolname='enabled']";
+	private static String xpathDisabled = "//label[2]/input[@formcontrolname='enabled']";
 	
 	
 	public static void verifyColumnsNames() {
@@ -96,7 +104,7 @@ public class Tenants extends BaseMain
 			
 			tenant.setKey(jo.getString("key"));
 			tenant.setName(jo.getString("name"));
-			tenant.setDefaultTenantID(CommonMethodsAna.GetNonRequiredItem(jo, "defaultTenantID"));
+			tenant.setDefaultTenantID(CommonMethods.GetNonRequiredItem(jo, "defaultTenantID"));
 			tenant.setEnabled(jo.getBoolean("enabled"));
 		
 			actualTenantsList.add(tenant);
@@ -136,7 +144,7 @@ public class Tenants extends BaseMain
 			tenant.setDefaultTenantID(row.get(2).getText());
 			/*if (row.get(2).getText().isEmpty()) { tenant.setDefaultTenantID(" "); }
 			else { tenant.setDefaultTenantID(row.get(2).getText()); } */
-			tenant.setEnabled(CommonMethodsAna.convertToBoolean(row.get(3).getText()));
+			tenant.setEnabled(CommonMethods.convertToBoolean(row.get(3).getText()));
 					
 			expectedTenantsList.add(tenant);
 			
@@ -152,53 +160,53 @@ public class Tenants extends BaseMain
 		
 		System.out.println("\n  ** Sort List by Name in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Name", "ASC");
+		CommonMethods.clickArrowSorting("Name", "ASC");
 				
 		verifySortingObjects("NAME", "ASC");
 		
 		System.out.println("\n  ** Sort List by Name in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Name", "DESC");
+		CommonMethods.clickArrowSorting("Name", "DESC");
 				
 		verifySortingObjects("NAME", "DESC");
 	
 		System.out.println("\n  ** Sort List by Default Tenant ID in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Default Tenant ID", "ASC");
+		CommonMethods.clickArrowSorting("Default Tenant ID", "ASC");
 		
 		verifySortingObjects("DEFAULT_TENANT_ID", "ASC");
 		
 		System.out.println("\n  ** Sort List by Default Tenant ID in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Default Tenant ID", "DESC");
+		CommonMethods.clickArrowSorting("Default Tenant ID", "DESC");
 				
 		verifySortingObjects("DEFAULT_TENANT_ID", "DESC");
 
 		System.out.println("\n  ** Sort List by Enabled in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Enabled", "ASC");
+		CommonMethods.clickArrowSorting("Enabled", "ASC");
 				
 		verifySortingObjects("IS_ENABLED", "ASC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
+		CommonMethods.clickArrowSorting("Enabled", "DESC");
 				
 		verifySortingObjects("IS_ENABLED", "DESC");
 		
 		System.out.println("\n  ** Sort List by Key in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 				
 		verifySortingObjects("KEY", "ASC");
 		
 		System.out.println("\n  ** Sort List by Key in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Key", "DESC");
+		CommonMethods.clickArrowSorting("Key", "DESC");
 		
 		verifySortingObjects("KEY", "DESC");
 	
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 		
 	}
 	
@@ -513,14 +521,14 @@ public class Tenants extends BaseMain
 
 		// Get all the "sizes" into a list
 		
-		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethods.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		
 		for (int i = 0; i < listSizesElements.size(); i++) {
 			
 			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
 			
-			CommonMethodsAna.selectSizeOfList(pageSize);
+			CommonMethods.selectSizeOfList(pageSize);
 			
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor.... 
 			
@@ -556,7 +564,7 @@ public class Tenants extends BaseMain
 		 * */
 		// Get all the "sizes" into a list
 		
-		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages(); // xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethods.getSizesOfPages(); // xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		/*System.out.println("listSizesElements.size(): " + listSizesElements.size());
 		
@@ -566,7 +574,7 @@ public class Tenants extends BaseMain
 			
 		}*/
 		
-		String totalCountItems = CommonMethodsAna.getTotalCountItems();
+		String totalCountItems = CommonMethods.getTotalCountItems();
 		
 		int index = totalCountItems.indexOf("of");
 		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
@@ -587,7 +595,7 @@ public class Tenants extends BaseMain
 			
 			System.out.println("pageSize = " + pageSize);
 			
-			CommonMethodsAna.selectSizeOfList(pageSize);
+			CommonMethods.selectSizeOfList(pageSize);
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
 			
 			int totalPages = 1;
@@ -602,7 +610,7 @@ public class Tenants extends BaseMain
 			
 			for (int page = 1; page <= totalPages; page++) {
 			
-				CommonMethodsAna.clickPageNumber(page);
+				CommonMethods.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
 				verifyDataFromUIMatchesAPI(page, pageSize);
@@ -665,7 +673,7 @@ public class Tenants extends BaseMain
 			
 			System.out.println("pageSize = " + pageSize);
 			
-			CommonMethodsAna.selectSizeOfList(pageSize);
+			CommonMethods.selectSizeOfList(pageSize);
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
 			
 			int totalPages = 1;
@@ -680,7 +688,7 @@ public class Tenants extends BaseMain
 			
 			for (int page = 1; page <= totalPages; page++) {
 			
-				CommonMethodsAna.clickPageNumber(page);
+				CommonMethods.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
 				verifyDataNew(page, pageSize, totalCount);
@@ -740,12 +748,12 @@ public class Tenants extends BaseMain
 
 
 	
-	public static void verifyFiltering() throws Exception {
+	public static void verifyFiltering(String applicationKey, String deploymentKey, String enabled) throws Exception {
 		
 		/*
-		 * 1. Filter tenant by Application / Deployment / Enabled 
+		 * 1. Filter tenant by Application | Deployment | Enabled 
 		 * 2. Get results from UI
-		 * 3. Get tenants filtered by the same application from API
+		 * 3. Get tenants filtered by the same application | deployment | enabled from API
 		 * 4. Compare results 
 		 * */ 
 		
@@ -758,8 +766,24 @@ public class Tenants extends BaseMain
 		filterNameMap.put("All Deployments", "deploymentKey");
 		filterNameMap.put("Show Enabled and Disabled", "enabled");
 		
-		String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
+		String enabledValueForRequest = getEnabledValueForRequest(enabled);
 		
+		String[] filterValue = {applicationKey, deploymentKey, enabled};
+		String[] queryParameterValues = {applicationKey, deploymentKey, enabledValueForRequest};
+		
+		int page = 1;
+		int pageSize = 10;
+			
+		String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
+		String apiType = "\"" + "tenants" + "\"" + ":";
+		
+						
+		/*
+		 * String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
+		String[] queryParameterValues = {"RVM", "DEP_RVM_1", enabledValueForRequest};*/
 		
 		for (int i = 0; i < filterNameMap.size(); i++) {
 
@@ -769,27 +793,23 @@ public class Tenants extends BaseMain
 			System.out.println("  Filter to select: " + filter + " by value: " + value);
 			
 			// 1.a. Click Application filter dropdown list
-			CommonMethodsAna.clickFilterDropdown(filter);
+			CommonMethods.clickFilterDropdown(filter);
 								
 			// 1.b. Enter App Key / Name on the Search field
-			CommonMethodsAna.enterSearchCriteria(filter, value);  // ***** IT FAILS WHEN IT NEEDS TO SELECT THE DEPLOYMENT AFTER IS FILTERED
+			CommonMethods.enterSearchCriteria(filter, value);
 			
 			
 			// 2. 
 			List<Tenant> filteredListOpsConsole = addTenantsFromUItoList();
 			
 			
-			// 3.
-			int page = 1;
-			int pageSize = 10;
-			
+			// 3.			
 			String filterBy = filterNameMap.get(filter);
-				
-			String token = CommonMethods.GetTokenFromPost();
-			String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
-			String apiType = "\"" + "tenants" + "\"" + ":";
-						
-			String queryParameters = "?page=" + page + "&pageSize=" + pageSize + "&" + filterBy + "=" + value;
+			String queryParameterValue = queryParameterValues[i];	
+			
+			String queryParametersFilterPortion = "&" + filterBy + "=" + queryParameterValue;
+			
+			String queryParameters = queryParametersPagePortion + queryParametersFilterPortion; 
 			
 			System.out.println("queryParameters: " + queryParameters);
 				
@@ -809,14 +829,131 @@ public class Tenants extends BaseMain
 			}
 			
 			// 5. Reset filters
-			resetFilters();
+			CommonMethods.resetFilters();
 			
 		}
 		
 				
 	}
 
+	
+	public static void verifyFilteringCombined(String applicationKey, String deploymentKey, String enabled) throws Exception {
+		
+		/*
+		 * 1. Filter tenant by Application & Deployment & Enabled 
+		 *   - Select "application" from dropdown list and append "application" query portion to queryParameters.
+		 *   - Select "deployment" from dropdown list and append "deployment" query portion to queryParameters.
+		 *   - Select "enabled" from dropdown list and append "enabled" query portion to queryParameters. 
+		 * 2. Get tenants filtered by the same application & deployment & enabled from API
+		 * 3. Get results from UI
+		 * 4. Compare results 
+		 * */ 
+		
+		String[] filterToSelect = {"All Applications", "All Deployments", "Show Enabled and Disabled"};
+		
+		
+		HashMap<String, String> filterNameMap = new HashMap<String, String>();
+		
+		filterNameMap.put("All Applications", "applicationKey");
+		filterNameMap.put("All Deployments", "deploymentKey");
+		filterNameMap.put("Show Enabled and Disabled", "enabled");
+		
+		String enabledValueForRequest = getEnabledValueForRequest(enabled);
+		
+		String[] filterValue = {applicationKey, deploymentKey, enabled};
+		String[] queryParameterValues = {applicationKey, deploymentKey, enabledValueForRequest};
+		
+		int page = 1;
+		int pageSize = 10;
+			
+		String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
+		String apiType = "\"" + "tenants" + "\"" + ":";
 
+		String queryParametersFilterPortion = "";
+		
+		// 1. 
+		
+		for (int i = 0; i < filterNameMap.size(); i++) {
+				
+			String filter = filterToSelect[i];
+			String value = filterValue[i];
+
+			System.out.println("  Filter to select: " + filter + " by value: " + value);
+			
+			// 1.a. Click filter dropdown list
+			CommonMethods.clickFilterDropdown(filter);
+								
+			// 1.b. Enter value on the Search field
+			CommonMethods.enterSearchCriteria(filter, value);
+			
+			String filterBy = filterNameMap.get(filter);
+			String queryParameterValue = queryParameterValues[i];	
+						
+			String query = "&" + filterBy + "=" + queryParameterValue;
+			
+			queryParametersFilterPortion = queryParametersFilterPortion + query;
+			
+		}
+	
+		// 2.
+		
+		String queryParameters = queryParametersPagePortion + queryParametersFilterPortion; 
+		
+		System.out.println("queryParameters: " + queryParameters);
+			
+		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url + queryParameters, apiType);
+		
+		List<Tenant> filteredListAPI = putJsonArrayIntoList(jsonArrayTenants);
+	
+		
+		// 3. 		
+		
+		List<Tenant> filteredListOpsConsole = addTenantsFromUItoList();
+				
+		
+		// 4. 
+		
+		for (int j = 0; j < filteredListOpsConsole.size(); j++) {
+			
+			Assert.assertEquals(filteredListOpsConsole.get(j).getKey(), filteredListAPI.get(j).getKey());
+			Assert.assertEquals(filteredListOpsConsole.get(j).getName(), filteredListAPI.get(j).getName());
+			Assert.assertEquals(filteredListOpsConsole.get(j).getDefaultTenantID(), filteredListAPI.get(j).getDefaultTenantID());
+			Assert.assertEquals(filteredListOpsConsole.get(j).isEnabled(), filteredListAPI.get(j).isEnabled());
+			
+		}
+		
+		// 5. Reset filters
+		CommonMethods.resetFilters();
+			
+	}
+	
+
+	
+	private static String getEnabledValueForRequest(String enabled) {
+		
+		switch(enabled) {
+			
+			case "Show Enabled Tenants Only": 
+				return "true";
+			
+			case "Show Disabled Tenants Only": 
+				return "false";
+			
+			case "Show Enabled and Disabled": 
+				return "";
+			
+			default:
+				return "";
+		}
+	}
+
+
+	// **** METHOD TO BE ADDED TO COMMON METHODS ********
+	// TO BE REMOVED
+	/*
 	private static void resetFilters() throws InterruptedException {
 		
 		String xpathApp = "//jhi-application-selector/form/div/div/button[@id='sortMenu']";
@@ -838,28 +975,153 @@ public class Tenants extends BaseMain
 		driver.findElement(By.xpath(xpathAllEnabled)).click();
 		
 		Thread.sleep(2000); 
+	}*/
+
+
+	public static void addTenant() throws Exception {
+		
+		String xpathButtonAdd = "//div/h2/button[2]";
+		
+		WaitForElementPresent(By.xpath(xpathButtonAdd), 3);
+		
+		driver.findElement(By.xpath(xpathButtonAdd)).click();
+			
+		driver.findElement(By.xpath(xpathKey)).sendKeys("T_AUTOM_ANA");
+		
+		driver.findElement(By.xpath(xpathName)).sendKeys("Automation Tenant Ana");
+		
+		driver.findElement(By.xpath(xpathDefTenantId)).sendKeys("TEN-ID-AUTO");
+		
+		String xpathButtonSave = "//button/span[text()='Save']/..";
+		
+		driver.findElement(By.xpath(xpathButtonSave)).submit();
+	
+		String xpathButtonClose = "//div[@class='modal-footer']/button[text()='Close']";
+		
+		driver.findElement(By.xpath(xpathButtonClose)).click();
+	}
+	
+
+	public static void searchTenant(String tenantKey) {
+		
+		String xpathSearchTypeSelect = "//select[@formcontrolname='searchTypeSelect']";
+		
+		new Select(driver.findElement(By.xpath(xpathSearchTypeSelect))).selectByValue("KEY");;
+		
+		String xpathSearchTextInput = "//input[@formcontrolname='searchTextInput']";
+		
+		driver.findElement(By.xpath(xpathSearchTextInput)).clear();
+		driver.findElement(By.xpath(xpathSearchTextInput)).sendKeys(tenantKey);
+		
+	}
+	
+	
+	public static void deleteTenant(String tenantKey) {
+		
+		int pageSize = 10;
+		
+		// make sure that the Delete button clicked belongs to the tenant that needs to be deleted
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonDelete = "//table/tbody/tr[" + i + "]/td[5]/div/button/span[text()='Delete']";
+			
+			driver.findElement(By.xpath(xpathButtonDelete)).click();	
+			
+			String xpathKeyPopUp = "//jhi-tenant-mgmt-delete-dialog/form/div[2]/div/div[2]/dd[1]";
+			
+			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(tenantKey)) {
+				
+				//System.out.println("Tenant found");
+				break;
+			}
+			//System.out.println("Tenant NOT found");
+			
+			// If the tenant clicked is not the tenant that we need then click Cancel button
+			driver.findElement(By.xpath("//button/span[text()='Cancel']/..")).click();
+			
+		}
+		
+		// click checkbox
+		String xpathCheckbox = "//label/input[@type='checkbox']";
+		
+		driver.findElement(By.xpath(xpathCheckbox)).click();
+		
+		// Was getting error "... other element would receive the click..." because of the other Delete buttons in the UI
+		// Added div[@class='modal-footer']/ to the xpath to get rid of this error 
+		String xpathButtonDeleteConfirm = "//div[@class='modal-footer']/button/span[text()='Delete']/..";
+		
+		WaitForElementClickable(By.xpath(xpathButtonDeleteConfirm), 3, "Button Delete is not clickable");
+		
+		driver.findElement(By.xpath(xpathButtonDeleteConfirm)).submit();
+	
+		
 	}
 
 
+	public static void editTenant(String tenantKey) {
+		
+		
+		int pageSize = 10;
+		
+		// make sure that the Edit button clicked belongs to the tenant that needs to be edited
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonEdit = "//table/tbody/tr[" + i + "]/td[5]/div/button/span[text()='Edit']";
+			
+			driver.findElement(By.xpath(xpathButtonEdit)).click();	
+			
+			String xpathKeyPopUp = "//jhi-tenant-management-dialog/form/div[2]/div/dl/dd";
+			
+			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(tenantKey)) {
+				
+				System.out.println("Tenant found");
+				break;
+			}
+			System.out.println("Tenant NOT found");
+			
+			// If the tenant clicked is not the tenant that we need then click Cancel button
+			driver.findElement(By.xpath("//button/span[text()='Cancel']/..")).click();
+			
+		}
+		
+		// Modify Name
+		driver.findElement(By.xpath(xpathName)).clear();
+		driver.findElement(By.xpath(xpathName)).sendKeys("New name for edited tenant");
+	
+		// Modify Default Tenant ID
+		driver.findElement(By.xpath(xpathDefTenantId)).clear();
+		driver.findElement(By.xpath(xpathDefTenantId)).sendKeys("Def tenant ID changed");
+		
+		// Modify Enabled
+		if (driver.findElement(By.xpath(xpathEnabled)).getAttribute("value").equals("false")) {
+			
+			driver.findElement(By.xpath(xpathEnabled)).click();
+		
+		} else if (driver.findElement(By.xpath(xpathDisabled)).getAttribute("value").equals("false")) {
+		
+			driver.findElement(By.xpath(xpathDisabled)).click();
+		}
+	
+	
+		// Was getting error "... other element would receive the click..." because of the other Delete buttons in the UI
+		// Added div[@class='modal-footer']/ to the xpath to get rid of this error 
+		String xpathButtonSave = "//div[@class='modal-footer']/button/span[text()='Save']/..";
+		
+		WaitForElementClickable(By.xpath(xpathButtonSave), 3, "Button Save is not clickable");
+		
+		driver.findElement(By.xpath(xpathButtonSave)).submit();
+	
+		
+		
+	}
+	
 	
 	// ***************************************************
 	// **** METHODS TO BE ADDED TO COMMON METHODS ********
 	// ***************************************************
 	/*
-	public static String GetNonRequiredItem(JSONObject jo,  String item) throws JSONException
-	{
-		try
-		{
-			jo.getString(item);				
-		}
-		catch (Exception e) 
-		{
-			return "";
-		}	
-		
-		return jo.getString(item);
-	}
-
 	
 
 	// ENABLED/DISABLED values are converted to true/false

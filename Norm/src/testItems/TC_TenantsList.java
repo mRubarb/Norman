@@ -1,10 +1,7 @@
 package testItems;
 
-import java.io.IOException;
-
 import javax.swing.JOptionPane;
 
-import org.json.JSONException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -35,22 +32,40 @@ public class TC_TenantsList extends BaseMain {
 		
 		CommonMethods.verifyTitle("Tenants");
 		
-		/*Tenants.verifyColumnsNames();
+		Tenants.verifyColumnsNames();
 		
 		Tenants.verifyDataAndSorting();
 		
 		Tenants.verifyPaging();
-		*/
-		Tenants.verifyFiltering();
+		
+		Tenants.verifyFiltering("RVM", "RVM_1", "Show Enabled Tenants Only");
 
-			
+		Tenants.verifyFilteringCombined("RVM", "RVM_1", "Show Enabled Tenants Only");
+		
+		String tenantKey = "T_AUTOM_ANA";
+		
+		Tenants.addTenant();
+		
+		Tenants.searchTenant("T_A");
+		
+		Thread.sleep(3000);
+		
+		Tenants.editTenant(tenantKey);
+		
+		Tenants.searchTenant("T_A");
+		
+		Thread.sleep(3000);
+		
+		Tenants.deleteTenant(tenantKey);
+		
+		
 	}
 	
 	
 	@AfterClass
 	public void finish() 
 	{
-		JOptionPane.showMessageDialog(null, "Ready To Close Driver.");		
+		JOptionPane.showMessageDialog(null, "Tenants Tests Finished.");		
 		driver.close();
 
 	}

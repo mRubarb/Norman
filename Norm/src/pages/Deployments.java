@@ -3,6 +3,7 @@ package pages;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -15,11 +16,16 @@ import org.testng.Assert;
 import baseItems.BaseMain;
 import classes.Deployment;
 import common.CommonMethods;
-import common.CommonMethodsAna;
 
 
 public class Deployments extends BaseMain 
 {
+	
+	private static String xpathKey = "//input[@formcontrolname='key']";
+	private static String xpathVersion = "//input[@formcontrolname='version']";
+	private static String xpathDescription = "//textarea[@formcontrolname='description']";
+	private static String xpathEnabled = "//label[1]/input[@formcontrolname='enabled']";
+	private static String xpathDisabled = "//label[2]/input[@formcontrolname='enabled']";
 	
 	public static String[] propertiesNames = {"Key", "Application Key", "Name", "Version", "Description", "Enabled"};
 	
@@ -63,7 +69,7 @@ public class Deployments extends BaseMain
 		List<Deployment> actualDeploymentsList = putJsonArrayIntoList(jsonArrayDeployments);
 		List<Deployment> expectedDeploymentsList = addDeploymentsFromUItoList();
 		
-		for (int i = 0; i < actualDeploymentsList.size(); i++) {
+		for (int i = 0; i < expectedDeploymentsList.size(); i++) {  // actualDeploymentsList.size(); i++) {
 			
 			Deployment actual = actualDeploymentsList.get(i);
 			Deployment expected = expectedDeploymentsList.get(i);
@@ -108,7 +114,7 @@ public class Deployments extends BaseMain
 			*/
 			
 			deployment.setKey(jo.getString("key"));
-			deployment.setDescription(CommonMethodsAna.GetNonRequiredItem(jo, "description"));
+			deployment.setDescription(CommonMethods.GetNonRequiredItem(jo, "description"));
 			deployment.setApplicationKey(jo.getString("applicationKey"));
 			deployment.setVersion(jo.getString("version"));
 			deployment.setEnabled(jo.getBoolean("enabled"));
@@ -136,7 +142,7 @@ public class Deployments extends BaseMain
 			//row = driver.findElements(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td"));
 			String key = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[1]")).getText();
 			String appKey = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[2]/div[1]/a")).getText();
-			String appName = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[2]/div[2]")).getText();
+			//String appName = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[2]/div[2]")).getText();
 			String version = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[3]")).getText();
 			String description = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[4]")).getText();
 			String enabled = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[5]")).getText();
@@ -147,7 +153,7 @@ public class Deployments extends BaseMain
 			deployment.setApplicationKey(appKey);
 			deployment.setVersion(version);
 			deployment.setDescription(description);
-			deployment.setEnabled(CommonMethodsAna.convertToBoolean(enabled));
+			deployment.setEnabled(CommonMethods.convertToBoolean(enabled));
 			
 			expectedDeploymentsList.add(deployment);
 			
@@ -168,13 +174,13 @@ public class Deployments extends BaseMain
 	public static void verifyDataAndSorting() throws InterruptedException, IOException, JSONException {
 		
 		// Get all the "sizes" into a list
-		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethods.getSizesOfPages();  //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		for (int i = 0; i < listSizesElements.size(); i++) {
 			
 			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
 			
-			CommonMethodsAna.selectSizeOfList(pageSize);
+			CommonMethods.selectSizeOfList(pageSize);
 			
 			// ** T-960:Tenants list can be sorted
 			verifyListSorted();
@@ -234,43 +240,43 @@ public class Deployments extends BaseMain
 		
 		System.out.println("\n  ** Sort List by Key in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 				
 		verifySortingObjects("KEY", "ASC");
 		
 		System.out.println("\n  ** Sort List by Key in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Key", "DESC");
+		CommonMethods.clickArrowSorting("Key", "DESC");
 		
 		verifySortingObjects("KEY", "DESC");
 	
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 		
 		System.out.println("\n  ** Sort List by Version in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Version", "ASC");
+		CommonMethods.clickArrowSorting("Version", "ASC");
 		
 		verifySortingObjects("VERSION", "ASC");
 		
 		System.out.println("\n  ** Sort List by Version in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Version", "DESC");
+		CommonMethods.clickArrowSorting("Version", "DESC");
 				
 		verifySortingObjects("VERSION", "DESC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Ascending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Enabled", "ASC");
+		CommonMethods.clickArrowSorting("Enabled", "ASC");
 				
 		verifySortingObjects("IS_ENABLED", "ASC");
 		
 		System.out.println("\n  ** Sort List by Enabled in Descending Order **");
 		
-		CommonMethodsAna.clickArrowSorting("Enabled", "DESC");
+		CommonMethods.clickArrowSorting("Enabled", "DESC");
 				
 		verifySortingObjects("IS_ENABLED", "DESC");
 	
-		CommonMethodsAna.clickArrowSorting("Key", "ASC");
+		CommonMethods.clickArrowSorting("Key", "ASC");
 		
 	}
 	
@@ -425,7 +431,7 @@ public class Deployments extends BaseMain
 		 * */
 		// Get all the "sizes" into a list
 		
-		List<WebElement> listSizesElements = CommonMethodsAna.getSizesOfPages(); // xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethods.getSizesOfPages(); // xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
 		/*System.out.println("listSizesElements.size(): " + listSizesElements.size());
 		
@@ -435,7 +441,7 @@ public class Deployments extends BaseMain
 			
 		}*/
 		
-		String totalCountItems = CommonMethodsAna.getTotalCountItems(); //driver.findElement(By.xpath("//div/jhi-item-count")).getText();
+		String totalCountItems = CommonMethods.getTotalCountItems(); //driver.findElement(By.xpath("//div/jhi-item-count")).getText();
 		
 		int index = totalCountItems.indexOf("of");
 		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
@@ -456,7 +462,7 @@ public class Deployments extends BaseMain
 			
 			System.out.println("pageSize = " + pageSize);
 			
-			CommonMethodsAna.selectSizeOfList(pageSize);
+			CommonMethods.selectSizeOfList(pageSize);
 			Thread.sleep(2000);  // -- see if it can be changed to waitfor....
 			
 			int totalPages = 1;
@@ -471,7 +477,7 @@ public class Deployments extends BaseMain
 			
 			for (int page = 1; page <= totalPages; page++) {
 			
-				CommonMethodsAna.clickPageNumber(page);
+				CommonMethods.clickPageNumber(page);
 				
 				System.out.println("page = " + page);
 				verifyDataFromUIMatchesAPI(page, pageSize);
@@ -506,42 +512,370 @@ public class Deployments extends BaseMain
 		}
 		
 	}
-	
-	
+
+	public static void addDeployment(String deploymentKey, String applicationKey) throws Exception {
 		
+		String xpathButtonAdd = "//div/h2/button[2]";
+		
+		WaitForElementPresent(By.xpath(xpathButtonAdd), 3);
+		
+		driver.findElement(By.xpath(xpathButtonAdd)).click();
+			
+		driver.findElement(By.xpath(xpathKey)).sendKeys(deploymentKey);
+		
+		CommonMethods.clickFilterDropdown("Select Application");
+		
+		CommonMethods.enterSearchCriteria("Select Application", applicationKey);
+		
+		driver.findElement(By.xpath(xpathVersion)).sendKeys("18.1.1");
+		
+		driver.findElement(By.xpath(xpathDescription)).sendKeys("Testing add deployment - automation");
+		
+		String xpathButtonSave = "//button/span[text()='Save']/..";
+		
+		driver.findElement(By.xpath(xpathButtonSave)).submit();
 	
-	// ***************************************************
-	// **** METHODS TO BE ADDED TO COMMON METHODS ********
-	// ***************************************************
-	/*
-	public static String GetNonRequiredItem(JSONObject jo,  String item) throws JSONException
-	{
-		try
-		{
-			jo.getString(item);				
+	}
+
+	
+	public static void editDeployment(String deploymentKey, String applicationKey) throws Exception {
+		
+		int pageSize = 10;
+		
+		CommonMethods.selectSizeOfList(pageSize);	
+		
+		// Filter by Application
+		CommonMethods.clickFilterDropdown("All Applications");
+		
+		CommonMethods.enterSearchCriteria("All Applications", applicationKey);
+		
+		// make sure that the Edit button clicked belongs to the deployment that needs to be edited
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonEdit = "//jhi-deployments/div/div/table/tbody/tr[" + i + "]/td[6]/div/button/span[text()='Edit']/..";
+			
+			driver.findElement(By.xpath(xpathButtonEdit)).click();	
+			
+			String xpathKeyPopUp = "//jhi-deployment-management-dialog/form/div/dl/dd";
+			
+			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(deploymentKey)) {
+				
+				// System.out.println("Deployment found");
+				break;
+			}
+			
+			// System.out.println("Deployment NOT found");
+			
+			// If the deployment clicked is not the deployment that we need then click Cancel button
+			driver.findElement(By.xpath("//button/span[text()='Cancel']/..")).click();
+			
 		}
-		catch (Exception e) 
-		{
-			return "";
-		}	
 		
-		return jo.getString(item);
+		// Modify Version
+		driver.findElement(By.xpath(xpathVersion)).clear();
+		driver.findElement(By.xpath(xpathVersion)).sendKeys("18.1.2.3");
+	
+		// Modify Description
+		driver.findElement(By.xpath(xpathDescription)).clear();
+		driver.findElement(By.xpath(xpathDescription)).sendKeys("Changing the deployment's description - Automation!!");
+		
+		// Modify Enabled
+		if (driver.findElement(By.xpath(xpathEnabled)).getAttribute("value").equals("false")) {
+			
+			driver.findElement(By.xpath(xpathEnabled)).click();
+		
+		} else if (driver.findElement(By.xpath(xpathDisabled)).getAttribute("value").equals("false")) {
+		
+			driver.findElement(By.xpath(xpathDisabled)).click();
+		}
+	
+	
+		// Was getting error "... other element would receive the click..." because of the other Delete buttons in the UI
+		// Added div[@class='modal-footer']/ to the xpath to get rid of this error 
+		String xpathButtonSave = "//div[@class='modal-footer']/button/span[text()='Save']/..";
+		
+		WaitForElementClickable(By.xpath(xpathButtonSave), 3, "Button Save is not clickable");
+		
+		driver.findElement(By.xpath(xpathButtonSave)).submit();
+			
+	}
+
+	
+	
+	public static void deleteDeployment(String deploymentKey) {
+		
+		int pageSize = 10;
+		
+		// make sure that the Delete button clicked belongs to the tenant that needs to be deleted
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonDelete = "//table/tbody/tr[" + i + "]/td[6]/div/button/span[text()='Delete']";
+			
+			driver.findElement(By.xpath(xpathButtonDelete)).click();	
+			
+			String xpathKeyPopUp = "//jhi-deployment-mgmt-delete-dialog/form/div[2]/div/div[2]/dd[1]";
+			
+			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(deploymentKey)) {
+				
+				// System.out.println("Deployment found");
+				break;
+			}
+			
+			// System.out.println("Deployment NOT found");
+			
+			// If the deployment clicked is not the deployment that we need then click Cancel button
+			driver.findElement(By.xpath("//button/span[text()='Cancel']/..")).click();
+			
+		}
+		
+		// click checkbox
+		String xpathCheckbox = "//label/input[@type='checkbox']";
+		
+		driver.findElement(By.xpath(xpathCheckbox)).click();
+		
+		// Was getting error "... other element would receive the click..." because of the other Delete buttons in the UI
+		// Added div[@class='modal-footer']/ to the xpath to get rid of this error 
+		String xpathButtonDeleteConfirm = "//div[@class='modal-footer']/button/span[text()='Delete']/..";
+		
+		WaitForElementClickable(By.xpath(xpathButtonDeleteConfirm), 3, "Button Delete is not clickable");
+		
+		driver.findElement(By.xpath(xpathButtonDeleteConfirm)).submit();
+			
+	}
+
+	
+	
+	public static void verifyFiltering(String tenantKey, String applicationKey, String enabled) throws Exception {
+		
+		
+		/*
+		 * 1. Filter deployment by Tenant | Application | Enabled 
+		 * 2. Get results from UI
+		 * 3. Get deployments filtered by the same tenant | application | enabled from API
+		 * 4. Compare results 
+		 * */ 
+		
+		String[] filterToSelect = {"All Tenants", "All Applications", "Show Enabled and Disabled"};
+		
+		
+		HashMap<String, String> filterNameMap = new HashMap<String, String>();
+		
+		filterNameMap.put("All Tenants", "tenantKey");
+		filterNameMap.put("All Applications", "applicationKey");
+		filterNameMap.put("Show Enabled and Disabled", "enabled");
+		
+		String enabledValueForRequest = getEnabledValueForRequest(enabled);
+		
+		String[] filterValue = {tenantKey, applicationKey, enabled};
+		String[] queryParameterValues = {tenantKey, applicationKey, enabledValueForRequest};
+		
+		int page = 1;
+		int pageSize = 10;
+			
+		String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments";
+		String apiType = "\"" + "deployments" + "\"" + ":";
+		
+						
+		/*
+		 * String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
+		String[] queryParameterValues = {"RVM", "DEP_RVM_1", enabledValueForRequest};*/
+		
+		for (int i = 0; i < filterNameMap.size(); i++) {
+
+			String filter = filterToSelect[i];
+			String value = filterValue[i];
+
+			System.out.println("  Filter to select: " + filter + " by value: " + value);
+			
+			// 1.a. Click Application filter dropdown list
+			CommonMethods.clickFilterDropdown(filter);
+								
+			// 1.b. Enter App Key / Name on the Search field
+			CommonMethods.enterSearchCriteria(filter, value);
+			
+			
+			// 2. 
+			List<Deployment> filteredListOpsConsole = addDeploymentsFromUItoList();
+			
+			
+			// 3.			
+			String filterBy = filterNameMap.get(filter);
+			String queryParameterValue = queryParameterValues[i];	
+			
+			String queryParametersFilterPortion = "&" + filterBy + "=" + queryParameterValue;
+			
+			String queryParameters = queryParametersPagePortion + queryParametersFilterPortion; 
+			
+			System.out.println("queryParameters: " + queryParameters);
+				
+			JSONArray jsonArrayDeployments = CommonMethods.GetJsonArrayWithUrl(token, url + queryParameters, apiType);
+			
+			List<Deployment> filteredListAPI = putJsonArrayIntoList(jsonArrayDeployments);
+		
+			// 4. 
+			
+			for (int j = 0; j < filteredListOpsConsole.size(); j++) {
+				
+				Assert.assertEquals(filteredListOpsConsole.get(j).getKey(), filteredListAPI.get(j).getKey());
+				Assert.assertEquals(filteredListOpsConsole.get(j).getApplicationKey(), filteredListAPI.get(j).getApplicationKey());
+				//Assert.assertEquals(filteredListOpsConsole.get(j).getDescription(), filteredListAPI.get(j).getDescription());  // 'Description' is optional
+				Assert.assertEquals(filteredListOpsConsole.get(j).getVersion(), filteredListAPI.get(j).getVersion());
+				Assert.assertEquals(filteredListOpsConsole.get(j).isEnabled(), filteredListAPI.get(j).isEnabled());
+				
+			}
+			
+			// 5. Reset filters
+			CommonMethods.resetFilters();
+			
+		}
+			
+		
 	}
 	
-	// ENABLED/DISABLED values are converted to true/false
-	private static boolean convertToBoolean(String isEnabled) {
-		
-		if (isEnabled.equals("ENABLED")) {
 	
-			return true;
+
+	public static void verifyFilteringCombined(String tenantKey, String applicationKey, String enabled) throws Exception {
+		
+		/*
+		 * 1. Filter deployment by Tenant & Application & Enabled 
+		 *   - Select "tenant" from dropdown list and append "tenant" query portion to queryParameters.
+		 *   - Select "application" from dropdown list and append "application" query portion to queryParameters.
+		 *   - Select "enabled" from dropdown list and append "enabled" query portion to queryParameters. 
+		 * 2. Get deployments filtered by the same tenant & application & enabled from API
+		 * 3. Get results from UI
+		 * 4. Compare results 
+		 * */ 
+		
+		String[] filterToSelect = {"All Tenants", "All Applications", "Show Enabled and Disabled"};
+		
+		
+		HashMap<String, String> filterNameMap = new HashMap<String, String>();
+		
+		filterNameMap.put("All Tenants", "tenantKey");
+		filterNameMap.put("All Applications", "applicationKey");
+		filterNameMap.put("Show Enabled and Disabled", "enabled");
+				
+		String enabledValueForRequest = getEnabledValueForRequest(enabled);
+		
+		String[] filterValue = {tenantKey, applicationKey, enabled};
+		String[] queryParameterValues = {tenantKey, applicationKey, enabledValueForRequest};
+		
+		int page = 1;
+		int pageSize = 10;
 			
-		} else if (isEnabled.equals("DISABLED")) {
+		String queryParametersPagePortion = "?page=" + page + "&pageSize=" + pageSize;
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments";
+		String apiType = "\"" + "deployments" + "\"" + ":";
+
+		String queryParametersFilterPortion = "";
+		
+		// 1. 
+		
+		for (int i = 0; i < filterNameMap.size(); i++) {
+				
+			String filter = filterToSelect[i];
+			String value = filterValue[i];
+
+			System.out.println("  Filter to select: " + filter + " by value: " + value);
 			
-			return false;
+			// 1.a. Click filter dropdown list
+			CommonMethods.clickFilterDropdown(filter);
+								
+			// 1.b. Enter value on the Search field
+			CommonMethods.enterSearchCriteria(filter, value);
+			
+			String filterBy = filterNameMap.get(filter);
+			String queryParameterValue = queryParameterValues[i];	
+						
+			String query = "&" + filterBy + "=" + queryParameterValue;
+			
+			queryParametersFilterPortion = queryParametersFilterPortion + query;
 			
 		}
-		return false; 
 	
+		// 2.
+		
+		String queryParameters = queryParametersPagePortion + queryParametersFilterPortion; 
+		
+		System.out.println("queryParameters: " + queryParameters);
+			
+		JSONArray jsonArrayDeployments = CommonMethods.GetJsonArrayWithUrl(token, url + queryParameters, apiType);
+		
+		List<Deployment> filteredListAPI = putJsonArrayIntoList(jsonArrayDeployments);
+	
+		
+		// 3. 		
+		
+		List<Deployment> filteredListOpsConsole = addDeploymentsFromUItoList();
+				
+		
+		// 4. 
+		
+		for (int j = 0; j < filteredListOpsConsole.size(); j++) {
+			
+			Assert.assertEquals(filteredListOpsConsole.get(j).getKey(), filteredListAPI.get(j).getKey());
+			Assert.assertEquals(filteredListOpsConsole.get(j).getApplicationKey(), filteredListAPI.get(j).getApplicationKey());
+			//Assert.assertEquals(filteredListOpsConsole.get(j).getDescription(), filteredListAPI.get(j).getDescription());  // 'Description' is optional
+			Assert.assertEquals(filteredListOpsConsole.get(j).getVersion(), filteredListAPI.get(j).getVersion());
+			Assert.assertEquals(filteredListOpsConsole.get(j).isEnabled(), filteredListAPI.get(j).isEnabled());
+			
+		}
+		
+		// 5. Reset filters
+		CommonMethods.resetFilters();
+			
+	}
+	
+	// TO BE REMOVED
+	/*
+	private static void resetFilters() throws InterruptedException {
+		
+		String xpathTenant = "//jhi-tenant-selector/form/div/div/button[@id='sortMenu']";
+		driver.findElement(By.xpath(xpathTenant)).click();
+				
+		String xpathAllTenants = "//jhi-tenant-selector/form/div/div/div/button/span[text()='All Tenants']";
+		driver.findElement(By.xpath(xpathAllTenants)).click();
+		
+		String xpathApp = "//jhi-application-selector/form/div/div/button[@id='sortMenu']";
+		driver.findElement(By.xpath(xpathApp)).click();
+				
+		String xpathAllApp = "//jhi-application-selector/form/div/div/div/button/span[text()='All Applications']";
+		driver.findElement(By.xpath(xpathAllApp)).click();
+		
+		String xpathEnabled = "//jhi-value-selector/div/div/button[@id='sortMenu']";
+		driver.findElement(By.xpath(xpathEnabled)).click();
+				
+		String xpathAllEnabled = "//jhi-value-selector/div/div/div/button/span[text()='Show Enabled and Disabled']";
+		driver.findElement(By.xpath(xpathAllEnabled)).click();
+		
+		Thread.sleep(2000); 
+		
 	}*/
+		
 	
+	private static String getEnabledValueForRequest(String enabled) {
+		
+		switch(enabled) {
+			
+			case "Show Enabled Deployments Only": 
+				return "true";
+			
+			case "Show Disabled Deployments Only": 
+				return "false";
+			
+			case "Show Enabled and Disabled": 
+				return "";
+			
+			default:
+				return "";
+		}
+	}
+
 }

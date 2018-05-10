@@ -31,8 +31,8 @@ public class TC_RoutesList extends BaseMain
 			CommonMethods.verifyTitle("Routes");
 			//Routes.VerifyFullList();
 			//Routes.VerifySortingMultiplePages();
-			Routes.AddValidations();
-			//Routes.AddRoute();
+			//Routes.AddValidations();
+			Routes.AddRoute();
 		}
 		
 		

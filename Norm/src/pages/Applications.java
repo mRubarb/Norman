@@ -49,7 +49,7 @@ public class Applications extends BaseMain
 	public static final String extraText = "NEW";
 	public static final String approveDeleteInPoup_Locator = "//input[@class='ng-untouched ng-pristine ng-valid']";
 	public static final String selectDeleteInPoup_Locator = "//button[@class='btn btn-danger']";	
-	public static final String saveButtonPoUp_Locator = "//button[@class='btn btn-primary']";
+	public static final String saveButtonPoUp_Locator = "//button[@class='btn btn-primary']";	 // TODO: same for routes.
 	public static final String addButton_Locator = "//button[@class='btn btn-primary ml-auto p-2']"; // TODO: same for routes.
 	public static final String uiCancel_Locator = "(//button[@class='btn btn-secondary'])[2]"; // TODO: same for routes.	
 	

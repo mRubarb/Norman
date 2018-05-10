@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.xerces.parsers.CachingParserPool.ShadowedGrammarPool;
+import org.apache.xerces.parsers.DTDConfiguration;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,6 +20,7 @@ import org.seleniumhq.jetty9.server.handler.ContextHandler.Availability;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
+import classes.ApplicationClass;
 import classes.RouteClass;
 import common.CommonMethods;
 import pages.Applications.ActionForApplications;
@@ -39,8 +41,11 @@ public class Routes extends BaseMain
 	public static boolean allowServiceCalls = false;
 	public static String host = "";
 	public static String path = "";
+	public static final String saveButtonPoUp_Locator = "//button[@class='btn btn-primary']";	 // TODO: same for routes.
 	public static final String addButton_Locator = "//button[@class='btn btn-primary ml-auto p-2']"; // TODO: same for routes.	
 	public static final String uiCancel_Locator = "(//button[@class='btn btn-secondary'])[2]"; // TODO: same for routes.
+	public static final String approveDeleteInPoup_Locator = "//input[@class='ng-untouched ng-pristine ng-valid']"; // TODO: same for routes.
+	public static final String selectDeleteInPoup_Locator = "//button[@class='btn btn-danger']"; // TODO: same for routes.
 	
 	// this is the real route in the QA environment - don't touch.
 	public static final String tenantDontUse = "CTTI";
@@ -51,14 +56,19 @@ public class Routes extends BaseMain
 	public static final String uiTextBoxInError = "form-control ng-untouched ng-pristine ng-invalid";
 	public static final String uiTextBoxNoError = "form-control ng-touched ng-dirty ng-valid";	
 	
-	// URL for temporary test route 
-	public static final String automationSubDomain= "automationSubDomain";
-	public static final String automationDomain= "automationDomain.com";
-	public static final String automationPath= "/automationPath";
+	// temporary test route 
+	public static final String automationSubDomain= "seleniumSubDomain";
+	public static final String automationDomain= "seleniumDomain.com";
+	public static final String automationPath= "/seleniumPath";
 	public static final String automationfullPath= automationSubDomain + "." + automationDomain + automationPath;
-
 	public static final String automationTenantID = "selenium123";
+	public static final String automationDescription = "selenium Description";	
+	public static final String automationRouteKey = "SELENIUM_TENANT:SELEN_APP:1246924192";
+	public static final String automationTenant = "SELENIUM_TENANT";
+	public static final String automationApp = "SELEN_APP";
+	public static final String automationDeploy = "SELEN_DEPLOYMENT";
 	
+													 	
 	public static String apiType = "\"routes\":";
 	public static String RoutesTableCss = ".table.table-striped>tbody>tr";
 	public static String RoutesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
@@ -259,38 +269,60 @@ public class Routes extends BaseMain
 
 	public static void AddRoute() throws Exception 
 	{
-		// select add, wait for title, and select cancel, and verify back in the applications list.
+		int indexLocator = 0;
+		boolean foundAddedRoute = false;
+		
+		// delete test route if it exists.
+		DeleteRouteByKeyFromRow(automationRouteKey);
+
+		Thread.sleep(3000);
+		
+		// select add and wait for title
 		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
 		
-		// tenant
-		ClickItem("(.//*[@id='sortMenu'])[5]", 3);
+		// select correct pull-downs.
+		PopulatePulldownsForAddRoute();
 		
-		// send search text.		
-		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[4]"), 3, "");
-		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[4]")).sendKeys("SELENIUM_TENANT");
+		// fill in fields and save.
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(automationSubDomain);
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(automationDomain);
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath);
+		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID);
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(automationDescription);		
+		driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[2]")).click();
+		driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
+		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator) ,3); 
 		
-		ClickItem("(//span[text()='SELENIUM_TENANT']/../..)[2]", 3);
+		listOfActualRoutes.clear();
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+		
+		for(RouteClass rtClass: listOfActualRoutes)
+		{
+			if((rtClass.m_host + rtClass.m_path).equals(automationfullPath.toLowerCase()))
+			{
+				ShowText(automationfullPath);
+				foundAddedRoute = true;
+				break;
+			}
+			indexLocator++;
+		}
 
-		// application
-		ClickItem("(.//*[@id='sortMenu'])[6]", 3);
+		if(!foundAddedRoute)
+		{
+			Assert.fail("Route that was added is not found in 'AddRoute'.");
+		}
 		
-		// send search text.		
-		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[5]"), 3, "");
-		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[5]")).sendKeys("SELEN_APP");
-
-		ClickItem("(//span[text()='SELEN_APP']/../..)[2]", 2);
+		ShowText(listOfActualRoutes.get(indexLocator).m_Key);
+		ShowText(listOfActualRoutes.get(indexLocator).m_path);		
+		ShowText(listOfActualRoutes.get(indexLocator).m_tenantId);
+		ShowText(listOfActualRoutes.get(indexLocator).m_description);
+		ShowText(listOfActualRoutes.get(indexLocator).m_disabledReason);
 		
-		// application
-		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
 		
-		// send search text.		
-		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
-		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[6]")).sendKeys("SELEN_DEPLOYMENT");
-
-		ClickItem("(//span[text()='SELEN_DEPLOYMENT ']/../..)[2]", 2);
+		
+		
 	}
-	
 	
 	public static void AddValidations() throws Exception 
 	{
@@ -303,8 +335,7 @@ public class Routes extends BaseMain
 		String errMessagesPulldown = "Failed expected message in pulldown.";
 		String subdomainNoSpecialChars = "Subdomain must only contain letters, numbers, periods, dashes and underscores";
 		String domainNoSpecialChars = "Domain must only contain letters, numbers, periods, dashes and underscores";
-		
-		
+		String specialCharErrNotFound = "Special character error not found.";		
 		String[] validationMessagesAddRoute = new String[]{"Must select a tenant", "Must select an application", "Must select a deployment", "required", "required", "required", "Tenant ID is required"};
 		
 		String greaterThan256Chars = "256bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbmmmmmmmm"
@@ -315,9 +346,11 @@ public class Routes extends BaseMain
 		
 		ShowCurrentTest("Routes: AddValidations");
 
-		// store what's in UI list.
-		ShowActualRoutesOrStore(ActionForApplications.Store);
-		
+		SetPageSizeToMax();
+
+		// delete test route if it exists.
+		DeleteRouteByKeyFromRow(automationRouteKey);
+
 		// ///////////////////////////////////////////////////////////////////////////////////
 		// first get a list of all routes in UI, considering there may be a second page.
 		// need this to make sure the route being added doesn't exist.
@@ -325,13 +358,15 @@ public class Routes extends BaseMain
 		// /////////////////////////////////////////////////////////////////////////////////// 
 		//LoadActualList(numberOfRows, ActionForApplications.Store);
 		
-		ShowText(automationfullPath);
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+		//ShowActualRoutesOrStore(ActionForApplications.Show);
 		
 		existingRoutePath = listOfActualRoutes.get(0).m_host + listOfActualRoutes.get(0).m_path;
+		
 		ShowText(existingRoutePath);
 		
 		// make sure test application is not on the list.
-		// DeleteAppByKeyFromRow(testAppKey); 
+		//DeleteAppByKeyFromRow(testAppKey); 
 		
 		// select add, wait for title, and select cancel, and verify back in the applications list.
 		ClickItem(addButton_Locator, 3); // add
@@ -398,10 +433,10 @@ public class Routes extends BaseMain
 		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[4]")).getText(), tooManyCharsPathError);
 
 		// //////////////////////////////////////////////////////////////////////////////////////////////////////
-		// this section verifies the max allowed characters to enter in sub-domain, domain, and path is 256
+		// verify the max allowed characters to enter in sub-domain, domain, and path is 256
 		// //////////////////////////////////////////////////////////////////////////////////////////////////////	
 		
-		CancelOpenAddRouteUI(); // need to start at open.
+		CancelOpenAddRouteUI(true); // need to start at open.
 		
 		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys("/" + greaterThan256Chars);
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value").length(), 256);
@@ -410,27 +445,29 @@ public class Routes extends BaseMain
 		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(greaterThan256Chars);
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).getAttribute("value").length(), 256);
 		
-		CancelOpenAddRouteUI(); // need to start at open.
+		CancelOpenAddRouteUI(true); // need to start at open.
 		
 		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(greaterThan256Chars);
 		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(greaterThan256Chars);
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("value").length(), 256);		
 
+		// //////////////////////////////////////////////////////////////////////////////////////////////////////
 		// verify validation error for "*" character in sub-domain and domain fields. 
-		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
-		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();		
-		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).clear();
-		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
-		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).clear();
+		// //////////////////////////////////////////////////////////////////////////////////////////////////////
+		ClearRequiredFields();
 		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath);
 		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys("*"); // special char		
 		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys("*"); // special char
 
-		String specialCharErrNotFound = "Special character error not found.";
 		WaitForElementVisible(By.xpath("(//div/small)[1]"), 5);
 		WaitForElementVisible(By.xpath("(//div/small)[2]"), 5);
 		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[1]")).getText(), subdomainNoSpecialChars, specialCharErrNotFound);
 		Assert.assertEquals(driver.findElement(By.xpath("(//div/small)[2]")).getText(), domainNoSpecialChars, specialCharErrNotFound);
+		
+		// verify existing route can't be added.
+		ClearRequiredFields();
+		
+		CancelOpenAddRouteUI(false);
 	}
 	
 	public static void GoToRoutes()
@@ -444,7 +481,124 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
-	public static void CancelOpenAddRouteUI() throws Exception
+	// see if an application key exists in the actual list from UI. 
+	public static int FindIndexExistingRoute(String routeKey)
+	{
+		boolean foundAdd = false;
+		int indexCntr = 1;
+
+		for(RouteClass rtClass : listOfActualRoutes)
+		{
+			if(rtClass.m_Key.equals(routeKey))
+			{
+				foundAdd = true;
+				break;
+			}
+			indexCntr++;
+		}
+		
+		if(!foundAdd)
+		{
+			return -1;
+		}
+
+		return indexCntr;
+	}		
+	
+	public static void DeleteRouteByKeyFromRow(String routeKey) throws Exception
+	{
+		int indexCntr = 0;
+
+		// clear actual list and get max page size. 
+		listOfActualRoutes.clear();
+		SetPageSizeToMax();
+
+		listOfActualRoutes.clear();
+		
+		// store the actual applications, see if test application exists. 
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+
+		indexCntr = FindIndexExistingRoute(routeKey);
+
+		// ShowInt(indexCntr);
+		
+		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleted.
+		{
+			SelectDeleteRowInAppList(indexCntr); // select delete application list row with appKey.
+			
+			// WaitForElementVisible(By.xpath("//dd[text()='SELENIUM_TENANT:SELEN_APP:1246924192']"), 3);
+			
+			// this is important. it verifies the correct route is being deleted. it verifies the correct key is present.
+			WaitForElementVisible(By.xpath("//dd[text()='" + automationRouteKey + "']"), 3);
+			Assert.assertEquals(driver.findElement(By.xpath("//dd[text()='" + automationRouteKey + "']")).getText(), automationRouteKey, "");
+			
+			//ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']",3); // approve delete.
+			ClickItem(approveDeleteInPoup_Locator ,3); // 			
+			
+			//ClickItem("//button[@class='btn btn-danger']", 3); // delete.
+			ClickItem(selectDeleteInPoup_Locator, 3); // delete.             			
+			WaitForElementNotVisibleNoThrow(By.xpath(selectDeleteInPoup_Locator), 4);
+			
+			listOfActualRoutes.clear();
+
+			// store the actual applications.
+			ShowActualRoutesOrStore(ActionForApplications.Store);
+
+			Assert.assertTrue(FindIndexExistingRoute(appKey) == -1, "Error -- test route was supposed to be deleted."); 
+		}		
+
+		listOfActualRoutes.clear();
+	}
+	
+	// this will select the delete button in a specified applications list row. 
+	public static void SelectDeleteRowInAppList(int rowToSelect)
+	{
+		String xpath =  "(//button[@class='btn btn-danger btn-sm'])[" + rowToSelect + "]";
+		ClickItem(xpath, 3);
+	}
+	
+	public static void PopulatePulldownsForAddRoute() throws Exception
+	{
+		
+		// tenant
+		ClickItem("(.//*[@id='sortMenu'])[5]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[4]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[4]")).sendKeys("SELENIUM_TENANT");
+		
+		ClickItem("(//span[text()='SELENIUM_TENANT']/../..)[2]", 3);
+
+		// application
+		ClickItem("(.//*[@id='sortMenu'])[6]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[5]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[5]")).sendKeys("SELEN_APP");
+
+		ClickItem("(//span[text()='SELEN_APP']/../..)[2]", 2);
+		
+		// application
+		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[6]")).sendKeys("SELEN_DEPLOYMENT");
+
+		ClickItem("(//span[text()='SELEN_DEPLOYMENT ']/../..)[2]", 2);		
+	}
+	
+	
+	public static void ClearRequiredFields()
+	{
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();		
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).clear();		
+	}
+	
+	
+	public static void CancelOpenAddRouteUI(boolean reOpen) throws Exception
 	{
 		ClickItem(uiCancel_Locator, 3); // cancel
 		
@@ -453,8 +607,11 @@ public class Routes extends BaseMain
 			Assert.fail("Add route UI is still showing. It should have closed after cancel.");
 		}
 
-		ClickItem(addButton_Locator, 3); // add
-		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+		if(reOpen)
+		{
+			ClickItem(addButton_Locator, 3); // add
+			WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+		}
 	}
 	
 	//click pull-downs and text boxes to get all validation messages to show up.

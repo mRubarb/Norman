@@ -30,24 +30,20 @@ public class TC_DeploymentsList extends BaseMain {
 					
 		CommonMethods.selectItemPlatformDropdown("Deployments");
 		
-		// CommonMethods.verifyTitle("Deployments");
+		CommonMethods.verifyTitle("Deployments");
 		
-		// Deployments.verifyColumnsNames();
+		Deployments.verifyColumnsNames();
 		
-		// Deployments.verifyData();
+		Deployments.verifyData();
 		
-		// Deployments.verifyDataAndSorting();
+		Deployments.verifyDataAndSorting();
 		
-		// Deployments.verifyPaging();
-		
-				
-		// ******* TO DO ***************
-		
+		Deployments.verifyPaging();
+	
 		Deployments.verifyFiltering("APR", "RVM", "Show Enabled Deployments Only");
 
 		Deployments.verifyFilteringCombined("APR", "RVM", "Show Enabled Deployments Only");
 		
-		/*
 		String deploymentKey = "DEP_AUTOM_ANA";
 				
 		String applicationKey = "RVM";
@@ -61,7 +57,7 @@ public class TC_DeploymentsList extends BaseMain {
 		Thread.sleep(3000);
 		
 		Deployments.deleteDeployment(deploymentKey); // OK!
-		*/
+		
 		
 			
 	}

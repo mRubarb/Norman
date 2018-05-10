@@ -15,9 +15,7 @@ import org.testng.Assert;
 
 import baseItems.BaseMain;
 import classes.Deployment;
-import classes.Tenant;
 import common.CommonMethods;
-import common.CommonMethodsAna;
 
 
 public class Deployments extends BaseMain 
@@ -835,7 +833,7 @@ public class Deployments extends BaseMain
 			
 	}
 	
-	
+	// TO BE REMOVED
 	/*
 	private static void resetFilters() throws InterruptedException {
 		

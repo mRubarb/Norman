@@ -16,13 +16,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
 import org.seleniumhq.jetty9.server.handler.ContextHandler.Availability;
 import org.testng.Assert;
+
+import com.google.gson.JsonArray;
 
 import baseItems.BaseMain;
 import classes.ApplicationClass;
 import classes.RouteClass;
 import common.CommonMethods;
+import common.CommonMethods_AppsRoutes;
 import pages.Applications.ActionForApplications;
 
 public class Routes extends BaseMain 
@@ -67,18 +71,27 @@ public class Routes extends BaseMain
 	public static final String automationTenant = "SELENIUM_TENANT";
 	public static final String automationApp = "SELEN_APP";
 	public static final String automationDeploy = "SELEN_DEPLOYMENT";
+	public static final String automationDisabledReason = "UPGRADING";	
+	public static final boolean automationAllowServiceCalls = false;
+	public static final boolean automationEnabled = false;	
 	
+	// for validating auto-populated items in add route pop-up.
+	public static String tempHost = "";
+	public static String tempPath = "";
+	public static String tempTenantID = "";
 													 	
 	public static String apiType = "\"routes\":";
 	public static String RoutesTableCss = ".table.table-striped>tbody>tr";
 	public static String RoutesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
+	public static final String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";
 	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNjMwODEwM30.0GU24pu7F8itDwHp8prFWlMwstsF53ISCxDQmteDEHCEWwXEt6V50AhnQTCLN7o6q-GQBlCQulTyeM6yn_C3bg";
 	public static final int maxItemsPerPage = 50;
 	
 	public static int expectedNumberOfColumns = 8;
 	
 	public static List<RouteClass> listOfExpectedRoutes = new ArrayList<RouteClass>();
-	public static List<RouteClass> listOfActualRoutes = new ArrayList<RouteClass>();	
+	public static List<RouteClass> listOfActualRoutes = new ArrayList<RouteClass>();
+	public static List<String> listOfTenantItems = new ArrayList<String>();	
 
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console.	
 	
@@ -116,7 +129,7 @@ public class Routes extends BaseMain
 		
 		System.out.println("Size from API = " +  listOfExpectedRoutes.size() + " rows.");
 		
-		SetPageSizeToMax();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
 		
 		// store the routes in UI to listOfActualApps
 		ShowActualRoutesOrStore(ActionForApplications.Store);
@@ -152,7 +165,7 @@ public class Routes extends BaseMain
 		{
 			System.out.println("Verify page size: " + tempInt);
 			
-			SetUiPageSizeSelector(pageSizeSelectorIndex);
+			CommonMethods_AppsRoutes.SetUiPageSizeSelector(pageSizeSelectorIndex);
 			pageSize = tempInt;
 			numberOfPages = GetTotalPages(totalCount, pageSize);
 			System.out.println("Expected number of pages for page size = " +  pageSize + " is " + numberOfPages);
@@ -267,16 +280,94 @@ public class Routes extends BaseMain
 		}	
 	}
 
+	public static void ValidatePrePopulatedItemsAndEdits() throws Exception // bladd
+	{
+		boolean startListCompare = false;
+		
+		ShowCurrentTest("Routes: AddRoutePrePopulatedItems");
+
+		// store application list info.
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		Applications.listOfActualApps.clear();
+		Applications.GoToApplications();
+		Applications.SetPageSizeToMax();
+		Applications.ShowActualApplicationsOrStore(ActionForApplications.Store);
+		
+		// create a list that holds tenant key and tenantID. get information from API. 
+		CreateTenantInformation();
+		
+		// go to routes list.
+		GoToRoutes();
+
+		// select add route and wait for title
+		ClickItem(addButton_Locator, 3); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+
+		// select tenant and application that will populate tenantID and URL.
+		SetTenantPulldown(GetTenantID(true));
+		SetAppPulldown(AppHostPathRequest(true));
+		Thread.sleep(500);
+		
+		// verify host, path, and tenantID.
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("value"),  tempHost, "");
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value"),  tempPath, "");
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"),  tempTenantID, "");		
+
+		// select tenant and application that will not populate tenantID and URL.
+		SetTenantPulldown(GetTenantID(false));
+		SetAppPulldown(AppHostPathRequest(false));
+		Thread.sleep(500);
+		
+		// verify host, path, and tenantID are empty
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("value"),  "", "");
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value"),  "", "");
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"),  "", "");		
+	
+		ClickItem("(.//*[@id='sortMenu'])[5]", 3);
+		Thread.sleep(500);
+		
+
+		
+		List<WebElement> listOfTenantsInPulldown = driver.findElements(By.cssSelector((".dropdown-menu")));
+		
+		for(WebElement ele: listOfTenantsInPulldown)
+		{
+			/*
+			if(ele.getText().equals("Select Tenant"))
+			{
+				startListCompare = true;
+				ShowText("True");
+			}
+			*/
+			if(startListCompare)
+			{
+				ShowText(ele.getText());				
+			}
+			
+			if(ele.getText().length() > 0)
+			{
+				ShowText(ele.getText());
+				startListCompare = true;
+			}
+				
+				
+		}
+		
+
+	
+	}
+	
+	
 	public static void AddRoute() throws Exception 
 	{
 		int indexLocator = 0;
 		boolean foundAddedRoute = false;
 		
+		ShowCurrentTest("Routes: AddRoute");
+		
 		// delete test route if it exists.
 		DeleteRouteByKeyFromRow(automationRouteKey);
 
-		Thread.sleep(3000);
-		
 		// select add and wait for title
 		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
@@ -291,37 +382,43 @@ public class Routes extends BaseMain
 		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID);
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(automationDescription);		
 		driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[2]")).click();
+		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();		
+		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();
+		//driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']")).click();
+		new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");
+		
 		driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
 		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator) ,3); 
 		
+		// store routes from UI
 		listOfActualRoutes.clear();
 		ShowActualRoutesOrStore(ActionForApplications.Store);
 		
+		// see if added route exist by searching for it.
 		for(RouteClass rtClass: listOfActualRoutes)
 		{
 			if((rtClass.m_host + rtClass.m_path).equals(automationfullPath.toLowerCase()))
 			{
-				ShowText(automationfullPath);
 				foundAddedRoute = true;
 				break;
 			}
 			indexLocator++;
 		}
 
-		if(!foundAddedRoute)
+		if(!foundAddedRoute) // error if new route not found.
 		{
 			Assert.fail("Route that was added is not found in 'AddRoute'.");
 		}
 		
-		ShowText(listOfActualRoutes.get(indexLocator).m_Key);
-		ShowText(listOfActualRoutes.get(indexLocator).m_path);		
-		ShowText(listOfActualRoutes.get(indexLocator).m_tenantId);
-		ShowText(listOfActualRoutes.get(indexLocator).m_description);
-		ShowText(listOfActualRoutes.get(indexLocator).m_disabledReason);
-		
-		
-		
-		
+		// verify route is in list.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_Key, automationRouteKey);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tenantId, automationTenantID);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tennantKey, automationTenant);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_appKey, automationApp);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_deployKey, automationDeploy);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, automationAllowServiceCalls);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, automationEnabled);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, automationDisabledReason);
 	}
 	
 	public static void AddValidations() throws Exception 
@@ -346,7 +443,7 @@ public class Routes extends BaseMain
 		
 		ShowCurrentTest("Routes: AddValidations");
 
-		SetPageSizeToMax();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
 
 		// delete test route if it exists.
 		DeleteRouteByKeyFromRow(automationRouteKey);
@@ -481,7 +578,126 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
-	// see if an application key exists in the actual list from UI. 
+	public static String AppHostPathRequest(boolean hasHostAndPath)
+	{
+		String retString = "";
+		boolean foundRequest = false;
+		
+		Assert.assertTrue(Applications.listOfActualApps.size() > 0); // application list should be created.
+		
+		for(ApplicationClass appClass : Applications.listOfActualApps)
+		{
+			if(hasHostAndPath)
+			{
+				if(!appClass.m_defaultHost.equals("") && !appClass.m_defaultPath.equals(""))
+				{
+					retString = appClass.m_Key;
+					tempHost = appClass.m_defaultHost;
+					tempPath = appClass.m_defaultPath;					
+					foundRequest = true;
+					break;
+				}
+			}
+			if(!hasHostAndPath)
+			{
+				if(appClass.m_defaultHost.equals("") && appClass.m_defaultPath.equals(""))
+				{
+					retString = appClass.m_Key;
+					foundRequest = true;
+					break;
+				}
+			}
+		}
+		
+		if(!foundRequest && hasHostAndPath)
+		{
+			Assert.fail("Did not find app with a host and path in 'AppHostPathRequest'.");
+		}
+		
+		if(!foundRequest && !hasHostAndPath)
+		{
+			Assert.fail("Did not find app with missing host and path in 'AppHostPathRequest'.");
+		}
+		
+		return retString;
+	}
+	
+	
+	// find a tenant key that has a tenant Id or doesn't have a tenant Id. each tenant element in 'listOfTenantItems' has this format - tenantKey:tenantID.
+	// if the  tenantID is missing for the tenant key, string character "null" is what the tenantID is. 
+	public static String GetTenantID(boolean hasTenantId)
+	{
+		String retStr = "";
+		
+		boolean foundRequest = false;
+		
+		for(String str : listOfTenantItems)
+		{
+			if(hasTenantId)
+			{
+				if(!str.split(":")[1].equals("null"))
+				{
+					foundRequest = true;
+					retStr = str.split(":")[0];
+					tempTenantID = str.split(":")[1];
+					break;
+				}
+			}
+			else
+			{
+				if(str.split(":")[1].equals("null"))
+				{
+					foundRequest = true;
+					retStr = str.split(":")[0];
+					break;
+				}
+			}
+		}
+
+		if(!foundRequest && hasTenantId)
+		{
+			Assert.fail("Did not find tenant with a tenantID in 'GetTenantID'.");
+		}
+		
+		if(!foundRequest && !hasTenantId)
+		{
+			Assert.fail("Did not find tenant with a missing tenantID in 'GetTenantID'.");
+		}
+
+		return retStr;
+	}
+	
+	
+	// store all tenant keys and their corresponding tenantID/name.
+	public static void CreateTenantInformation() throws Exception
+	{
+		JSONArray jArray;
+		
+		String url = tenantsURL + "?pageSize=";
+		String apiType = "\"tenants\":"; 
+		
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		// store some tenant info from the API onto listOfTenantItems list.
+		for(int x = 0; x < jArray.length(); x++)
+		{
+			JSONObject jo = jArray.getJSONObject(x); // get current json object from the list  
+
+			if(CommonMethods.GetNonRequiredItem(jo, "defaultTenantID").equals(""))
+			{
+				listOfTenantItems.add(jo.getString("key") + ":" + "null" + ":" + jo.getString("name"));
+			}
+			else
+			{
+				listOfTenantItems.add(jo.getString("key") + ":" + jo.getString("defaultTenantID") + ":" + jo.getString("name"));				
+			}
+		}		
+
+		// for(String str : listOfTenantItems){ShowText(str.split(":")[0] + ":" + str.split(":")[1]);}		
+	}
+	
+	
+	// see if a route key exists in the actual list from UI. 
 	public static int FindIndexExistingRoute(String routeKey)
 	{
 		boolean foundAdd = false;
@@ -511,7 +727,7 @@ public class Routes extends BaseMain
 
 		// clear actual list and get max page size. 
 		listOfActualRoutes.clear();
-		SetPageSizeToMax();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
 
 		listOfActualRoutes.clear();
 		
@@ -519,23 +735,17 @@ public class Routes extends BaseMain
 		ShowActualRoutesOrStore(ActionForApplications.Store);
 
 		indexCntr = FindIndexExistingRoute(routeKey);
-
-		// ShowInt(indexCntr);
 		
 		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleted.
 		{
-			SelectDeleteRowInAppList(indexCntr); // select delete application list row with appKey.
-			
-			// WaitForElementVisible(By.xpath("//dd[text()='SELENIUM_TENANT:SELEN_APP:1246924192']"), 3);
+			CommonMethods_AppsRoutes.SelectDeleteByRowInList(indexCntr); // select delete application list row with appKey.
 			
 			// this is important. it verifies the correct route is being deleted. it verifies the correct key is present.
 			WaitForElementVisible(By.xpath("//dd[text()='" + automationRouteKey + "']"), 3);
 			Assert.assertEquals(driver.findElement(By.xpath("//dd[text()='" + automationRouteKey + "']")).getText(), automationRouteKey, "");
 			
-			//ClickItem("//input[@class='ng-untouched ng-pristine ng-valid']",3); // approve delete.
-			ClickItem(approveDeleteInPoup_Locator ,3); // 			
+			ClickItem(approveDeleteInPoup_Locator ,3); // approve 			
 			
-			//ClickItem("//button[@class='btn btn-danger']", 3); // delete.
 			ClickItem(selectDeleteInPoup_Locator, 3); // delete.             			
 			WaitForElementNotVisibleNoThrow(By.xpath(selectDeleteInPoup_Locator), 4);
 			
@@ -546,48 +756,71 @@ public class Routes extends BaseMain
 
 			Assert.assertTrue(FindIndexExistingRoute(appKey) == -1, "Error -- test route was supposed to be deleted."); 
 		}		
-
 		listOfActualRoutes.clear();
 	}
-	
-	// this will select the delete button in a specified applications list row. 
-	public static void SelectDeleteRowInAppList(int rowToSelect)
-	{
-		String xpath =  "(//button[@class='btn btn-danger btn-sm'])[" + rowToSelect + "]";
-		ClickItem(xpath, 3);
-	}
-	
+
 	public static void PopulatePulldownsForAddRoute() throws Exception
 	{
+		// ///////////
+		// tenant 
+		// ///////////
+		ClickItem("(.//*[@id='sortMenu'])[5]", 3);
 		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[4]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[4]")).sendKeys(automationTenant);
+		
+		//ClickItem("(//span[text()='" + automationTenant  + "']/../..)[2]", 3);
+		ClickItem("(//div[@class='dropdown-menu'])[5]/div[2]", 2); // this seems more consistent with different selections.
+
+		// ///////////
+		// application
+		// ///////////
+		ClickItem("(.//*[@id='sortMenu'])[6]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[5]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[5]")).sendKeys(automationApp);
+
+		//ClickItem("(//span[text()='" + automationApp + "']/../..)[2]", 2); // didn't always work with other text.
+		ClickItem("(//div[@class='dropdown-menu'])[6]/div[2]", 2); // this seems more consistent with different selections.
+		
+		// ///////////
+		// deploy
+		// ///////////
+		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[6]")).sendKeys(automationDeploy);
+
+		//ClickItem("(//span[text()='" + automationDeploy + " "  +  "']/../..)[2]", 2);
+		ClickItem("(//div[@class='dropdown-menu'])[7]/div[2]", 2); // this seems more consistent with different selections.
+	}
+	
+	public static void SetTenantPulldown(String tenantName)
+	{
 		// tenant
 		ClickItem("(.//*[@id='sortMenu'])[5]", 3);
 		
 		// send search text.		
 		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[4]"), 3, "");
-		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[4]")).sendKeys("SELENIUM_TENANT");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[4]")).sendKeys(tenantName);
 		
-		ClickItem("(//span[text()='SELENIUM_TENANT']/../..)[2]", 3);
-
+		ClickItem("(//span[text()='" + tenantName  + "']/../..)[2]", 3);
+	}
+	
+	public static void SetAppPulldown(String appName)
+	{
 		// application
 		ClickItem("(.//*[@id='sortMenu'])[6]", 3);
 		
 		// send search text.		
 		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[5]"), 3, "");
-		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[5]")).sendKeys("SELEN_APP");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[5]")).sendKeys(appName);
 
-		ClickItem("(//span[text()='SELEN_APP']/../..)[2]", 2);
-		
-		// application
-		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
-		
-		// send search text.		
-		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
-		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[6]")).sendKeys("SELEN_DEPLOYMENT");
-
-		ClickItem("(//span[text()='SELEN_DEPLOYMENT ']/../..)[2]", 2);		
+		ClickItem("(//div[@class='dropdown-menu'])[6]/div[2]", 2);
 	}
-	
 	
 	public static void ClearRequiredFields()
 	{
@@ -684,15 +917,7 @@ public class Routes extends BaseMain
 	{
 		ShowText("******************************* Running test name " + currentTest + " **************************************************");
 	}	
-		
-	public static void SetPageSizeToMax() throws Exception // TODO: this is in apps page also
-	{
-		// set page size to max.
-		// CommonMethods.selectSizeOfList(50);
-		SetUiPageSizeSelector(4);
-		WaitForElementClickable(By.xpath("(//button[@class='btn btn-info btn-sm'])[5]"), 3, "");
-	}
-	
+
 	// this clicks a column selection to set sorting mode.
 	public static void ClickSorting(String item) throws Exception		
 	{
@@ -700,20 +925,6 @@ public class Routes extends BaseMain
 		driver.findElement(By.xpath(item)).click();
 		Thread.sleep(2000);
 	}
-		
-	// this sets page to 5, 10, 20, or 50.
-	static public void SetUiPageSizeSelector(int index) throws InterruptedException
-	{
-		if(index > 4 || index < 1)
-		{
-			Assert.fail("Bad index number sent to 'SetPageSize' method in Applicatiins page class.");
-		}
-		
-		// set page size to max.
-		WaitForElementClickable(By.xpath("(//span/label)[" + index + "]"), 5, "");
-		driver.findElement(By.xpath("(//span/label)[" + index + "]")).click(); 		
-		Thread.sleep(1000);
-	}	
 	
 	public static void VerifyPagesSorting(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception		
 	{

@@ -8,28 +8,18 @@ import baseItems.BaseMain;
 import classes.ApplicationClass;
 import classes.TenantAppForAppSearch;
 import common.CommonMethods;
-import net.jcip.annotations.ThreadSafe;
+import common.CommonMethods_AppsRoutes;
 
 import org.testng.Assert;
-
-import com.gargoylesoftware.htmlunit.javascript.host.dom.ShadowRoot;
-import com.google.gson.JsonObject;
-
-import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.conn.routing.RouteInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.server.handler.ClickElement;
-import org.openqa.selenium.support.ui.Select;
-
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 public class Applications extends BaseMain
@@ -49,7 +39,6 @@ public class Applications extends BaseMain
 	public static final String extraText = "NEW";
 	public static final String approveDeleteInPoup_Locator = "//input[@class='ng-untouched ng-pristine ng-valid']";
 	public static final String selectDeleteInPoup_Locator = "//button[@class='btn btn-danger']";	
-	public static final String saveButtonPoUp_Locator = "//button[@class='btn btn-primary']";	 // TODO: same for routes.
 	public static final String addButton_Locator = "//button[@class='btn btn-primary ml-auto p-2']"; // TODO: same for routes.
 	public static final String uiCancel_Locator = "(//button[@class='btn btn-secondary'])[2]"; // TODO: same for routes.	
 	
@@ -154,7 +143,7 @@ public class Applications extends BaseMain
 				break;
 			}
 			ShowText("Verify Page Size " +  pageSizes[j] + " **************** .\r\n");
-			SetUiPageSizeSelector(j + 1); // select index of page size 5 selector.
+			CommonMethods_AppsRoutes.SetUiPageSizeSelector(j + 1); // select index of page size 5 selector.
 			
 			// call info API with page size and store results from API call. store results from UI applications list.  
 			PassDataAndStoreApiRequest(apiType, pageSizes[j], 0, "", ""); // NEEDS WORK -- was changed --- WONT'T work in this method   
@@ -269,12 +258,12 @@ public class Applications extends BaseMain
 		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
 
-		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
-		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName);		
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("key"))).sendKeys(testAppKey);
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("name"))).sendKeys(testAppName);		
 
-		ClickItem(saveButtonPoUp_Locator, 3); // save		
+		ClickItem(CommonMethods_AppsRoutes.saveButtonPoUp_Locator, 3); // save		
 		
-		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator), 3);
+		WaitForElementNotVisibleNoThrow(By.xpath(CommonMethods_AppsRoutes.saveButtonPoUp_Locator), 3);
 		
 		// wait for view button after page save.
 		//WaitForElementVisible(By.xpath("(//button[@class='btn btn-info btn-sm'])[6]"), 4);
@@ -366,7 +355,7 @@ public class Applications extends BaseMain
 		System.out.println("routes = " + numRoutes);
 		
 		// need to change page sizes to be able to select a delete in row,
-		SetUiPageSizeSelector(1);
+		CommonMethods_AppsRoutes.SetUiPageSizeSelector(1);
 		SetPageSizeToMax();
 		
 		// /////////////////////////////////////////////////////////////////////////////
@@ -431,7 +420,7 @@ public class Applications extends BaseMain
 		// SetPageSizeToMax();
 		
 		// CommonMethods.selectSizeOfList(10);
-		SetUiPageSizeSelector(2);
+		CommonMethods_AppsRoutes.SetUiPageSizeSelector(2);
 		
 		// store off what's in UI.
 		ClearActualExpectedLists();
@@ -460,19 +449,19 @@ public class Applications extends BaseMain
 		VerifyKnownValues(rowIndex - 1); // all others
 		
 		// clear everything and change state of enabled/disabled.
-		driver.findElement(By.xpath(GetXpathForTextBox("name"))).clear();
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).clear();
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).clear();
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("name"))).clear();
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultHost"))).clear();
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultPath"))).clear();
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).clear(); // description.				
 		
 		// enter new values and save.
 		ToggleEnabledDisabled(rowIndex); // toggle enabled
-		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName + extraText); // name
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost + extraText); // host 
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath + extraText); // path
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("name"))).sendKeys(testAppName + extraText); // name
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost + extraText); // host 
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath + extraText); // path
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription + extraText); // description
 		
-		ClickItem(saveButtonPoUp_Locator, 3); // save  
+		ClickItem(CommonMethods_AppsRoutes.saveButtonPoUp_Locator, 3); // save  
 		Thread.sleep(1000);
 		
 		// test app should be near top so only use 10 rows. 
@@ -525,12 +514,12 @@ public class Applications extends BaseMain
 		// verify button states - save, cancel, reset.
 		Assert.assertFalse(driver.findElement(By.xpath("(//button[@class='btn btn-secondary'])[1]")).isEnabled());
 		Assert.assertTrue(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled());
-		Assert.assertFalse(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled());
+		Assert.assertFalse(driver.findElement(By.xpath(CommonMethods_AppsRoutes.saveButtonPoUp_Locator)).isEnabled());
 		
 		// change data for everything in form.
-		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName + "bad");
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost + "bad");
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath + "bad");
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("name"))).sendKeys(testAppName + "bad");
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost + "bad");
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath + "bad");
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription + "bad"); // description		
 		
 		ToggleEnabledDisabled(rowIndex);
@@ -538,7 +527,7 @@ public class Applications extends BaseMain
 		// select reset button
 		ClickItem("(//button[@class='btn btn-secondary'])[1]", 2);
 		
-		ShowText(driver.findElement(By.xpath(GetXpathForTextBox("name"))).getAttribute("value"));
+		ShowText(driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("name"))).getAttribute("value"));
 
 		// verify original values are back after reset.
 		VerifyKnownValues(rowIndex - 1);
@@ -569,16 +558,16 @@ public class Applications extends BaseMain
 		ClickItem(addButton_Locator, 3); // add
 		WaitForElementVisible(By.xpath("//strong[text()='Add Application']"), 3); // title 
 
-		driver.findElement(By.xpath(GetXpathForTextBox("key"))).sendKeys(testAppKey);
-		driver.findElement(By.xpath(GetXpathForTextBox("name"))).sendKeys(testAppName);
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost);
-		driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath);
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("key"))).sendKeys(testAppKey);
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("name"))).sendKeys(testAppName);
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultHost"))).sendKeys(testDefaultHost);
+		driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultPath"))).sendKeys(testDefaultPath);
 		
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(testDescription); // description		
 		ClickItem("//input[@value='false']", 3); // click false
-		ClickItem(saveButtonPoUp_Locator, 3); // save		
+		ClickItem(CommonMethods_AppsRoutes.saveButtonPoUp_Locator, 3); // save		
 		
-		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator), 3);
+		WaitForElementNotVisibleNoThrow(By.xpath(CommonMethods_AppsRoutes.saveButtonPoUp_Locator), 3);
 		
 		
 		// verify application was added.
@@ -719,7 +708,7 @@ public class Applications extends BaseMain
 		{
 			System.out.println("Verify page size: " + tempInt);
 			
-			SetUiPageSizeSelector(pageSizeSelectorIndex);
+			CommonMethods_AppsRoutes.SetUiPageSizeSelector(pageSizeSelectorIndex);
 			pageSize = tempInt;
 			numberOfPages = GetTotalPages(totalCount, pageSize);
 			System.out.println("Expected number of pages for page size = " +  pageSize + " is " + numberOfPages);
@@ -1042,9 +1031,9 @@ public class Applications extends BaseMain
 	
 	public static void VerifyKnownValues(int rowIndex)
 	{
-		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("name"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_Name);
-		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("defaultHost"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_defaultHost);		
-		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("defaultPath"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_defaultPath);
+		Assert.assertEquals(driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("name"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_Name);
+		Assert.assertEquals(driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultHost"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_defaultHost);		
+		Assert.assertEquals(driver.findElement(By.xpath(CommonMethods_AppsRoutes.GetXpathForTextBox("defaultPath"))).getAttribute("value"), listOfActualApps.get(rowIndex).m_defaultPath);
 		Assert.assertEquals(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value"), listOfActualApps.get(rowIndex).m_Description);
 	}
 
@@ -1137,7 +1126,6 @@ public class Applications extends BaseMain
 
 		//ShowInt(indexCntr);
 		
-		// TODO: make method of this
 		if(indexCntr != -1) // test application exists, delete it and then verify it has been deleted.
 		{
 			SelectDeleteRowInAppList(indexCntr); // select delete application list row with appKey.
@@ -1189,10 +1177,10 @@ public class Applications extends BaseMain
 		driver.findElement(By.xpath(xpath)).click();
 	}
 	
-	public static String GetXpathForTextBox(String item) // TODO: use in routes also
-	{
-		return "//input[@formcontrolname='" + item + "']";
-	}
+	//public static String GetXpathForTextBox(String item) // TODO: use in routes also
+	//{
+	//	return "//input[@formcontrolname='" + item + "']";
+	//}
 	
 	// receive a list of application(s) and a tenant name. create a 'TenantAppForAppSearch' object to hold the tenant name and all of 
 	// the applications that go with it.
@@ -1533,23 +1521,6 @@ public class Applications extends BaseMain
 		return totalPages;
 	}	
 	
-	// this sets page to 5, 10, 20, or 50.
-	// TODO: duplicate
-	static public void SetUiPageSizeSelector(int index) throws InterruptedException 
-	{
-		if(index > 4 || index < 1)
-		{
-			Assert.fail("Bad index number sent to 'SetPageSize' method in Applicatiins page class.");
-		}
-		
-		// set page size.
-		WaitForElementClickable(By.xpath("(//span/label)[" + index + "]"), 5, "");
-		driver.findElement(By.xpath("(//span/label)[" + index + "]")).click(); 		
-
-		Thread.sleep(500);
-		WaitForElementClickable(By.xpath("(//li[@class='page-item disabled'])[1]"), 5, "");
-	}
-	
 	// add sortBy, sortDirection
 	public static void PassDataAndStoreApiRequest(String apiType, int pageSize, int pageNumber, String sortDirection, String sortBy) throws IOException, JSONException 
 	{
@@ -1600,7 +1571,7 @@ public class Applications extends BaseMain
 	{
 		// set page size to max.
 		// CommonMethods.selectSizeOfList(50);
-		SetUiPageSizeSelector(4);
+		CommonMethods_AppsRoutes.SetUiPageSizeSelector(4);
 		WaitForElementClickable(By.xpath("(//button[@class='btn btn-info btn-sm'])[5]"), 3, "");
 	}
 

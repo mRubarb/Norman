@@ -27,6 +27,7 @@ import classes.ApplicationClass;
 import classes.RouteClass;
 import common.CommonMethods;
 import common.CommonMethods_AppsRoutes;
+import common.CommonMethods_AppsRoutes.TenantInfo;
 import pages.Applications.ActionForApplications;
 
 public class Routes extends BaseMain 
@@ -75,6 +76,8 @@ public class Routes extends BaseMain
 	public static final boolean automationAllowServiceCalls = false;
 	public static final boolean automationEnabled = false;	
 	
+	public static final String charSeparatorForTenantItems = "\\^";
+	
 	// for validating auto-populated items in add route pop-up.
 	public static String tempHost = "";
 	public static String tempPath = "";
@@ -88,10 +91,11 @@ public class Routes extends BaseMain
 	public static final int maxItemsPerPage = 50;
 	
 	public static int expectedNumberOfColumns = 8;
+	public static int maxNumberOfItemsInPulldown = 10;
 	
 	public static List<RouteClass> listOfExpectedRoutes = new ArrayList<RouteClass>();
 	public static List<RouteClass> listOfActualRoutes = new ArrayList<RouteClass>();
-	public static List<String> listOfTenantItems = new ArrayList<String>();	
+	public static List<CommonMethods_AppsRoutes.TenantInfo> listOfTenantItems = new ArrayList<CommonMethods_AppsRoutes.TenantInfo>();	
 
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console.	
 	
@@ -282,7 +286,7 @@ public class Routes extends BaseMain
 
 	public static void ValidatePrePopulatedItemsAndEdits() throws Exception // bladd
 	{
-		boolean startListCompare = false;
+		int cntr = 0;
 		
 		ShowCurrentTest("Routes: AddRoutePrePopulatedItems");
 
@@ -295,6 +299,12 @@ public class Routes extends BaseMain
 		
 		// create a list that holds tenant key and tenantID. get information from API. 
 		CreateTenantInformation();
+
+		//for(TenantInfo tInfo : listOfTenantItems)
+		//{
+		//	tInfo.Show();
+		//}
+		
 		
 		// go to routes list.
 		GoToRoutes();
@@ -323,40 +333,32 @@ public class Routes extends BaseMain
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value"),  "", "");
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"),  "", "");		
 	
-		ClickItem("(.//*[@id='sortMenu'])[5]", 3);
+		ClickItem("(.//*[@id='sortMenu'])[5]", 3); // select tenants pull-down.
 		Thread.sleep(500);
-		
 
-		
-		List<WebElement> listOfTenantsInPulldown = driver.findElements(By.cssSelector((".dropdown-menu")));
-		
+		// this gets everything in the tenants pull-down.
+		List<WebElement> listOfTenantsInPulldown = driver.findElements(By.xpath(("(//div[@class='dropdown-menu'])[5]/div")));
+
 		for(WebElement ele: listOfTenantsInPulldown)
 		{
-			/*
-			if(ele.getText().equals("Select Tenant"))
-			{
-				startListCompare = true;
-				ShowText("True");
-			}
-			*/
-			if(startListCompare)
-			{
-				ShowText(ele.getText());				
-			}
-			
-			if(ele.getText().length() > 0)
+			if(ele.getText().length() > 0) // the first item on the list is blank. don't include it
 			{
 				ShowText(ele.getText());
-				startListCompare = true;
-			}
-				
-				
-		}
-		
+				//ShowText(listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[0] + " " +  listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[2]);
 
-	
+				// compare tenant key in pull-down list to tenant key from UI.
+				//Assert.assertEquals(ele.getText().split(" ")[0], listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[0], "");
+				// compare tenant name in pull-down list to tenant key from UI.
+				//Assert.assertEquals(ele.getText().split(" ")[1], listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[2], "");
+				
+				cntr++;
+				if(cntr > listOfTenantsInPulldown.size() || cntr > maxNumberOfItemsInPulldown)
+				{
+					break;
+				}
+			}
+		}
 	}
-	
 	
 	public static void AddRoute() throws Exception 
 	{
@@ -578,6 +580,10 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 
+	// depending on 'hasHostAndPath' boolean passed in: 
+	// find an application that has host and path variables or find an application that doesn't have host and path variables. return the application key.
+	// if a request to find an application that has host and path variables is requested, set class variables 'tempHost' and 'tempPath' to application 
+	// path and host.
 	public static String AppHostPathRequest(boolean hasHostAndPath)
 	{
 		String retString = "";
@@ -623,32 +629,34 @@ public class Routes extends BaseMain
 	}
 	
 	
-	// find a tenant key that has a tenant Id or doesn't have a tenant Id. each tenant element in 'listOfTenantItems' has this format - tenantKey:tenantID.
-	// if the  tenantID is missing for the tenant key, string character "null" is what the tenantID is. 
+	// depending on the value of 'hasTenantId' passed in:
+	// find a tenant key that has a tenant Id or doesn't have a tenant Id. 
+	// if the tenantID is missing for the tenant key, string character "null" is what the tenantID is.
+	// return the tenant key for what is being requested.
 	public static String GetTenantID(boolean hasTenantId)
 	{
 		String retStr = "";
 		
 		boolean foundRequest = false;
 		
-		for(String str : listOfTenantItems)
+		for(TenantInfo tInfo : listOfTenantItems)
 		{
 			if(hasTenantId)
 			{
-				if(!str.split(":")[1].equals("null"))
+				if(!tInfo.m_tenantID.equals("null"))
 				{
 					foundRequest = true;
-					retStr = str.split(":")[0];
-					tempTenantID = str.split(":")[1];
+					retStr = tInfo.m_key;
+					tempTenantID = tInfo.m_tenantID;
 					break;
 				}
 			}
 			else
 			{
-				if(str.split(":")[1].equals("null"))
+				if(tInfo.m_tenantID.equals("null"))
 				{
 					foundRequest = true;
-					retStr = str.split(":")[0];
+					retStr = tInfo.m_key;
 					break;
 				}
 			}
@@ -668,7 +676,7 @@ public class Routes extends BaseMain
 	}
 	
 	
-	// store all tenant keys and their corresponding tenantID/name.
+	// store all tenant keys and their corresponding tenantID/name 
 	public static void CreateTenantInformation() throws Exception
 	{
 		JSONArray jArray;
@@ -685,15 +693,17 @@ public class Routes extends BaseMain
 
 			if(CommonMethods.GetNonRequiredItem(jo, "defaultTenantID").equals(""))
 			{
-				listOfTenantItems.add(jo.getString("key") + ":" + "null" + ":" + jo.getString("name"));
+				//listOfTenantItems.add(jo.getString("key") + charSeparatorForTenantItems + "null" + charSeparatorForTenantItems + jo.getString("name"));
+				listOfTenantItems.add(new CommonMethods_AppsRoutes.TenantInfo(jo.getString("key"), jo.getString("name"), "null"));
 			}
 			else
 			{
-				listOfTenantItems.add(jo.getString("key") + ":" + jo.getString("defaultTenantID") + ":" + jo.getString("name"));				
+				//listOfTenantItems.add(jo.getString("key") + charSeparatorForTenantItems + jo.getString("defaultTenantID") + charSeparatorForTenantItems + jo.getString("name"));
+				listOfTenantItems.add(new CommonMethods_AppsRoutes.TenantInfo(jo.getString("key"), jo.getString("name"), jo.getString("defaultTenantID") ));
 			}
 		}		
 
-		// for(String str : listOfTenantItems){ShowText(str.split(":")[0] + ":" + str.split(":")[1]);}		
+		// for(TenantInfo tInfo : listOfTenantItems){tInfo.Show();}		
 	}
 	
 	

@@ -57,10 +57,31 @@ public class CommonMethods_AppsRoutes extends BaseMain
 	public static void SetPageSizeToMax() throws Exception 
 	{
 		// set page size to max.
-		// CommonMethods.selectSizeOfList(50);
 		SetUiPageSizeSelector(4);
 		WaitForElementClickable(By.xpath("(//button[@class='btn btn-info btn-sm'])[5]"), 3, "");
 	}
 	
+	// store some tenant info.
+	public static class TenantInfo
+	{
+		public String m_key = "";
+		public String m_name = "";
+		public String m_tenantID = "";
+		
+		public TenantInfo(String key, String name, String tenantID) 
+		{
+			m_key = key;
+			m_name = name;
+			m_tenantID = tenantID;
+		}
+		
+		public void Show()
+		{
+			System.out.println("*******************");
+			System.out.println("key= " + m_key);
+			System.out.println("name= " + m_name);
+			System.out.println("tenantID= " + m_tenantID);
+		}
+	}
 	
 }

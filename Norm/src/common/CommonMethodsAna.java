@@ -1,7 +1,13 @@
 package common;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
@@ -187,6 +193,49 @@ public class CommonMethodsAna  extends BaseMain {
 		
 		// Give time to the list to be refreshed after it's filtered.
 		Thread.sleep(2000);
+		
+	}
+	
+	
+	//****TO BE MOVED TO COMMON METHODS CLASS***** 
+	// Call into API and get single JSON object.  
+	public static JSONObject getSingleObject(String token, String url) throws IOException, JSONException
+	{
+				
+		URL obj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		
+		// optional default is GET
+		con.setRequestMethod("GET");
+		
+		//add authorization header
+		con.setRequestProperty("Authorization", "Bearer " + token);
+		
+		int responseCode = con.getResponseCode();
+		System.out.println("\nSending 'GET' request to URL : " + url);
+		System.out.println("Response Code : " + responseCode);
+
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) 
+		{
+			response.append(inputLine);
+		}
+		in.close();
+		
+		System.out.println(response.toString());		
+		
+		// Create json object
+		JSONObject jsonObject = new JSONObject(response.toString());		
+		return jsonObject;
+		
+	}	
+		
+	public static void refreshPage() {
+		
+		driver.findElement(By.xpath("//button[@title='refresh']")).click();
 		
 	}
 	

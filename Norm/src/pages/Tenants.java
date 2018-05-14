@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 import org.testng.Assert;
@@ -17,6 +18,7 @@ import org.testng.Assert;
 import baseItems.BaseMain;
 import classes.Tenant;
 import common.CommonMethods;
+import common.CommonMethodsAna;
 
 
 public class Tenants extends BaseMain
@@ -114,6 +116,44 @@ public class Tenants extends BaseMain
 		return actualTenantsList;
 			
 	}
+	
+	
+	// Puts the JSON response obtained from the API GET /tenants/{id} into an object.
+	private static Tenant putJsonObjectIntoTenantObject(JSONObject jsonObject) throws JSONException {
+		
+		Tenant tenant = new Tenant();
+		
+		/*			
+		System.out.print(i+1 + "  Key: " + jo.getString("key"));
+		System.out.print(", Name: " + jo.getString("name"));
+		System.out.print(", Default Tenant ID: " + GetNonRequiredItem(jo, "defaultTenantID")
+		System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+		*/
+		
+		tenant.setKey(jsonObject.getString("key"));
+		tenant.setName(jsonObject.getString("name"));
+		tenant.setDefaultTenantID(CommonMethods.GetNonRequiredItem(jsonObject, "defaultTenantID"));
+		tenant.setEnabled(jsonObject.getBoolean("enabled"));
+		
+		try { 
+			tenant.setApplicationCount(jsonObject.getJSONObject("statistics").getInt("applicationCount")); 
+		}
+		catch (NoSuchElementException e) { }
+		
+		try { 
+			tenant.setDeploymentCount(jsonObject.getJSONObject("statistics").getInt("deploymentCount")); 
+		}
+		catch (NoSuchElementException e) { }
+		
+		try { 
+			tenant.setRouteCount(jsonObject.getJSONObject("statistics").getInt("routeCount")); 
+		}
+		catch (NoSuchElementException e) { }
+		
+		return tenant;
+			
+	}
+		
 	
 
 	// It adds the tenants that are listed on the UI to a list
@@ -978,7 +1018,7 @@ public class Tenants extends BaseMain
 	}*/
 
 
-	public static void addTenant() throws Exception {
+	public static void addTenant(String tenantKey) throws Exception {
 		
 		String xpathButtonAdd = "//div/h2/button[2]";
 		
@@ -986,7 +1026,7 @@ public class Tenants extends BaseMain
 		
 		driver.findElement(By.xpath(xpathButtonAdd)).click();
 			
-		driver.findElement(By.xpath(xpathKey)).sendKeys("T_AUTOM_ANA");
+		driver.findElement(By.xpath(xpathKey)).sendKeys(tenantKey);
 		
 		driver.findElement(By.xpath(xpathName)).sendKeys("Automation Tenant Ana");
 		
@@ -1006,13 +1046,14 @@ public class Tenants extends BaseMain
 		
 		String xpathSearchTypeSelect = "//select[@formcontrolname='searchTypeSelect']";
 		
-		new Select(driver.findElement(By.xpath(xpathSearchTypeSelect))).selectByValue("KEY");;
+		new Select(driver.findElement(By.xpath(xpathSearchTypeSelect))).selectByValue("KEY");
 		
 		String xpathSearchTextInput = "//input[@formcontrolname='searchTextInput']";
 		
 		driver.findElement(By.xpath(xpathSearchTextInput)).clear();
-		driver.findElement(By.xpath(xpathSearchTextInput)).sendKeys(tenantKey);
 		
+		driver.findElement(By.xpath(xpathSearchTextInput)).sendKeys(tenantKey);
+				
 	}
 	
 	
@@ -1116,39 +1157,122 @@ public class Tenants extends BaseMain
 		
 		
 	}
+
+
+	public static void viewTenant(String tenantKey) throws InterruptedException, IOException, JSONException {
+		
+		openTenantDetailsPage(tenantKey);
+		verifyTenantDetails(tenantKey);
+	
+	}
+	
+
+	public static void openTenantDetailsPage(String tenantKey) throws InterruptedException {
+		
+		int pageSize = 10;
+		
+		// make sure that the View button clicked belongs to the tenant that is going to be viewed
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonView = "//table/tbody/tr[" + i + "]/td[5]/div/button/span[text()='View']";
+			
+			driver.findElement(By.xpath(xpathButtonView)).click();	
+			
+			String xpathKeyTenant = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
+			
+			String tenantKeyUI = driver.findElement(By.xpath(xpathKeyTenant)).getText().split("   ")[0].trim();
+			
+			System.out.println("Tenant key: " + tenantKeyUI);
+			
+			if (tenantKeyUI.equals(tenantKey)) {
+				
+				// System.out.println("Tenant found");
+				break;
+			}
+			//System.out.println("Tenant NOT found");
+			
+			// If the tenant clicked is not the tenant that we need then click Back button
+			driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
+			Thread.sleep(2000);
+			
+		}
+	
+	}
+
+	
+	public static void verifyTenantDetails(String tenantKey) throws InterruptedException, IOException, JSONException {
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants/" + tenantKey + "?includeStatistics=true";
+						
+		JSONObject jsonObject = CommonMethodsAna.getSingleObject(token, url); 
+		
+		Tenant tenantObject = putJsonObjectIntoTenantObject(jsonObject);
+		
+		String xpathNameTenant = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Name:']/following-sibling::dd";	
+		String xpathDefIdTenant = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Default Tenant ID:']/following-sibling::dd";
+		String xpathEnabledTenant = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
+		
+		// Verify Name
+		String nameUI = driver.findElement(By.xpath(xpathNameTenant)).getText().trim();
+		Assert.assertEquals(nameUI, tenantObject.getName());
+				
+		// Verify Default Tenant ID - in some cases there is no value for Default Tenant ID 
+		String defTenIdUI = "";
+		
+		try {
+			defTenIdUI = driver.findElement(By.xpath(xpathDefIdTenant)).getText().trim();
+			Assert.assertEquals(defTenIdUI, tenantObject.getDefaultTenantID());
+			
+		} catch (NoSuchElementException e) { }
+		
+		// Verify Enabled value
+		String enabledUI = driver.findElement(By.xpath(xpathEnabledTenant)).getText().split("   ")[1].trim();
+		Assert.assertEquals(CommonMethods.convertToBoolean(enabledUI), tenantObject.isEnabled());
+		
+		
+		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
+		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Deployments ']/span")).getText()); 
+		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
+		
+		System.out.println("applicationCount: " + applicationCount);
+		System.out.println("deploymentCount: " + deploymentCount);
+		System.out.println("routeCount: " + routeCount);
+	
+		Assert.assertEquals(applicationCount, tenantObject.getApplicationCount());
+		Assert.assertEquals(deploymentCount, tenantObject.getDeploymentCount());
+		Assert.assertEquals(routeCount, tenantObject.getRouteCount());
+		
+		driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
+		Thread.sleep(2000);
+		
+	}
+
+
+	public static void verifyApplicationDataTabInDetailsPage() {
+		
+	
+		// Open tenant's details page 
+		
+		// Click 'Applications' tab
+		
+		// Get a list with the apps listed
+		
+		// Run request for GET /applications?tenantKey=tenantKeyValue
+		
+		// Compare the apps listed on each list - they should be the same 
+		
+	}
+	
+	
+	
 	
 	
 	// ***************************************************
 	// **** METHODS TO BE ADDED TO COMMON METHODS ********
 	// ***************************************************
-	/*
 	
-
-	// ENABLED/DISABLED values are converted to true/false
-	private static boolean convertToBoolean(String isEnabled) {
-		
-		if (isEnabled.equals("ENABLED")) {
-	
-			return true;
-			
-		} else if (isEnabled.equals("DISABLED")) {
-			
-			return false;
-			
-		}
-		return false; 
-	
-	}
-	
-	
-	// ***** COMMON METHOD??? 
-	// Clicks on the page number at the bottom - pagination bar
-	private static void clickPageNumber(int page) throws InterruptedException {
-		
-		driver.findElement(By.xpath("//ul[@class='pagination']/li/a[contains(text()," + "\"" + page + "\"" + ")]")).click();
-		Thread.sleep(3000);
-	}
-*/
 
 	
 }

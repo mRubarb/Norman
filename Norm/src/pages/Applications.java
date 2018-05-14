@@ -47,8 +47,7 @@ public class Applications extends BaseMain
 	public static final String deploymentsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";	
 	public static final String routesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
 	
-	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNjMwODEwM30.0GU24pu7F8itDwHp8prFWlMwstsF53ISCxDQmteDEHCEWwXEt6V50AhnQTCLN7o6q-GQBlCQulTyeM6yn_C3bg";
-	
+	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNzI4NzE0Nn0.qL_k3R9Tec5AlB3dLVcd2EfTItr5USR9n9CEj_LYoludqMJpb3FBaBvvWh3lEeud8YJ0hLOtjC-Z5Hspy2CeYA";	
 	public static final String testAppKey = "1234567890";
 	public static final String testAppName = "ZZZ_ZEBRA_XYZ";
 	public static final String testDefaultHost = "automationzz.com";

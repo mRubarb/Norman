@@ -9,24 +9,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.xerces.parsers.CachingParserPool.ShadowedGrammarPool;
-import org.apache.xerces.parsers.DTDConfiguration;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
-import org.seleniumhq.jetty9.server.handler.ContextHandler.Availability;
 import org.testng.Assert;
-
-import com.google.gson.JsonArray;
 
 import baseItems.BaseMain;
 import classes.ApplicationClass;
 import classes.RouteClass;
 import common.CommonMethods;
 import common.CommonMethods_AppsRoutes;
+import common.CommonMethods_AppsRoutes.DeployInfo;
 import common.CommonMethods_AppsRoutes.TenantInfo;
 import pages.Applications.ActionForApplications;
 
@@ -87,7 +83,9 @@ public class Routes extends BaseMain
 	public static String RoutesTableCss = ".table.table-striped>tbody>tr";
 	public static String RoutesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
 	public static final String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";
-	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNjMwODEwM30.0GU24pu7F8itDwHp8prFWlMwstsF53ISCxDQmteDEHCEWwXEt6V50AhnQTCLN7o6q-GQBlCQulTyeM6yn_C3bg";
+	public static final String deploymentsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";	
+	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNzI4NzE0Nn0.qL_k3R9Tec5AlB3dLVcd2EfTItr5USR9n9CEj_LYoludqMJpb3FBaBvvWh3lEeud8YJ0hLOtjC-Z5Hspy2CeYA";	
+	
 	public static final int maxItemsPerPage = 50;
 	
 	public static int expectedNumberOfColumns = 8;
@@ -95,7 +93,8 @@ public class Routes extends BaseMain
 	
 	public static List<RouteClass> listOfExpectedRoutes = new ArrayList<RouteClass>();
 	public static List<RouteClass> listOfActualRoutes = new ArrayList<RouteClass>();
-	public static List<CommonMethods_AppsRoutes.TenantInfo> listOfTenantItems = new ArrayList<CommonMethods_AppsRoutes.TenantInfo>();	
+	public static List<CommonMethods_AppsRoutes.TenantInfo> listOfTenantItems = new ArrayList<CommonMethods_AppsRoutes.TenantInfo>();
+	public static List<DeployInfo> listOfMaxDeploymentItems = new ArrayList<DeployInfo>();
 
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console.	
 	
@@ -142,7 +141,6 @@ public class Routes extends BaseMain
 		
 		// verify actual and expected are equal.
 		VerifyRouteCollectionsExpectedAndActual();
-
 	}		
 	
 	// //////////////////////////////////////////////////////////////
@@ -284,130 +282,156 @@ public class Routes extends BaseMain
 		}	
 	}
 
-	public static void ValidatePrePopulatedItemsAndEdits() throws Exception // bladd
+	public static void ValidatePrePopulatedItemsAndEdits_PartTwo() throws Exception  // bladd
 	{
-		int cntr = 0;
-		
-		ShowCurrentTest("Routes: AddRoutePrePopulatedItems");
+		int indexLocator = 0;
+		ShowCurrentTest("Routes: AddRoutePrePopulatedItems_PartTwo");
 
-		// store application list info.
+		// delete test route if it exists.
+		DeleteRouteByKeyFromRow(automationRouteKey);
+		
+		SelectAddRoute();
+		
+		// save a route for these enabled/service-calls.
+		// false/false, false/true, true/false,	true/true.
+		
+		// select correct pull-downs and fill in fields for test route.
+		PopulatePulldownsForAddTestRoute();
+		ClearRouteTextFields();
+		PopulateRouteAddFields();
+		
+		// now set enabled/service-calls false/false
+		
+		SaveRoutePopup();
+
+		listOfActualRoutes.clear();
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+
+		// see if added route exist by searching for it in routes list.
+		indexLocator = TestRouteIsInRoutesList();
+		
+		if(indexLocator == -1)
+		{
+			Assert.fail("Route that was added is not found in 'AddRoute'.");
+		}		
+		
+		
+
+		// verify route is in list.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_Key, automationRouteKey);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tenantId, automationTenantID);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tennantKey, automationTenant);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_appKey, automationApp);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_deployKey, automationDeploy);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, automationAllowServiceCalls);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, automationEnabled);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, automationDisabledReason);
+
+	}
+	
+	
+	public static void ValidatePrePopulatedItemsAndEdits_PartOne() throws Exception 
+	{
+		ShowCurrentTest("Routes: AddRoutePrePopulatedItems_PartOne");
+
+		// store application list info from UI list - will be used later..
 		CommonMethods_AppsRoutes.SetPageSizeToMax();
 		Applications.listOfActualApps.clear();
 		Applications.GoToApplications();
 		Applications.SetPageSizeToMax();
 		Applications.ShowActualApplicationsOrStore(ActionForApplications.Store);
 		
-		// create a list that holds tenant key and tenantID. get information from API. 
+		// create a list that holds tenant key and tenantID. get information from API - will be used later. 
 		CreateTenantInformation();
-
-		//for(TenantInfo tInfo : listOfTenantItems)
-		//{
-		//	tInfo.Show();
-		//}
-		
 		
 		// go to routes list.
 		GoToRoutes();
 
-		// select add route and wait for title
-		ClickItem(addButton_Locator, 3); // add
-		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
-
+		SelectAddRoute();
+				
 		// select tenant and application that will populate tenantID and URL.
-		SetTenantPulldown(GetTenantID(true));
-		SetAppPulldown(AppHostPathRequest(true));
+		SetTenantPulldown(GetTenantID(true)); // select tenant in pull-down that has tenantID.
+		SetAppPulldown(AppHostPathRequest(true)); // select application in pull-down that has application host and path.
 		Thread.sleep(500);
 		
-		// verify host, path, and tenantID.
+		// verify host, path, and tenantID in add UI.
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("value"),  tempHost, "");
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value"),  tempPath, "");
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"),  tempTenantID, "");		
 
 		// select tenant and application that will not populate tenantID and URL.
-		SetTenantPulldown(GetTenantID(false));
-		SetAppPulldown(AppHostPathRequest(false));
+		SetTenantPulldown(GetTenantID(false)); // select tenant in pull-down that has no tenantID.
+		SetAppPulldown(AppHostPathRequest(false)); // select application in pull-down that has application no host and path.
 		Thread.sleep(500);
 		
-		// verify host, path, and tenantID are empty
+		// verify host, path, and tenantID are empty add UI.
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("domain"))).getAttribute("value"),  "", "");
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value"),  "", "");
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"),  "", "");		
 	
 		ClickItem("(.//*[@id='sortMenu'])[5]", 3); // select tenants pull-down.
 		Thread.sleep(500);
+		
+		// compare tenant keys and names in pull-down to expected tenant keys and names.
+		VerifyItemsInTenantPulldown();
+		
+		ClickItem("(.//*[@id='sortMenu'])[6]", 3); // select application pull-down 
+		Thread.sleep(500);		
 
-		// this gets everything in the tenants pull-down.
-		List<WebElement> listOfTenantsInPulldown = driver.findElements(By.xpath(("(//div[@class='dropdown-menu'])[5]/div")));
-
-		for(WebElement ele: listOfTenantsInPulldown)
-		{
-			if(ele.getText().length() > 0) // the first item on the list is blank. don't include it
-			{
-				ShowText(ele.getText());
-				//ShowText(listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[0] + " " +  listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[2]);
-
-				// compare tenant key in pull-down list to tenant key from UI.
-				//Assert.assertEquals(ele.getText().split(" ")[0], listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[0], "");
-				// compare tenant name in pull-down list to tenant key from UI.
-				//Assert.assertEquals(ele.getText().split(" ")[1], listOfTenantItems.get(cntr).split(charSeparatorForTenantItems)[2], "");
-				
-				cntr++;
-				if(cntr > listOfTenantsInPulldown.size() || cntr > maxNumberOfItemsInPulldown)
-				{
-					break;
-				}
-			}
-		}
+		// compare application keys and names in pull-down to expected application keys and names.
+		VerifyItemsInAppPulldown();
+		
+		// ////////////////////////////////////////////////////////////////////////////////////////////////
+		// select an application in applications pull-down that has the most deployments and verify the
+		// deployments in deployment list (key, application, and deploy version).
+		// ////////////////////////////////////////////////////////////////////////////////////////////////		
+		
+		// this builds a list called 'listOfDeploymentItems' that will have all the expected
+		// deployment keys, application keys, and deploy versions that should be shown in the 
+		// deployments pull-down, after the application with the most deployments is selected.
+		// the API is used to get the information for the 'listOfDeploymentItems' list.
+		FindAppWithTheMostDeploys();
+		
+		ClickItem("(.//*[@id='sortMenu'])[6]", 3); // select applications pull-down.
+		
+		// select application that's common to all items in the 'listOfDeploymentItems' list.
+		// this will be the application with the most deployments.
+		SetAppPulldown(listOfMaxDeploymentItems.get(0).m_appName);  
+		
+		ClickItem("(.//*[@id='sortMenu'])[7]", 3); // select deployment pull-down.
+		
+		VerifyItemsInDeployPulldown();
+		
+		CancelOpenAddRouteUI(false);
 	}
 	
 	public static void AddRoute() throws Exception 
 	{
 		int indexLocator = 0;
-		boolean foundAddedRoute = false;
+		//boolean foundAddedRoute = false;
 		
 		ShowCurrentTest("Routes: AddRoute");
 		
 		// delete test route if it exists.
 		DeleteRouteByKeyFromRow(automationRouteKey);
 
-		// select add and wait for title
-		ClickItem(addButton_Locator, 3); // add
-		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+		SelectAddRoute();
 		
-		// select correct pull-downs.
-		PopulatePulldownsForAddRoute();
+		// select correct pull-downs and fill in fields for test route.
+		PopulatePulldownsForAddTestRoute();
+		ClearRouteTextFields();
+		PopulateRouteAddFields();
 		
-		// fill in fields and save.
-		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(automationSubDomain);
-		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(automationDomain);
-		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath);
-		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID);
-		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(automationDescription);		
-		driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[2]")).click();
-		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();		
-		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();
-		//driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']")).click();
-		new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");
-		
-		driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
-		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator) ,3); 
+		SaveRoutePopup();
 		
 		// store routes from UI
 		listOfActualRoutes.clear();
 		ShowActualRoutesOrStore(ActionForApplications.Store);
-		
-		// see if added route exist by searching for it.
-		for(RouteClass rtClass: listOfActualRoutes)
-		{
-			if((rtClass.m_host + rtClass.m_path).equals(automationfullPath.toLowerCase()))
-			{
-				foundAddedRoute = true;
-				break;
-			}
-			indexLocator++;
-		}
 
-		if(!foundAddedRoute) // error if new route not found.
+		// see if added route exist by searching for it in routes list.
+		indexLocator = TestRouteIsInRoutesList();
+		
+		if(indexLocator == -1)
 		{
 			Assert.fail("Route that was added is not found in 'AddRoute'.");
 		}
@@ -467,20 +491,14 @@ public class Routes extends BaseMain
 		// make sure test application is not on the list.
 		//DeleteAppByKeyFromRow(testAppKey); 
 		
-		// select add, wait for title, and select cancel, and verify back in the applications list.
-		ClickItem(addButton_Locator, 3); // add
-		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
-		ClickItem(uiCancel_Locator, 3); // cancel
-	
-		if(!WaitForElementNotVisibleNoThrow(By.xpath(uiCancel_Locator), 3)) // verify UI closed 
-		{
-			Assert.fail("Add route UI is still showing. It should have closed after cancel.");
-		}
+		SelectAddRoute();
 		
-		// select add 
-		ClickItem(addButton_Locator, 3); // add
-		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
-
+		CancelOpenAddRouteUI(false);
+		
+		WaitForElementVisible(By.xpath("(//button/span[text()='View'])[3]"), 3); // wait for third row in routes list to be visible.
+		
+		SelectAddRoute();
+		
 		// verify text boxes are highlighted.
 		VerifyAllTextBoxConditions(false);
 		
@@ -579,7 +597,167 @@ public class Routes extends BaseMain
 	// 															HELPERS 
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	
+	public static int TestRouteIsInRoutesList() throws Exception
+	{
+		boolean foundAddedRoute = false;
+		int indexLocator = 0;
+		
+		// see if added route exist by searching for it in UI.
+		for(RouteClass rtClass: listOfActualRoutes)
+		{
+			if((rtClass.m_host + rtClass.m_path).equals(automationfullPath.toLowerCase()))
+			{
+				foundAddedRoute = true;
+				break;
+			}
+			indexLocator++;
+		}
+		
+		if(!foundAddedRoute)
+		{
+			return -1;
+		}
+		else
+		{
+			return indexLocator;
+		}
+	}
+	
+	
+	public static void SaveRoutePopup() throws Exception
+	{
+		driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
+		WaitForElementNotVisibleNoThrow(By.xpath(saveButtonPoUp_Locator) ,3); 
+	}
+	
+	
+	// fill in fields in add route UI with test route values.
+	public static void PopulateRouteAddFields()
+	{
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(automationSubDomain);
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(automationDomain);
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath);
+		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID);
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(automationDescription);		
+		driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[2]")).click();
+		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();		
+		new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");		
+	}
+	
+	// clear all text fields in route add UI.
+	public static void ClearRouteTextFields()
+	{
+		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("path"))).clear();
+		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).clear();
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).clear();		
+	}
+	
+	public static void SelectAddRoute() throws Exception
+	{
+		// select add and wait for title
+		ClickItem(addButton_Locator, 3); // add
+		WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+	}
+	
+	
+	// compare tenant key and name in pull-down to expected application key and name.
+	public static void VerifyItemsInTenantPulldown()
+	{
+		int cntr = 0;
+		String errTenants = "Error in verifying Tenants pulldown items,";
 
+		// this gets everything in the tenants pull-down.
+		List<WebElement> listOfTenantsInPulldown = driver.findElements(By.xpath(("(//div[@class='dropdown-menu'])[5]/div")));
+		
+		// compare tenant key and name in pull-down to expected tenant key and name. 
+		for(WebElement ele: listOfTenantsInPulldown)
+		{
+			if(ele.getText().length() > 0) // the first item on the list is blank. don't include it
+			{
+				// compare tenant key in pull-down list to tenant key from UI.
+				Assert.assertEquals(CommonMethods_AppsRoutes.SeparateKeyAndName(ele.getText())[0], listOfTenantItems.get(cntr).m_key, errTenants);
+
+				// compare tenant name in pull-down list to tenant key from UI.
+				Assert.assertEquals(CommonMethods_AppsRoutes.SeparateKeyAndName(ele.getText())[1], listOfTenantItems.get(cntr).m_name, errTenants);
+				
+				cntr++;
+				if(cntr > listOfTenantsInPulldown.size() || cntr > maxNumberOfItemsInPulldown)
+				{
+					break;
+				}
+			}
+		}		
+	}
+	
+	// compare application key and name in pull-down to expected application key and name.
+	public static void VerifyItemsInAppPulldown()
+	{
+		int cntr = 0;
+		String errApps = "Error in verifying Apps pulldown items,";
+		
+		// this gets everything in the applications pull-down.
+		List<WebElement> listOfAppsInPulldown = driver.findElements(By.xpath(("(//div[@class='dropdown-menu'])[6]/div")));
+
+		// compare tenant key and name in pull-down to expected tenant key and name. 
+		for(WebElement ele: listOfAppsInPulldown)
+		{
+			if(ele.getText().length() > 0) // the first item on the list is blank. don't include it
+			{
+				// compare application key in pull-down list to application key from UI.
+				Assert.assertEquals(CommonMethods_AppsRoutes.SeparateKeyAndName(ele.getText())[0], Applications.listOfActualApps.get(cntr).m_Key, errApps);
+
+				// compare tenant name in pull-down list to tenant key from UI.
+				Assert.assertEquals(CommonMethods_AppsRoutes.SeparateKeyAndName(ele.getText())[1], Applications.listOfActualApps.get(cntr).m_Name, errApps);
+				
+				cntr++;
+				if(cntr > listOfAppsInPulldown.size() || cntr > maxNumberOfItemsInPulldown)
+				{
+					break;
+				}
+			}
+		}
+	}
+	
+	// compare deploy key, application name, and version in deploy pull-down to expected deploy key, application name, and version 
+	public static void VerifyItemsInDeployPulldown()
+	{
+		// get list of items in the deployment drop down.
+		List<WebElement> listOfDeploysInPulldown = driver.findElements(By.xpath(("(//div[@class='dropdown-menu'])[7]/div")));
+		
+		int cntr = 0; 
+		String errDeploy = "Failure in verification of deployment pulldown in 'VerifyItemsInDeployPulldown'.";
+		
+		// compare   
+		for(WebElement ele: listOfDeploysInPulldown)
+		{
+			if(ele.getText().length() > 0) // the first item on the list is blank. don't include it
+			{
+				// /////////////////////////////////////////////////////////////////////////////////////
+				// 				NOTE --- The 'listOfMaxDeploymentItems' was built using the API.
+				// /////////////////////////////////////////////////////////////////////////////////////
+				
+				// compare deployment key in pull-down list to deployment key from 'listOfMaxDeploymentItems'. 
+				Assert.assertEquals(CommonMethods_AppsRoutes.GetDeploymentInfoArray(ele.getText())[0] , listOfMaxDeploymentItems.get(cntr).m_key, errDeploy);
+				
+				// compare deploy application in pull-down list to deploy application from 'listOfMaxDeploymentItems'.
+				Assert.assertEquals(CommonMethods_AppsRoutes.GetDeploymentInfoArray(ele.getText())[1] , listOfMaxDeploymentItems.get(cntr).m_appName, errDeploy);
+				
+				// compare deploy version in pull-down list to deploy version from 'listOfMaxDeploymentItems'.
+				Assert.assertEquals(CommonMethods_AppsRoutes.GetDeploymentInfoArray(ele.getText())[2] , listOfMaxDeploymentItems.get(cntr).m_version, errDeploy);
+				
+				cntr++;
+				if(cntr > listOfDeploysInPulldown.size() || cntr > maxNumberOfItemsInPulldown)
+				{
+					break;
+				}
+			}
+		}
+	}
+	
+	
 	// depending on 'hasHostAndPath' boolean passed in: 
 	// find an application that has host and path variables or find an application that doesn't have host and path variables. return the application key.
 	// if a request to find an application that has host and path variables is requested, set class variables 'tempHost' and 'tempPath' to application 
@@ -675,14 +853,44 @@ public class Routes extends BaseMain
 		return retStr;
 	}
 	
+	// this assumes applications list from UI has been populated. comments below explain.
+	// this will find the application with the most deployments.
+	public static void FindAppWithTheMostDeploys() throws Exception 
+	{
+		String url =  deploymentsURL + "?pageSize=300" + "&applicationKey=";
+		String apiType = "\"deployments\":";
+		int maxNumDeploysFound = 0;
+		JSONArray jArray;
+		JSONObject jo;
+		
+		// go through the applications list. for each application see if there are any related deployments using the API deployments
+		// APi with application filter. store some deployment information, for the application with the most deployments, onto a list
+		// of DeployInfo objects.
+		for(ApplicationClass appClass : Applications.listOfActualApps)
+		{
+			// call deployments on current application.
+			jArray = CommonMethods.GetJsonArrayWithUrl(token, url + appClass.m_Key, apiType);
+		
+			if(jArray.length() >= 1 && jArray.length() > maxNumDeploysFound) 
+			{
+				listOfMaxDeploymentItems.clear();
+				for(int x = 0; x < jArray.length(); x++)
+				{
+					jo = jArray.getJSONObject(x); // get current json object from the list		
+					listOfMaxDeploymentItems.add(new DeployInfo(jo.getString("key"), jo.getString("applicationKey"), jo.getString("version")));
+				}
+				maxNumDeploysFound = jArray.length();
+			}
+		}
+	}
 	
 	// store all tenant keys and their corresponding tenantID/name 
 	public static void CreateTenantInformation() throws Exception
 	{
 		JSONArray jArray;
-		
 		String url = tenantsURL + "?pageSize=";
-		String apiType = "\"tenants\":"; 
+		String apiType = "\"tenants\":";
+		int cntr = 0;
 		
 		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 		
@@ -769,7 +977,7 @@ public class Routes extends BaseMain
 		listOfActualRoutes.clear();
 	}
 
-	public static void PopulatePulldownsForAddRoute() throws Exception
+	public static void PopulatePulldownsForAddTestRoute() throws Exception
 	{
 		// ///////////
 		// tenant 
@@ -817,7 +1025,8 @@ public class Routes extends BaseMain
 		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[4]"), 3, "");
 		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[4]")).sendKeys(tenantName);
 		
-		ClickItem("(//span[text()='" + tenantName  + "']/../..)[2]", 3);
+		// ClickItem("(//span[text()='" + tenantName  + "']/../..)[2]", 3);
+		ClickItem("(//div[@class='dropdown-menu'])[5]/div[2]", 2); // this seems more consistent with different selections.
 	}
 	
 	public static void SetAppPulldown(String appName)
@@ -829,8 +1038,23 @@ public class Routes extends BaseMain
 		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[5]"), 3, "");
 		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[5]")).sendKeys(appName);
 
-		ClickItem("(//div[@class='dropdown-menu'])[6]/div[2]", 2);
+		// ClickItem("(//div[@class='dropdown-menu'])[6]/div[2]", 2);
+		ClickItem("(//div[@class='dropdown-menu'])[6]/div[2]", 2); // this seems more consistent with different selections.
 	}
+	
+	public static void SetDeployPulldown(String appName)
+	{
+		// application
+		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		
+		// send search text.		
+		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
+		driver.findElement(By.xpath("(//input[@placeholder='Search...'])[6]")).sendKeys(appName);
+
+		// ClickItem("(//div[@class='dropdown-menu'])[6]/div[2]", 2);
+		ClickItem("(//div[@class='dropdown-menu'])[7]/div[2]", 2); // this seems more consistent with different selections.
+	}
+	
 	
 	public static void ClearRequiredFields()
 	{
@@ -849,11 +1073,10 @@ public class Routes extends BaseMain
 		{
 			Assert.fail("Add route UI is still showing. It should have closed after cancel.");
 		}
-
+		
 		if(reOpen)
 		{
-			ClickItem(addButton_Locator, 3); // add
-			WaitForElementVisible(By.xpath("//strong[text()='Add Route']"), 3); // title
+			SelectAddRoute();
 		}
 	}
 	

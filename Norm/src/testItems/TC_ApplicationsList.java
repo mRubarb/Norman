@@ -38,7 +38,7 @@ public class TC_ApplicationsList extends BaseMain
 		// ** Applications.VerifyPaging(); // TC948 step 3 - NOTE: never completed - this is done in 'Applications.VerifySortingMultiplePages()' below.		
 		// ** Applications.VerifySortingFullPage(); // NOTE: this is done in 'Applications.VerifySortingMultiplePages()'.
 		
-		//Applications.VerifyFilteringByTenant(); // TC1011 - filter on tenant with one application and filter on tenant with the most applications.  
+		Applications.VerifyFilteringByTenant(); // TC1011 - filter on tenant with one application and filter on tenant with the most applications.  
 		//Applications.VerifyFilteringByEnabledDisabled(); // TC1011 - filter in enabled/disabled full list.		
 		//Applications.VerifyFilteringEnabledDisabledWithTenant(); // TC1011 - combined filtering.
 		// Applications.VerifySortingMultiplePages(); // TC1156 sorting with different page sizes applications. FIX THIS!! has bug.

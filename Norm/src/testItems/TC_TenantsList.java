@@ -42,6 +42,7 @@ public class TC_TenantsList extends BaseMain {
 
 		Tenants.verifyFilteringCombined("RVM", "RVM_1", "Show Enabled Tenants Only");
 		*/
+		/*
 		String tenantKey = "T_AUTOM_ANA";
 		
 		Tenants.addTenant(tenantKey);
@@ -70,7 +71,7 @@ public class TC_TenantsList extends BaseMain {
 		
 		// view tenant
 		Tenants.viewTenant(tenantKey2);
-		
+		*/
 		String tenantKey3 = "APR";
 		
 		Tenants.searchTenant("A");
@@ -78,10 +79,10 @@ public class TC_TenantsList extends BaseMain {
 		Thread.sleep(2000);
 		
 		// view tenant
-		Tenants.viewTenant(tenantKey3);
+		//Tenants.viewTenant(tenantKey3);
 		
 		// Verify applications listed in the Applications tab, in Tenant's details page
-		Tenants.verifyApplicationDataTabInDetailsPage();
+		Tenants.verifyApplicationDataTabInDetailsPage(tenantKey3);
 		
 		// Verify deployments listed in the Deployments tab, in Tenant's details page
 		

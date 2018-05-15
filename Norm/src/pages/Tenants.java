@@ -12,10 +12,14 @@ import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
+import classes.ApplicationClass;
 import classes.Tenant;
 import common.CommonMethods;
 import common.CommonMethodsAna;
@@ -1250,21 +1254,100 @@ public class Tenants extends BaseMain
 	}
 
 
-	public static void verifyApplicationDataTabInDetailsPage() {
+	public static void verifyApplicationDataTabInDetailsPage(String tenantKey) throws Exception {
 		
 	
 		// Open tenant's details page 
+		openTenantDetailsPage(tenantKey);
 		
 		// Click 'Applications' tab
+		String xpathAppTab = "//li/a[@id='tenant_tab']/div[text()='Applications ']";  // tenant_tab -- the 'id' is incorrectly named in the DOM - it should application_tab
+		driver.findElement(By.xpath(xpathAppTab)).click();
+		
+		// Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("tenant_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
 		
 		// Get a list with the apps listed
 		
+		
 		// Run request for GET /applications?tenantKey=tenantKeyValue
+		
 		
 		// Compare the apps listed on each list - they should be the same 
 		
+		
 	}
 	
+	public static void verifyDeploymentDataTabInDetailsPage(String tenantKey) throws Exception {
+		
+		
+		// Open tenant's details page 
+		openTenantDetailsPage(tenantKey);
+		
+		// Click 'Deployments' tab
+		String xpathDepTab = "//li/a[@id='deployment_tab']/div[text()='Deployments ']";
+		driver.findElement(By.xpath(xpathDepTab)).click();
+		
+		// Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("deployment_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		
+		// Get a list with the apps listed
+		
+		
+		// Run request for GET /applications?tenantKey=tenantKeyValue
+		
+		
+		// Compare the apps listed on each list - they should be the same 
+		
+		
+	}
+	
+	public static void verifyRouteDataTabInDetailsPage(String tenantKey) throws Exception {
+		
+		
+		// Open tenant's details page 
+		openTenantDetailsPage(tenantKey);
+		
+		// Click 'Routes' tab
+		String xpathRouteTab = "//li/a[@id='route_tab']/div[text()='Routes ']";
+		driver.findElement(By.xpath(xpathRouteTab)).click();
+		Thread.sleep(2000);
+		
+		// Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("route_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		// set max size of list
+		CommonMethods.selectSizeOfList(50);
+		
+		// Get a list with the apps listed
+		getApplicationsFromTab();
+		
+		// Run request for GET /applications?tenantKey=tenantKeyValue
+		
+		
+		// Compare the apps listed on each list - they should be the same 
+		
+		
+	}
+
+
+	private static void getApplicationsFromTab() {
+		
+		
+		List<ApplicationClass> listApps = new ArrayList<>();
+		
+		
+		
+		
+	}
 	
 	
 	

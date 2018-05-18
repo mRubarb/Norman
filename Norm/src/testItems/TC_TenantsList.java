@@ -82,7 +82,17 @@ public class TC_TenantsList extends BaseMain {
 		//Tenants.viewTenant(tenantKey3);
 		
 		// Verify applications listed in the Applications tab, in Tenant's details page
+		
+		
+		// ********** CONTINUE HERE ************
+		// ********** CONTINUE HERE ************
+		// ********** CONTINUE HERE ************
+		
 		Tenants.verifyApplicationDataTabInDetailsPage(tenantKey3);
+		
+		// ********** CONTINUE HERE ************
+		// ********** CONTINUE HERE ************
+		// ********** CONTINUE HERE ************
 		
 		// Verify deployments listed in the Deployments tab, in Tenant's details page
 		

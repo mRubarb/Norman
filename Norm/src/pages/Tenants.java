@@ -122,6 +122,32 @@ public class Tenants extends BaseMain
 	}
 	
 	
+	// Puts the JSON response obtained from the API GET /tenants into a list.
+	private static List<ApplicationClass> putJsonArrayAppsIntoList(JSONArray jsonArrayApps) throws JSONException {
+		
+		List<ApplicationClass> applicationList = new ArrayList<>();
+		
+		// Put the deployments in the json array into a list of deployments
+		for (int i = 0; i < jsonArrayApps.length(); i++) {
+			
+			JSONObject jo = jsonArrayApps.getJSONObject(i);
+			ApplicationClass app = new ApplicationClass(jo.getString("key"), jo.getString("name"), "", jo.getBoolean("enabled"), "", "");
+			
+			/*			
+			System.out.print(i+1 + "  Key: " + jo.getString("key"));
+			System.out.print(", Name: " + jo.getString("name"));
+			System.out.print(", Default Tenant ID: " + GetNonRequiredItem(jo, "defaultTenantID")
+			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+			*/
+			
+			applicationList.add(app);
+			
+		}
+		
+		return applicationList;
+			
+	}
+	
 	// Puts the JSON response obtained from the API GET /tenants/{id} into an object.
 	private static Tenant putJsonObjectIntoTenantObject(JSONObject jsonObject) throws JSONException {
 		
@@ -1269,14 +1295,40 @@ public class Tenants extends BaseMain
 		wait.until(ExpectedConditions.attributeToBe(By.id("tenant_tab"), "aria-expanded", "true"));
 		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
 		
+		// Get a list with the apps listed in the UI
 		
-		// Get a list with the apps listed
+		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
+		List<ApplicationClass> applicationsInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= applicationCount; i++) {
+		
+			String appKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String appName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
+			String appEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			
+			ApplicationClass app = new ApplicationClass(appKey, appName, "", CommonMethods.convertToBoolean(appEnabled), "", "");
+			applicationsInTab.add(app);
+			
+			System.out.println("key: " + appKey);
+			
+		}
+		
 		
 		
 		// Run request for GET /applications?tenantKey=tenantKeyValue
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/applications?tenantKey=" + tenantKey;
+		String apiType = "\"" + "applications" + "\"" + ":";
+		
+		JSONArray jsonArrayApplications = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<ApplicationClass> listAppsFromAPI = putJsonArrayAppsIntoList(jsonArrayApplications);	
 		
 		
 		// Compare the apps listed on each list - they should be the same 
+	
+		// ********** CONTINUE HERE ************
+		
 		
 		
 	}

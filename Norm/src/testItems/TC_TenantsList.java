@@ -84,11 +84,13 @@ public class TC_TenantsList extends BaseMain {
 		// Verify applications listed in the Applications tab, in Tenant's details page
 		
 		
+		
 		// ********** CONTINUE HERE ************
 		// ********** CONTINUE HERE ************
 		// ********** CONTINUE HERE ************
 		
-		Tenants.verifyApplicationDataTabInDetailsPage(tenantKey3);
+		Tenants.verifyDetailsPages(tenantKey3);
+		
 		
 		// ********** CONTINUE HERE ************
 		// ********** CONTINUE HERE ************

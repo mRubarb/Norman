@@ -2,6 +2,8 @@ package classes;
 
 import java.util.Comparator;
 
+import common.CommonMethods;
+
 public class Deployment {
 
 	private String key;
@@ -42,6 +44,18 @@ public class Deployment {
 		this.enabled = enabled;
 	}
 	
+	
+	public Deployment() {}
+	
+	public Deployment(String key, String appKey, String version, String desc, boolean enabled) {
+		
+		this.key = key;
+		this.applicationKey = appKey;
+		this.version = version;
+		this.description = desc;
+		this.enabled = enabled;
+		
+	}
 	
 	/* Comparator for sorting the list by Key Ascending */
     public static Comparator<Deployment> keyComparatorAsc = new Comparator<Deployment>() {

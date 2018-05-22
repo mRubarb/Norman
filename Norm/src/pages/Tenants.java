@@ -93,7 +93,7 @@ public class Tenants extends BaseMain
 	}
 	
 	// Puts the JSON response obtained from the API GET /tenants into a list.
-	private static List<Tenant> putJsonArrayIntoList(JSONArray jsonArrayTenants) throws JSONException {
+	public static List<Tenant> putJsonArrayIntoList(JSONArray jsonArrayTenants) throws JSONException {
 		
 		List<Tenant> actualTenantsList = new ArrayList<>();
 		
@@ -178,7 +178,7 @@ public class Tenants extends BaseMain
 	
 	
 	// Puts the JSON response obtained from the API GET /routes into a list.
-	private static List<RouteClass> putJsonArrayRoutesIntoList(JSONArray jsonArrayRoutes) throws JSONException {
+	public static List<RouteClass> putJsonArrayRoutesIntoList(JSONArray jsonArrayRoutes) throws JSONException {
 		
 		List<RouteClass> routeList = new ArrayList<>();
 		

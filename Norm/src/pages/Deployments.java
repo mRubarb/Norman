@@ -18,6 +18,8 @@ import org.testng.Assert;
 import baseItems.BaseMain;
 import classes.ApplicationClass;
 import classes.Deployment;
+import classes.RouteClass;
+import classes.Tenant;
 import common.CommonMethods;
 import common.CommonMethodsAna;
 
@@ -889,34 +891,31 @@ public class Deployments extends BaseMain
 		// 1. Open deployment's details page
 		CommonMethodsAna.openElementDetailsPage(deploymentKey, "deployment");
 		
-		// 2. Verify data in Applications tab
-		verifyApplicationDataTabInDetailsPage(deploymentKey);
+		// 2. Verify data in Tenants tab
+		verifyTenantDataTabInDetailsPage(deploymentKey);
 		
-		// 3. Verify data in Tenants tab
-		//verifyTenanttDataTabInDetailsPage(deploymentKey);
-		
-		// 4. Verify data in Routes tab
-		//verifyRouteDataTabInDetailsPage(deploymentKey);
+		// 3. Verify data in Routes tab
+		verifyRouteDataTabInDetailsPage(deploymentKey);
 		
 		
 		
 	}
 	
-	public static void verifyApplicationDataTabInDetailsPage(String deploymentKey) throws Exception {
+	public static void verifyTenantDataTabInDetailsPage(String deploymentKey) throws Exception {
 		
 		/*
-		 * 1. Click 'Applications' tab
+		 * 1. Click 'Tenants' tab
 		 *  	* Wait for tab to be selected
-		 * 2. Get a list with the apps listed in the UI
-		 * 3. Run request for GET /applications?tenantKey=tenantKeyValue to get a list with the apps in the API
-		 * 4. Compare the apps listed on each list - they should be the same 
+		 * 2. Get a list with the tenants listed in the UI
+		 * 3. Run request for GET /tenants?tenantKey=tenantKeyValue to get a list with the tenants in the API
+		 * 4. Compare the tenants listed on each list - they should be the same 
 		 * 
 		 */
 		
 		
-		// 1. Click 'Applications' tab
-		String xpathAppTab = "//li/a[@id='tenant_tab']/div[text()='Applications ']";  // tenant_tab -- the 'id' is incorrectly named in the DOM - it should application_tab
-		driver.findElement(By.xpath(xpathAppTab)).click();
+		// 1. Click 'Tenants' tab
+		String xpathTenantTab = "//li/a[@id='tenant_tab']/div[text()='Tenants ']";
+		driver.findElement(By.xpath(xpathTenantTab)).click();
 		
 		// * Wait for tab to be selected
 		WebDriverWait wait = new WebDriverWait(driver, 4);
@@ -924,54 +923,132 @@ public class Deployments extends BaseMain
 		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
 		
 		
-		// 2. Get a list with the apps listed in the UI
-		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
-		List<ApplicationClass> applicationsInTab = new ArrayList<>();
-		List<String> applicationsKeysInTab = new ArrayList<>();
+		// 2. Get a list with the tenants listed in the UI
+		int tenantCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Tenants ']/span")).getText());
+		List<Tenant> tenantsInTab = new ArrayList<>();
+		List<String> tenantsKeysInTab = new ArrayList<>();
 				
-		for (int i = 1; i <= applicationCount; i++) {
+		for (int i = 1; i <= tenantCount; i++) {
 		
-			String appKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
-			String appName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
-			String appEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			String tenantKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			//String tenantName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
+			//String tenantEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
 			
-			ApplicationClass app = new ApplicationClass(appKey, appName, "", CommonMethods.convertToBoolean(appEnabled), "", "");
-			applicationsInTab.add(app);
-			applicationsKeysInTab.add(appKey);
+			Tenant tenant = new Tenant();
+			tenant.setKey(tenantKey);
+			tenantsInTab.add(tenant);
+			tenantsKeysInTab.add(tenantKey);
 			
-			// System.out.println("key: " + appKey);
+			// System.out.println("key: " + tenantKey);
 			
 		}
 		
 			
-		// 3. Run request for GET /applications?tenantKey=tenantKeyValue
+		// 3. Run request for GET /tenants?tenantKey=tenantKeyValue
 		String token = CommonMethods.GetTokenFromPost();
-		String url = baseUrl.replace("#", "") + "platformservice/api/v1/applications?deploymentKey=" + deploymentKey;
-		String apiType = "\"" + "applications" + "\"" + ":";
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants?deploymentKey=" + deploymentKey;
+		String apiType = "\"" + "tenants" + "\"" + ":";
 		
-		JSONArray jsonArrayApplications = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 		
-		List<ApplicationClass> applicationsFromAPI = Tenants.putJsonArrayAppsIntoList(jsonArrayApplications);	
-		List<String> applicationKeysFromAPI = new ArrayList<>();
+		List<Tenant> tenantsFromAPI = Tenants.putJsonArrayIntoList(jsonArrayTenants);	
+		List<String> tenantKeysFromAPI = new ArrayList<>();
 		
-		for (int i = 0; i < applicationsFromAPI.size(); i++) {
+		for (int i = 0; i < tenantsFromAPI.size(); i++) {
 			
-			applicationKeysFromAPI.add(applicationsFromAPI.get(i).m_Key);
+			tenantKeysFromAPI.add(tenantsFromAPI.get(i).getKey());
 			
 		}
 		
 
-		// 4. Compare the apps listed on each list - they should be the same 
-		Collections.sort(applicationsKeysInTab);
-		Collections.sort(applicationKeysFromAPI);
+		// 4. Compare the tenants listed on each list - they should be the same 
+		Collections.sort(tenantsKeysInTab);
+		Collections.sort(tenantKeysFromAPI);
 		
-		for (int i = 0; i < applicationCount; i++) {
+		for (int i = 0; i < tenantCount; i++) {
 			
-			Assert.assertEquals(applicationKeysFromAPI.get(i), applicationsKeysInTab.get(i));
+			Assert.assertEquals(tenantKeysFromAPI.get(i), tenantsKeysInTab.get(i));
 			
 		}
 		
 	}
 	
+	
+	public static void verifyRouteDataTabInDetailsPage(String deploymentKey) throws Exception {
+		
+		/*
+		 * 1. Click 'Routes' tab
+		 *  	* Wait for tab to be selected
+		 * 2. Get a list with the routes listed in the UI
+		 * 3. Run request for GET /routes?deploymentKey=deploymentKeyValue to get a list with the routes in the API
+		 * 4. Compare the routes listed on each list - they should be the same 
+		 * 
+		 */
+		
+			
+		// 1. Click 'Routes' tab
+		String xpathRouteTab = "//li/a[@id='route_tab']/div[text()='Routes ']";
+		driver.findElement(By.xpath(xpathRouteTab)).click();
+			
+		// * Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("route_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		// set max size of list
+		int sizeOfList = 50;
+		CommonMethods.selectSizeOfList(sizeOfList);
+		
+		
+		// 2. Get a list with the routes listed in the UI
+		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
+		List<RouteClass> routesInTab = new ArrayList<>();
+		List<String> routesKeysInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= routeCount; i++) {
+		
+			String routeKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String routeAppKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]/div/a")).getText();
+			String routeEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div/span")).getText();
+			
+			RouteClass route = new RouteClass(routeKey, "", "", routeAppKey, "", "", "", "", "", 
+					CommonMethods.convertToBoolean(routeEnabled), "", true, "", "");
+			routesInTab.add(route);
+			routesKeysInTab.add(routeKey);
+			
+			System.out.println("key: " + routeKey);
+			
+		}
+		
+		
+		// 3. Run request for GET /routes?deploymentKey=deploymentKeyValue to get a list with the routes in the API
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/routes?deploymentKey=" + deploymentKey + "&pageSize=" + sizeOfList;
+		String apiType = "\"" + "routes" + "\"" + ":";
+		
+		JSONArray jsonArrayRoutes = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<RouteClass> routesFromAPI = Tenants.putJsonArrayRoutesIntoList(jsonArrayRoutes);	
+		List<String> routeKeysFromAPI = new ArrayList<>();
+		
+		for (int i = 0; i < routesFromAPI.size(); i++) {
+			
+			routeKeysFromAPI.add(routesFromAPI.get(i).m_Key);
+			
+		}
+		
+		
+		// 4. Compare the routes listed on each list - they should be the same 
+		Collections.sort(routesKeysInTab);
+		Collections.sort(routeKeysFromAPI);
+		
+		for (int i = 0; i < routeCount; i++) {
+			
+			Assert.assertEquals(routeKeysFromAPI.get(i), routesKeysInTab.get(i));
+			
+		}
+		
+	}
+
 
 }

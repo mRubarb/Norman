@@ -248,9 +248,15 @@ public class CommonMethodsAna  extends BaseMain {
 		
 		// make sure that the View button clicked belongs to the tenant that is going to be viewed
 		
+		String indexViewButton = "";
+		
+		if (elementType.equals("tenant")) indexViewButton = "5";
+		if (elementType.equals("deployment")) indexViewButton = "6";
+		
+		
 		for (int i = 1; i <= pageSize; i++) {
 		
-			String xpathButtonView = "//table/tbody/tr[" + i + "]/td[5]/div/button/span[text()='View']";
+			String xpathButtonView = "//table/tbody/tr[" + i + "]/td[" + indexViewButton + "]/div/button/span[text()='View']";
 			
 			driver.findElement(By.xpath(xpathButtonView)).click();	
 			

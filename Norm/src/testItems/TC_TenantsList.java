@@ -72,7 +72,7 @@ public class TC_TenantsList extends BaseMain {
 		// view tenant
 		Tenants.viewTenant(tenantKey2);
 		*/
-		String tenantKey3 = "APR";
+		String tenantKey3 = "ANA_1"; //"APR"; // 
 		
 		Tenants.searchTenant("A");
 		
@@ -82,25 +82,10 @@ public class TC_TenantsList extends BaseMain {
 		//Tenants.viewTenant(tenantKey3);
 		
 		// Verify applications listed in the Applications tab, in Tenant's details page
-		
-		
-		
-		// ********** CONTINUE HERE ************
-		// ********** CONTINUE HERE ************
-		// ********** CONTINUE HERE ************
-		
-		Tenants.verifyDetailsPages(tenantKey3);
-		
-		
-		// ********** CONTINUE HERE ************
-		// ********** CONTINUE HERE ************
-		// ********** CONTINUE HERE ************
-		
 		// Verify deployments listed in the Deployments tab, in Tenant's details page
-		
-		
 		// Verify routes listed in the Routes tab, in Tenant's details page
-		
+		// Verify addresses listed in the ACL tab, in Tenant's details page
+		Tenants.verifyDetailsPages(tenantKey3);
 		
 	}
 	

@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 import baseItems.BaseMain;
 import common.CommonMethods;
 import pages.Deployments;
+import pages.Tenants;
 
 
 public class TC_DeploymentsList extends BaseMain {
@@ -29,7 +30,7 @@ public class TC_DeploymentsList extends BaseMain {
 	{
 					
 		CommonMethods.selectItemPlatformDropdown("Deployments");
-		
+		/*
 		CommonMethods.verifyTitle("Deployments");
 		
 		Deployments.verifyColumnsNames();
@@ -52,14 +53,24 @@ public class TC_DeploymentsList extends BaseMain {
 				
 		Thread.sleep(5000);
 		
-		Deployments.editDeployment(deploymentKey, applicationKey);  // *** IT WORKS :) ***
+		Deployments.editDeployment(deploymentKey, applicationKey);  
 			
 		Thread.sleep(3000);
 		
-		Deployments.deleteDeployment(deploymentKey); // OK!
+		Deployments.deleteDeployment(deploymentKey);
+		*/
 		
+		String deploymentKey = "RVM_1";
 		
+		// Verify applications listed in the Applications tab, in Deployment's details page
+		// Verify tenants listed in the Tenants tab, in Deployment's details page
+		// Verify routes listed in the Routes tab, in Deployment's details page
+		// Verify addresses listed in the ACL tab, in Deployment's details page
+		Deployments.verifyDetailsPages(deploymentKey);
 			
+		//// ****** IT FAILED *** CONTINUE HERE ****
+		
+		
 	}
 	
 	

@@ -11,11 +11,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
+import classes.ApplicationClass;
 import classes.Deployment;
 import common.CommonMethods;
+import common.CommonMethodsAna;
 
 
 public class Deployments extends BaseMain 
@@ -877,5 +881,97 @@ public class Deployments extends BaseMain
 				return "";
 		}
 	}
+
+	
+	// In the deployment's details page verify the data displayed on each tab comparing it to the data coming from the API
+	public static void verifyDetailsPages(String deploymentKey) throws Exception {
+		
+		// 1. Open deployment's details page
+		CommonMethodsAna.openElementDetailsPage(deploymentKey, "deployment");
+		
+		// 2. Verify data in Applications tab
+		verifyApplicationDataTabInDetailsPage(deploymentKey);
+		
+		// 3. Verify data in Tenants tab
+		//verifyTenanttDataTabInDetailsPage(deploymentKey);
+		
+		// 4. Verify data in Routes tab
+		//verifyRouteDataTabInDetailsPage(deploymentKey);
+		
+		
+		
+	}
+	
+	public static void verifyApplicationDataTabInDetailsPage(String deploymentKey) throws Exception {
+		
+		/*
+		 * 1. Click 'Applications' tab
+		 *  	* Wait for tab to be selected
+		 * 2. Get a list with the apps listed in the UI
+		 * 3. Run request for GET /applications?tenantKey=tenantKeyValue to get a list with the apps in the API
+		 * 4. Compare the apps listed on each list - they should be the same 
+		 * 
+		 */
+		
+		
+		// 1. Click 'Applications' tab
+		String xpathAppTab = "//li/a[@id='tenant_tab']/div[text()='Applications ']";  // tenant_tab -- the 'id' is incorrectly named in the DOM - it should application_tab
+		driver.findElement(By.xpath(xpathAppTab)).click();
+		
+		// * Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("tenant_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		
+		// 2. Get a list with the apps listed in the UI
+		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
+		List<ApplicationClass> applicationsInTab = new ArrayList<>();
+		List<String> applicationsKeysInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= applicationCount; i++) {
+		
+			String appKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String appName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
+			String appEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			
+			ApplicationClass app = new ApplicationClass(appKey, appName, "", CommonMethods.convertToBoolean(appEnabled), "", "");
+			applicationsInTab.add(app);
+			applicationsKeysInTab.add(appKey);
+			
+			// System.out.println("key: " + appKey);
+			
+		}
+		
+			
+		// 3. Run request for GET /applications?tenantKey=tenantKeyValue
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/applications?deploymentKey=" + deploymentKey;
+		String apiType = "\"" + "applications" + "\"" + ":";
+		
+		JSONArray jsonArrayApplications = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<ApplicationClass> applicationsFromAPI = Tenants.putJsonArrayAppsIntoList(jsonArrayApplications);	
+		List<String> applicationKeysFromAPI = new ArrayList<>();
+		
+		for (int i = 0; i < applicationsFromAPI.size(); i++) {
+			
+			applicationKeysFromAPI.add(applicationsFromAPI.get(i).m_Key);
+			
+		}
+		
+
+		// 4. Compare the apps listed on each list - they should be the same 
+		Collections.sort(applicationsKeysInTab);
+		Collections.sort(applicationKeysFromAPI);
+		
+		for (int i = 0; i < applicationCount; i++) {
+			
+			Assert.assertEquals(applicationKeysFromAPI.get(i), applicationsKeysInTab.get(i));
+			
+		}
+		
+	}
+	
 
 }

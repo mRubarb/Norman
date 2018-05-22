@@ -124,8 +124,8 @@ public class Tenants extends BaseMain
 	}
 	
 	
-	// Puts the JSON response obtained from the API GET /tenants into a list.
-	private static List<ApplicationClass> putJsonArrayAppsIntoList(JSONArray jsonArrayApps) throws JSONException {
+	// Puts the JSON response obtained from the API GET /applications into a list.
+	public static List<ApplicationClass> putJsonArrayAppsIntoList(JSONArray jsonArrayApps) throws JSONException {
 		
 		List<ApplicationClass> applicationList = new ArrayList<>();
 		
@@ -151,7 +151,7 @@ public class Tenants extends BaseMain
 	}
 	
 	
-	// Puts the JSON response obtained from the API GET /tenants into a list.
+	// Puts the JSON response obtained from the API GET /deployments into a list.
 	private static List<Deployment> putJsonArrayDeploymentsIntoList(JSONArray jsonArrayDeps) throws JSONException {
 		
 		List<Deployment> deploymentList = new ArrayList<>();
@@ -177,6 +177,31 @@ public class Tenants extends BaseMain
 	}
 	
 	
+	// Puts the JSON response obtained from the API GET /routes into a list.
+	private static List<RouteClass> putJsonArrayRoutesIntoList(JSONArray jsonArrayRoutes) throws JSONException {
+		
+		List<RouteClass> routeList = new ArrayList<>();
+		
+		// Put the routes in the json array into a list of routes
+		for (int i = 0; i < jsonArrayRoutes.length(); i++) {
+			
+			JSONObject jo = jsonArrayRoutes.getJSONObject(i);
+			RouteClass route = new RouteClass(jo.getString("key"), "", "", "", "", "", "", "", "", jo.getBoolean("enabled"), "", true, "", "");
+			
+			/*			
+			System.out.print(i+1 + "  Key: " + jo.getString("key"));
+			
+			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+			*/
+			
+			routeList.add(route);
+			
+		}
+		
+		return routeList;
+	}
+
+
 	// Puts the JSON response obtained from the API GET /tenants/{id} into an object.
 	private static Tenant putJsonObjectIntoTenantObject(JSONObject jsonObject) throws JSONException {
 		
@@ -215,7 +240,7 @@ public class Tenants extends BaseMain
 		
 	
 
-	// It adds the tenants that are listed on the UI to a list
+	// Adds the tenants that are listed on the UI to a list
 	private static List<Tenant> addTenantsFromUItoList() {
 
 		List<Tenant> expectedTenantsList = new ArrayList<>();
@@ -1309,6 +1334,42 @@ public class Tenants extends BaseMain
 	}
 
 
+	
+
+	private static void getApplicationsFromTab() {
+		
+		
+		List<ApplicationClass> listApps = new ArrayList<>();
+		
+		
+		
+		
+	}
+
+
+	// In the tenant's details page verify the data displayed on each tab comparing it to the data coming from the API
+	public static void verifyDetailsPages(String tenantKey) throws Exception {
+		
+		// 1. Open tenant's details page 
+		//openTenantDetailsPage(tenantKey);
+		CommonMethodsAna.openElementDetailsPage(tenantKey, "tenant");
+		
+		// 2. Verify data in Applications tab
+		verifyApplicationDataTabInDetailsPage(tenantKey);
+		
+		// 3. Verify data in Deployments tab
+		verifyDeploymentDataTabInDetailsPage(tenantKey);
+		
+		// 4. Verify data in Routes tab
+		verifyRouteDataTabInDetailsPage(tenantKey);
+		
+		// 5. Verify data in ACL tab
+		verifyACLDataTabInDetailsPage(tenantKey);
+		
+	}
+	
+	
+	
 	public static void verifyApplicationDataTabInDetailsPage(String tenantKey) throws Exception {
 		
 		/*
@@ -1453,14 +1514,12 @@ public class Tenants extends BaseMain
 	
 	public static void verifyRouteDataTabInDetailsPage(String tenantKey) throws Exception {
 		
-		// ******** CONTINUE HERE  ********
-		
 		/*
 		 * 1. Click 'Routes' tab
 		 *  	* Wait for tab to be selected
 		 * 2. Get a list with the routes listed in the UI
 		 * 3. Run request for GET /routes?tenantKey=tenantKeyValue to get a list with the routes in the API
-		 * 4. Compare the deployments listed on each list - they should be the same 
+		 * 4. Compare the routes listed on each list - they should be the same 
 		 * 
 		 */
 		
@@ -1468,18 +1527,16 @@ public class Tenants extends BaseMain
 		// 1. Click 'Routes' tab
 		String xpathRouteTab = "//li/a[@id='route_tab']/div[text()='Routes ']";
 		driver.findElement(By.xpath(xpathRouteTab)).click();
-		Thread.sleep(2000);
-		
+			
 		// * Wait for tab to be selected
 		WebDriverWait wait = new WebDriverWait(driver, 4);
 		wait.until(ExpectedConditions.attributeToBe(By.id("route_tab"), "aria-expanded", "true"));
 		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
 		
 		// set max size of list
-		CommonMethods.selectSizeOfList(50);
+		int sizeOfList = 50;
+		CommonMethods.selectSizeOfList(sizeOfList);
 		
-		// Get a list with the apps listed
-		//getApplicationsFromTab();
 		
 		// 2. Get a list with the routes listed in the UI
 		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
@@ -1488,54 +1545,140 @@ public class Tenants extends BaseMain
 				
 		for (int i = 1; i <= routeCount; i++) {
 		
-			String depKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
-			String depVersion = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]")).getText();
-			String depEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			String routeKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String routeAppKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]/div/a")).getText();
+			String routeEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div/span")).getText();
 			
-			//RouteClass dep = new RouteClass(key, tennantKey, tennantName, appKey, appName, deployKey, deployVersion, tenantId, description, enabled, disabledReason, allowServiceCalls, host, path)
-			//routesInTab.add(dep);
-			routesKeysInTab.add(depKey);
+			RouteClass route = new RouteClass(routeKey, "", "", routeAppKey, "", "", "", "", "", 
+					CommonMethods.convertToBoolean(routeEnabled), "", true, "", "");
+			routesInTab.add(route);
+			routesKeysInTab.add(routeKey);
 			
-			System.out.println("key: " + depKey);
+			System.out.println("key: " + routeKey);
 			
 		}
 		
 		
 		// 3. Run request for GET /routes?tenantKey=tenantKeyValue to get a list with the routes in the API
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/routes?tenantKey=" + tenantKey + "&pageSize=" + sizeOfList;
+		String apiType = "\"" + "routes" + "\"" + ":";
+		
+		JSONArray jsonArrayRoutes = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<RouteClass> routesFromAPI = putJsonArrayRoutesIntoList(jsonArrayRoutes);	
+		List<String> routeKeysFromAPI = new ArrayList<>();
+		
+		for (int i = 0; i < routesFromAPI.size(); i++) {
+			
+			routeKeysFromAPI.add(routesFromAPI.get(i).m_Key);
+			
+		}
 		
 		
-		// Compare the apps listed on each list - they should be the same 
+		// 4. Compare the routes listed on each list - they should be the same 
+		Collections.sort(routesKeysInTab);
+		Collections.sort(routeKeysFromAPI);
 		
+		for (int i = 0; i < routeCount; i++) {
+			
+			Assert.assertEquals(routeKeysFromAPI.get(i), routesKeysInTab.get(i));
+			
+		}
+		
+	}
+
+	private static void verifyACLDataTabInDetailsPage(String tenantKey) throws Exception {
+	
+		/*
+		 * 1. Click 'ACL' tab
+		 *  	* Wait for tab to be selected
+		 * 2. Run request for GET /acl/tenant/<tenantKey>?defaultIfMissing=true to get a list with the IP/CIDR in the API
+		 * 3. Get a list with the IPs/CIDRs listed in the UI
+		 * 4. Compare the ACL listed on each list - they should be the same 
+		 * 
+		 */
+		
+			
+		// 1. Click 'ACL' tab
+		String xpathACLTab = "//li/a[@id='acl_tab']/div[text()='ACL']";
+		driver.findElement(By.xpath(xpathACLTab)).click();
+			
+		// * Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("acl_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='ADDRESS']"), 4);
+		
+		
+		// 2. Run request for GET /acl/tenant/<tenantKey>?defaultIfMissing=true to get a list with the IP/CIDR in the API
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/acl/tenant/" + tenantKey + "?defaultIfMissing=true";
+		String apiType = "\"" + "addresses" + "\"" + ":";
+		
+		JSONArray jsonArrayAddresses = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<String> addressesFromAPI = putJsonArrayAddressesIntoList(jsonArrayAddresses);	
+		List<String> addressesKeysFromAPI = new ArrayList<>();
+		
+		int addressesCount = addressesFromAPI.size();
+		
+		for (int i = 0; i < addressesCount; i++) {
+			
+			addressesKeysFromAPI.add(addressesFromAPI.get(i));
+			
+		}
+		
+				
+		// 3. Get a list with the IP/CIDR listed in the UI
+		List<String> addressesInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= addressesCount; i++) {
+		
+			String addrInTab = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td")).getText();
+			
+			addressesInTab.add(addrInTab);
+			
+			System.out.println("addrInTab: " + addrInTab);
+			
+		}
+		
+		
+		
+		
+		// 4. Compare the addresses listed on each list - they should be the same 
+		Collections.sort(addressesInTab);
+		Collections.sort(addressesKeysFromAPI);
+		
+		for (int i = 0; i < addressesCount; i++) {
+			
+			Assert.assertEquals(addressesKeysFromAPI.get(i), addressesInTab.get(i));
+			
+		}
 		
 	}
 
 
-	private static void getApplicationsFromTab() {
+	private static List<String> putJsonArrayAddressesIntoList(JSONArray jsonArrayAddresses) throws JSONException {
+	
+		List<String> actualAddressesList = new ArrayList<>();
 		
+		// Put the deployments in the json array into a list of deployments
+		for (int i = 0; i < jsonArrayAddresses.length(); i++) {
+			
+			JSONObject jo = jsonArrayAddresses.getJSONObject(i);
+						
+			// System.out.println(i+1 + "  Address: " + jo.getString("addr"));
+			
+			actualAddressesList.add(jo.getString("addr"));
+			
+		}
 		
-		List<ApplicationClass> listApps = new ArrayList<>();
-		
-		
-		
-		
+		return actualAddressesList;
+	
 	}
 
 
-	public static void verifyDetailsPages(String tenantKey) throws Exception {
 		
-		// 1. Open tenant's details page 
-		openTenantDetailsPage(tenantKey);
-		
-		// 2. Verify data in Applications tab
-		verifyApplicationDataTabInDetailsPage(tenantKey);
-		
-		// 3. Verify data in Deployments tab
-		verifyDeploymentDataTabInDetailsPage(tenantKey);
-		
-		// 4. Verify data in Routes tab
-		verifyRouteDataTabInDetailsPage(tenantKey);
-		
-	}
 	
 	
 	

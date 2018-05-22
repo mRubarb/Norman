@@ -239,5 +239,43 @@ public class CommonMethodsAna  extends BaseMain {
 		
 	}
 	
+
+	// Open element details page. It works for Tenants.
+	// Trying Deployments
+	public static void openElementDetailsPage(String key, String elementType) throws InterruptedException {
+		
+		int pageSize = 10;
+		
+		// make sure that the View button clicked belongs to the tenant that is going to be viewed
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonView = "//table/tbody/tr[" + i + "]/td[5]/div/button/span[text()='View']";
+			
+			driver.findElement(By.xpath(xpathButtonView)).click();	
+			
+			String xpathKey = "//jhi-" + elementType + "-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
+			
+			String keyUI = driver.findElement(By.xpath(xpathKey)).getText().split("   ")[0].trim();
+			
+			System.out.println("Tenant key: " + keyUI);
+			
+			if (keyUI.equals(key)) {
+				
+				// System.out.println(elementType + " found");
+				break;
+			}
+			// System.out.println(elementType + " NOT found");
+			
+			// If the element clicked is not the element that we need then click Back button
+			driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
+			Thread.sleep(2000);
+			
+		}
+	
+	}
+
+
+	
 	
 }

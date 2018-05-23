@@ -29,63 +29,19 @@ public class TC_TenantsList extends BaseMain {
 	{
 				
 		CommonMethods.selectItemPlatformDropdown("Tenants");
-		/*
+		
 		CommonMethods.verifyTitle("Tenants");
 		
 		Tenants.verifyColumnsNames();
 		
 		Tenants.verifyDataAndSorting();
 		
-		Tenants.verifyPaging();
+		Tenants.verifyPagingNew();
 		
 		Tenants.verifyFiltering("RVM", "RVM_1", "Show Enabled Tenants Only");
 
 		Tenants.verifyFilteringCombined("RVM", "RVM_1", "Show Enabled Tenants Only");
-		*/
-		/*
-		String tenantKey = "T_AUTOM_ANA";
 		
-		Tenants.addTenant(tenantKey);
-		
-		Thread.sleep(3000);
-		
-		Tenants.searchTenant("T_A");
-		
-		Thread.sleep(2000);
-		
-		Tenants.editTenant(tenantKey);
-		
-		Tenants.searchTenant("T_A");
-		
-		Thread.sleep(2000);
-		
-		Tenants.deleteTenant(tenantKey);
-		
-		//Tenants.clearTenantSearch();
-	
-		String tenantKey2 = "CTTI";
-		
-		Tenants.searchTenant("C");
-		
-		Thread.sleep(2000);
-		
-		// view tenant
-		Tenants.viewTenant(tenantKey2);
-		*/
-		String tenantKey3 = "ANA_1"; //"APR"; // 
-		
-		Tenants.searchTenant("A");
-		
-		Thread.sleep(2000);
-		
-		// view tenant
-		//Tenants.viewTenant(tenantKey3);
-		
-		// Verify applications listed in the Applications tab, in Tenant's details page
-		// Verify deployments listed in the Deployments tab, in Tenant's details page
-		// Verify routes listed in the Routes tab, in Tenant's details page
-		// Verify addresses listed in the ACL tab, in Tenant's details page
-		Tenants.verifyDetailsPages(tenantKey3);
 		
 	}
 	

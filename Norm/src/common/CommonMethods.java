@@ -1,6 +1,10 @@
 package common;
 
 import baseItems.BaseMain;
+import classes.ApplicationClass;
+import classes.Deployment;
+import classes.RouteClass;
+import classes.Tenant;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -8,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -433,4 +439,494 @@ public class CommonMethods extends BaseMain
 		Thread.sleep(2000); 
 		
 	}
+	
+	
+	// Puts the JSON response obtained from the API GET /tenants into a list.
+	public static List<Tenant> putJsonArrayTenantsIntoList(JSONArray jsonArrayTenants) throws JSONException {
+		
+		List<Tenant> actualTenantsList = new ArrayList<>();
+		
+		// Put the deployments in the json array into a list of tenants
+		for (int i = 0; i < jsonArrayTenants.length(); i++) {
+			
+			JSONObject jo = jsonArrayTenants.getJSONObject(i);
+			Tenant tenant = new Tenant();
+			
+			/*			
+			System.out.print(i+1 + "  Key: " + jo.getString("key"));
+			System.out.print(", Name: " + jo.getString("name"));
+			System.out.print(", Default Tenant ID: " + GetNonRequiredItem(jo, "defaultTenantID")
+			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+			*/
+			
+			tenant.setKey(jo.getString("key"));
+			tenant.setName(jo.getString("name"));
+			tenant.setDefaultTenantID(CommonMethods.GetNonRequiredItem(jo, "defaultTenantID"));
+			tenant.setEnabled(jo.getBoolean("enabled"));
+		
+			actualTenantsList.add(tenant);
+			
+		}
+		
+		return actualTenantsList;
+			
+	}
+	
+	
+	// Puts the JSON response obtained from the API GET /applications into a list.
+	public static List<ApplicationClass> putJsonArrayAppsIntoList(JSONArray jsonArrayApps) throws JSONException {
+		
+		List<ApplicationClass> applicationList = new ArrayList<>();
+		
+		// Put the deployments in the json array into a list of applications
+		for (int i = 0; i < jsonArrayApps.length(); i++) {
+			
+			JSONObject jo = jsonArrayApps.getJSONObject(i);
+			ApplicationClass app = new ApplicationClass(jo.getString("key"), jo.getString("name"), "", jo.getBoolean("enabled"), "", "");
+			
+			/*			
+			System.out.print(i+1 + "  Key: " + jo.getString("key"));
+			System.out.print(", Name: " + jo.getString("name"));
+			System.out.print(", Default Tenant ID: " + GetNonRequiredItem(jo, "defaultTenantID")
+			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+			*/
+			
+			applicationList.add(app);
+			
+		}
+		
+		return applicationList;
+			
+	}
+	
+	
+	// Puts the JSON response obtained from the API GET /deployments into a list.
+	public static List<Deployment> putJsonArrayDeploymentsIntoList(JSONArray jsonArrayDeps) throws JSONException {
+		
+		List<Deployment> deploymentList = new ArrayList<>();
+		
+		// Put the deployments in the json array into a list of deployments
+		for (int i = 0; i < jsonArrayDeps.length(); i++) {
+			
+			JSONObject jo = jsonArrayDeps.getJSONObject(i);
+			Deployment dep = new Deployment(jo.getString("key"), "", jo.getString("version"), "", jo.getBoolean("enabled"));
+			
+			/*			
+			System.out.print(i+1 + "  Key: " + jo.getString("key"));
+			System.out.print(", Version: " + jo.getString("version"));
+			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+			*/
+			
+			deploymentList.add(dep);
+			
+		}
+		
+		return deploymentList;
+			
+	}
+	
+	
+	// Puts the JSON response obtained from the API GET /routes into a list.
+	public static List<RouteClass> putJsonArrayRoutesIntoList(JSONArray jsonArrayRoutes) throws JSONException {
+		
+		List<RouteClass> routeList = new ArrayList<>();
+		
+		// Put the routes in the json array into a list of routes
+		for (int i = 0; i < jsonArrayRoutes.length(); i++) {
+			
+			JSONObject jo = jsonArrayRoutes.getJSONObject(i);
+			RouteClass route = new RouteClass(jo.getString("key"), "", "", "", "", "", "", "", "", jo.getBoolean("enabled"), "", true, "", "");
+			
+			/*			
+			System.out.print(i+1 + "  Key: " + jo.getString("key"));
+			
+			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+			*/
+			
+			routeList.add(route);
+			
+		}
+		
+		return routeList;
+	}
+
+
+	public static void verifyRouteDataTabInDetailsPage(String key, String detailsPage) throws Exception {
+		
+		/*
+		 * 1. Click 'Routes' tab
+		 *  	* Wait for tab to be selected
+		 * 2. Get a list with the routes listed in the UI
+		 * 3. Run request for GET /routes?deploymentKey=deploymentKeyValue to get a list with the routes in the API
+		 * 4. Compare the routes listed on each list - they should be the same 
+		 * 
+		 */
+		
+			
+		// 1. Click 'Routes' tab
+		String xpathRouteTab = "//li/a[@id='route_tab']/div[text()='Routes ']";
+		driver.findElement(By.xpath(xpathRouteTab)).click();
+			
+		// * Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("route_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		// set max size of list
+		int sizeOfList = 50;
+		CommonMethods.selectSizeOfList(sizeOfList);
+		
+		
+		// 2. Get a list with the routes listed in the UI
+		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
+		List<RouteClass> routesInTab = new ArrayList<>();
+		List<String> routesKeysInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= routeCount; i++) {
+		
+			String routeKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String routeAppKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]/div/a")).getText();
+			String routeEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div/span")).getText();
+			
+			RouteClass route = new RouteClass(routeKey, "", "", routeAppKey, "", "", "", "", "", 
+					CommonMethods.convertToBoolean(routeEnabled), "", true, "", "");
+			routesInTab.add(route);
+			routesKeysInTab.add(routeKey);
+			
+			System.out.println("key: " + routeKey);
+			
+		}
+		
+		
+		// 3. Run request for GET /routes?deploymentKey=deploymentKeyValue to get a list with the routes in the API
+		String token = CommonMethods.GetTokenFromPost();
+		
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/routes?" + detailsPage + "Key=" + key + "&pageSize=" + sizeOfList;
+		//                                E.g.: "platformservice/api/v1/routes?deploymentKey=deploymentKey&pageSize=" + sizeOfList;
+		
+		String apiType = "\"" + "routes" + "\"" + ":";
+		
+		JSONArray jsonArrayRoutes = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<RouteClass> routesFromAPI = CommonMethods.putJsonArrayRoutesIntoList(jsonArrayRoutes);	
+		List<String> routeKeysFromAPI = new ArrayList<>();
+		
+		for (int i = 0; i < routesFromAPI.size(); i++) {
+			
+			routeKeysFromAPI.add(routesFromAPI.get(i).m_Key);
+			
+		}
+		
+		
+		// 4. Compare the routes listed on each list - they should be the same 
+		Collections.sort(routesKeysInTab);
+		Collections.sort(routeKeysFromAPI);
+		
+		for (int i = 0; i < routeCount; i++) {
+			
+			Assert.assertEquals(routeKeysFromAPI.get(i), routesKeysInTab.get(i));
+			
+		}
+		
+	}
+	
+	
+	public static void verifyTenantDataTabInDetailsPage(String key, String detailsPage) throws Exception {
+		
+		/*
+		 * 1. Click 'Tenants' tab
+		 *  	* Wait for tab to be selected
+		 * 2. Get a list with the tenants listed in the UI
+		 * 3. Run request for GET /tenants?tenantKey=tenantKeyValue to get a list with the tenants in the API
+		 * 4. Compare the tenants listed on each list - they should be the same 
+		 * 
+		 */
+		
+		
+		// 1. Click 'Tenants' tab
+		String xpathTenantTab = "//li/a[@id='tenant_tab']/div[text()='Tenants ']";
+		driver.findElement(By.xpath(xpathTenantTab)).click();
+		
+		// * Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("tenant_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		
+		// 2. Get a list with the tenants listed in the UI
+		int tenantCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Tenants ']/span")).getText());
+		List<Tenant> tenantsInTab = new ArrayList<>();
+		List<String> tenantsKeysInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= tenantCount; i++) {
+		
+			String tenantKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			//String tenantName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
+			//String tenantEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			
+			Tenant tenant = new Tenant();
+			tenant.setKey(tenantKey);
+			tenantsInTab.add(tenant);
+			tenantsKeysInTab.add(tenantKey);
+			
+			// System.out.println("key: " + tenantKey);
+			
+		}
+		
+			
+		// 3. Run request for GET /tenants?tenantKey=tenantKeyValue
+		String token = CommonMethods.GetTokenFromPost();
+		
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants?" + detailsPage + "Key=" + key;
+		//                                E.g.: "platformservice/api/v1/tenants?deploymentKey=deploymentKey;
+		String apiType = "\"" + "tenants" + "\"" + ":";
+		
+		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<Tenant> tenantsFromAPI = CommonMethods.putJsonArrayTenantsIntoList(jsonArrayTenants);	
+		List<String> tenantKeysFromAPI = new ArrayList<>();
+		
+		for (int i = 0; i < tenantsFromAPI.size(); i++) {
+			
+			tenantKeysFromAPI.add(tenantsFromAPI.get(i).getKey());
+			
+		}
+		
+
+		// 4. Compare the tenants listed on each list - they should be the same 
+		Collections.sort(tenantsKeysInTab);
+		Collections.sort(tenantKeysFromAPI);
+		
+		for (int i = 0; i < tenantCount; i++) {
+			
+			Assert.assertEquals(tenantKeysFromAPI.get(i), tenantsKeysInTab.get(i));
+			
+		}
+		
+	}
+	
+	
+	public static void verifyDeploymentDataTabInDetailsPage(String key, String detailsPage) throws Exception {
+		
+		/*
+		 * 1. Click 'Deployments' tab
+		 *  	* Wait for tab to be selected
+		 * 2. Get a list with the deployments listed in the UI
+		 * 3. Run request for GET /deployments?tenantKey=tenantKeyValue to get a list with the deployments in the API
+		 * 4. Compare the deployments listed on each list - they should be the same 
+		 * 
+		 */
+		
+				
+		// 1. Click 'Deployments' tab
+		String xpathDepTab = "//li/a[@id='deployment_tab']/div[text()='Deployments ']";
+		driver.findElement(By.xpath(xpathDepTab)).click();
+		
+		// * Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("deployment_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		
+		// 2. Get a list with the deployments listed in the UI
+		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Deployments ']/span")).getText());
+		List<Deployment> deploymentsInTab = new ArrayList<>();
+		List<String> deploymentsKeysInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= deploymentCount; i++) {
+		
+			String depKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String depVersion = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]")).getText();
+			String depEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			
+			Deployment dep = new Deployment(depKey, "", depVersion, "", CommonMethods.convertToBoolean(depEnabled));
+			deploymentsInTab.add(dep);
+			deploymentsKeysInTab.add(depKey);
+			
+			System.out.println("key: " + depKey);
+			
+		}
+		
+		
+		// 3. Run request for GET /deployments?tenantKey=tenantKeyValue to get a list with the deployments in the API
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments?" + detailsPage + "Key=" + key;
+		String apiType = "\"" + "deployments" + "\"" + ":";
+		
+		JSONArray jsonArrayDeployments = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<Deployment> deploymentsFromAPI = CommonMethods.putJsonArrayDeploymentsIntoList(jsonArrayDeployments);	
+		List<String> deploymentKeysFromAPI = new ArrayList<>();
+		
+		for (int i = 0; i < deploymentsFromAPI.size(); i++) {
+			
+			deploymentKeysFromAPI.add(deploymentsFromAPI.get(i).getKey());
+			
+		}
+		
+		
+		// 4. Compare the deployments listed on each list - they should be the same
+		Collections.sort(deploymentsKeysInTab);
+		Collections.sort(deploymentKeysFromAPI);
+		
+		for (int i = 0; i < deploymentCount; i++) {
+			
+			Assert.assertEquals(deploymentKeysFromAPI.get(i), deploymentsKeysInTab.get(i));
+			
+		}
+		
+	}
+	
+	public static void verifyApplicationDataTabInDetailsPage(String key, String detailsPage) throws Exception {
+		
+		/*
+		 * 1. Click 'Applications' tab
+		 *  	* Wait for tab to be selected
+		 * 2. Get a list with the apps listed in the UI
+		 * 3. Run request for GET /applications?tenantKey=tenantKeyValue to get a list with the apps in the API
+		 * 4. Compare the apps listed on each list - they should be the same 
+		 * 
+		 */
+		
+		
+		// 1. Click 'Applications' tab
+		String xpathAppTab = "//li/a[@id='tenant_tab']/div[text()='Applications ']";  // tenant_tab -- the 'id' is incorrectly named in the DOM - it should application_tab
+		driver.findElement(By.xpath(xpathAppTab)).click();
+		
+		// * Wait for tab to be selected
+		WebDriverWait wait = new WebDriverWait(driver, 4);
+		wait.until(ExpectedConditions.attributeToBe(By.id("tenant_tab"), "aria-expanded", "true"));
+		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
+		
+		
+		// 2. Get a list with the apps listed in the UI
+		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
+		List<ApplicationClass> applicationsInTab = new ArrayList<>();
+		List<String> applicationsKeysInTab = new ArrayList<>();
+				
+		for (int i = 1; i <= applicationCount; i++) {
+		
+			String appKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String appName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
+			String appEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			
+			ApplicationClass app = new ApplicationClass(appKey, appName, "", CommonMethods.convertToBoolean(appEnabled), "", "");
+			applicationsInTab.add(app);
+			applicationsKeysInTab.add(appKey);
+			
+			// System.out.println("key: " + appKey);
+			
+		}
+		
+			
+		// 3. Run request for GET /applications?tenantKey=tenantKeyValue
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/applications?" + detailsPage + "Key=" + key;
+		String apiType = "\"" + "applications" + "\"" + ":";
+		
+		JSONArray jsonArrayApplications = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		
+		List<ApplicationClass> applicationsFromAPI = CommonMethods.putJsonArrayAppsIntoList(jsonArrayApplications);	
+		List<String> applicationKeysFromAPI = new ArrayList<>();
+		
+		for (int i = 0; i < applicationsFromAPI.size(); i++) {
+			
+			applicationKeysFromAPI.add(applicationsFromAPI.get(i).m_Key);
+			
+		}
+		
+
+		// 4. Compare the apps listed on each list - they should be the same 
+		Collections.sort(applicationsKeysInTab);
+		Collections.sort(applicationKeysFromAPI);
+		
+		for (int i = 0; i < applicationCount; i++) {
+			
+			Assert.assertEquals(applicationKeysFromAPI.get(i), applicationsKeysInTab.get(i));
+			
+		}
+		
+	}
+	
+	
+	// Open element details page. It works for Tenants and Deployments
+	public static void openElementDetailsPage(String key, String elementType) throws Exception {
+		
+		int pageSize = 10;
+		
+		// make sure that the View button clicked belongs to the tenant that is going to be viewed
+		
+		String indexViewButton = "";
+		
+		if (elementType.equals("tenant")) indexViewButton = "5";
+		if (elementType.equals("deployment")) indexViewButton = "6";
+		
+		
+		for (int i = 1; i <= pageSize; i++) {
+		
+			String xpathButtonView = "//table/tbody/tr[" + i + "]/td[" + indexViewButton + "]/div/button/span[text()='View']";
+			
+			driver.findElement(By.xpath(xpathButtonView)).click();	
+			
+			//WaitForElementPresent(By.xpath("//jhi-" + elementType + "-detail/div/h2/div[text()='Tenant Detail ']"), 3);
+			
+			String xpathKey = "//jhi-" + elementType + "-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
+			
+			WaitForElementPresent(By.xpath(xpathKey), 3);
+			
+			String keyUI = driver.findElement(By.xpath(xpathKey)).getText().split("   ")[0].trim();
+			
+			System.out.println("Tenant key: " + keyUI);
+			
+			if (keyUI.equals(key)) {
+				
+				// System.out.println(elementType + " found");
+				break;
+			}
+			// System.out.println(elementType + " NOT found");
+			
+			// If the element clicked is not the element that we need then click Back button
+			driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
+			Thread.sleep(2000);
+			
+		}
+	
+	}
+
+	
+	// Call into API and get single JSON object.  
+	public static JSONObject getSingleObject(String token, String url) throws IOException, JSONException
+	{
+				
+		URL obj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		
+		// optional default is GET
+		con.setRequestMethod("GET");
+		
+		//add authorization header
+		con.setRequestProperty("Authorization", "Bearer " + token);
+		
+		int responseCode = con.getResponseCode();
+		System.out.println("\nSending 'GET' request to URL : " + url);
+		System.out.println("Response Code : " + responseCode);
+
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+
+		while ((inputLine = in.readLine()) != null) 
+		{
+			response.append(inputLine);
+		}
+		in.close();
+		
+		System.out.println(response.toString());		
+		
+		// Create json object
+		JSONObject jsonObject = new JSONObject(response.toString());		
+		return jsonObject;
+		
+	}	
+			
 }

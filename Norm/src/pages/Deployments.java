@@ -10,18 +10,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 
 import baseItems.BaseMain;
-import classes.ApplicationClass;
 import classes.Deployment;
-import classes.RouteClass;
 import classes.Tenant;
 import common.CommonMethods;
-import common.CommonMethodsAna;
 
 
 public class Deployments extends BaseMain 
@@ -889,19 +885,86 @@ public class Deployments extends BaseMain
 	public static void verifyDetailsPages(String deploymentKey) throws Exception {
 		
 		// 1. Open deployment's details page
-		CommonMethodsAna.openElementDetailsPage(deploymentKey, "deployment");
+		CommonMethods.openElementDetailsPage(deploymentKey, "deployment");
 		
 		// 2. Verify data in Tenants tab
-		verifyTenantDataTabInDetailsPage(deploymentKey);
+		CommonMethods.verifyTenantDataTabInDetailsPage(deploymentKey, "deployment");
 		
 		// 3. Verify data in Routes tab
-		verifyRouteDataTabInDetailsPage(deploymentKey);
+		CommonMethods.verifyRouteDataTabInDetailsPage(deploymentKey, "deployment");
 		
 		
 		
 	}
 	
-	public static void verifyTenantDataTabInDetailsPage(String deploymentKey) throws Exception {
+	/// ********* CONTINUE HERE ***********************
+	/// ********* CONTINUE HERE ***********************
+	/// ********* CONTINUE HERE ***********************
+	
+	public static void verifyDeploymentDetails(String deploymentKey) throws Exception {
+	
+		CommonMethods.openElementDetailsPage(deploymentKey, "deployment");
+		
+		String token = CommonMethods.GetTokenFromPost();
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments/" + deploymentKey + "?includeStatistics=true";
+						
+		JSONObject jsonObject = CommonMethods.getSingleObject(token, url); 
+		
+		/// ********* CONTINUE HERE ***********************
+		
+		/*
+		Deployment deploymentObject = putJsonObjectIntoDeploymentObject(jsonObject); // <--- ADD CODE TO METHOD 
+		
+		String xpathNameDeployment = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Name:']/following-sibling::dd";	
+		String xpathDefIdDeployment = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Default Deployment ID:']/following-sibling::dd";
+		String xpathEnabledDeployment = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
+		
+		// Verify Name
+		String nameUI = driver.findElement(By.xpath(xpathNameDeployment)).getText().trim();
+		Assert.assertEquals(nameUI, deploymentObject.getName());
+				
+		// Verify Default Deployment ID - in some cases there is no value for Default Deployment ID 
+		String defTenIdUI = "";
+		
+		try {
+			defTenIdUI = driver.findElement(By.xpath(xpathDefIdDeployment)).getText().trim();
+			Assert.assertEquals(defTenIdUI, deploymentObject.getDefaultDeploymentID());
+			
+		} catch (NoSuchElementException e) { }
+		
+		// Verify Enabled value
+		String enabledUI = driver.findElement(By.xpath(xpathEnabledDeployment)).getText().split("   ")[1].trim();
+		Assert.assertEquals(CommonMethods.convertToBoolean(enabledUI), deploymentObject.isEnabled());
+		
+		
+		// Verify the # on each tab
+		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
+		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Deployments ']/span")).getText()); 
+		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
+		
+		System.out.println("applicationCount: " + applicationCount);
+		System.out.println("deploymentCount: " + deploymentCount);
+		System.out.println("routeCount: " + routeCount);
+	
+		Assert.assertEquals(applicationCount, deploymentObject.getApplicationCount());
+		Assert.assertEquals(deploymentCount, deploymentObject.getDeploymentCount());
+		Assert.assertEquals(routeCount, deploymentObject.getRouteCount());
+		
+		driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
+		Thread.sleep(2000);
+		*/
+		
+	}
+
+	
+	
+	
+	private static Deployment putJsonObjectIntoDeploymentObject(JSONObject jsonObject) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	//public static void verifyTenantDataTabInDetailsPage(String deploymentKey) throws Exception {
 		
 		/*
 		 * 1. Click 'Tenants' tab
@@ -912,7 +975,7 @@ public class Deployments extends BaseMain
 		 * 
 		 */
 		
-		
+		/*
 		// 1. Click 'Tenants' tab
 		String xpathTenantTab = "//li/a[@id='tenant_tab']/div[text()='Tenants ']";
 		driver.findElement(By.xpath(xpathTenantTab)).click();
@@ -951,7 +1014,7 @@ public class Deployments extends BaseMain
 		
 		JSONArray jsonArrayTenants = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 		
-		List<Tenant> tenantsFromAPI = Tenants.putJsonArrayIntoList(jsonArrayTenants);	
+		List<Tenant> tenantsFromAPI = CommonMethods.putJsonArrayTenantsIntoList(jsonArrayTenants);	
 		List<String> tenantKeysFromAPI = new ArrayList<>();
 		
 		for (int i = 0; i < tenantsFromAPI.size(); i++) {
@@ -972,9 +1035,9 @@ public class Deployments extends BaseMain
 		}
 		
 	}
+	*/
 	
-	
-	public static void verifyRouteDataTabInDetailsPage(String deploymentKey) throws Exception {
+	//public static void verifyRouteDataTabInDetailsPage(String deploymentKey, String detailsPage) throws Exception {
 		
 		/*
 		 * 1. Click 'Routes' tab
@@ -985,7 +1048,7 @@ public class Deployments extends BaseMain
 		 * 
 		 */
 		
-			
+	/*		
 		// 1. Click 'Routes' tab
 		String xpathRouteTab = "//li/a[@id='route_tab']/div[text()='Routes ']";
 		driver.findElement(By.xpath(xpathRouteTab)).click();
@@ -1023,12 +1086,13 @@ public class Deployments extends BaseMain
 		
 		// 3. Run request for GET /routes?deploymentKey=deploymentKeyValue to get a list with the routes in the API
 		String token = CommonMethods.GetTokenFromPost();
-		String url = baseUrl.replace("#", "") + "platformservice/api/v1/routes?deploymentKey=" + deploymentKey + "&pageSize=" + sizeOfList;
+		//String url = baseUrl.replace("#", "") + "platformservice/api/v1/routes?deploymentKey=" + deploymentKey + "&pageSize=" + sizeOfList;
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/routes?" + detailsPage + "Key=" + deploymentKey + "&pageSize=" + sizeOfList;
 		String apiType = "\"" + "routes" + "\"" + ":";
 		
 		JSONArray jsonArrayRoutes = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
 		
-		List<RouteClass> routesFromAPI = Tenants.putJsonArrayRoutesIntoList(jsonArrayRoutes);	
+		List<RouteClass> routesFromAPI = CommonMethods.putJsonArrayRoutesIntoList(jsonArrayRoutes);	
 		List<String> routeKeysFromAPI = new ArrayList<>();
 		
 		for (int i = 0; i < routesFromAPI.size(); i++) {
@@ -1048,7 +1112,7 @@ public class Deployments extends BaseMain
 			
 		}
 		
-	}
+	}*/
 
 
 }

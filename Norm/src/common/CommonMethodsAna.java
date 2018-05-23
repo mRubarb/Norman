@@ -1,13 +1,7 @@
 package common;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.By;
@@ -197,42 +191,6 @@ public class CommonMethodsAna  extends BaseMain {
 	}
 	
 	
-	//****TO BE MOVED TO COMMON METHODS CLASS***** 
-	// Call into API and get single JSON object.  
-	public static JSONObject getSingleObject(String token, String url) throws IOException, JSONException
-	{
-				
-		URL obj = new URL(url);
-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-		
-		// optional default is GET
-		con.setRequestMethod("GET");
-		
-		//add authorization header
-		con.setRequestProperty("Authorization", "Bearer " + token);
-		
-		int responseCode = con.getResponseCode();
-		System.out.println("\nSending 'GET' request to URL : " + url);
-		System.out.println("Response Code : " + responseCode);
-
-		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-		String inputLine;
-		StringBuffer response = new StringBuffer();
-
-		while ((inputLine = in.readLine()) != null) 
-		{
-			response.append(inputLine);
-		}
-		in.close();
-		
-		System.out.println(response.toString());		
-		
-		// Create json object
-		JSONObject jsonObject = new JSONObject(response.toString());		
-		return jsonObject;
-		
-	}	
-		
 	public static void refreshPage() {
 		
 		driver.findElement(By.xpath("//button[@title='refresh']")).click();
@@ -240,47 +198,7 @@ public class CommonMethodsAna  extends BaseMain {
 	}
 	
 
-	// Open element details page. It works for Tenants.
-	// Trying Deployments
-	public static void openElementDetailsPage(String key, String elementType) throws InterruptedException {
-		
-		int pageSize = 10;
-		
-		// make sure that the View button clicked belongs to the tenant that is going to be viewed
-		
-		String indexViewButton = "";
-		
-		if (elementType.equals("tenant")) indexViewButton = "5";
-		if (elementType.equals("deployment")) indexViewButton = "6";
-		
-		
-		for (int i = 1; i <= pageSize; i++) {
-		
-			String xpathButtonView = "//table/tbody/tr[" + i + "]/td[" + indexViewButton + "]/div/button/span[text()='View']";
-			
-			driver.findElement(By.xpath(xpathButtonView)).click();	
-			
-			String xpathKey = "//jhi-" + elementType + "-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
-			
-			String keyUI = driver.findElement(By.xpath(xpathKey)).getText().split("   ")[0].trim();
-			
-			System.out.println("Tenant key: " + keyUI);
-			
-			if (keyUI.equals(key)) {
-				
-				// System.out.println(elementType + " found");
-				break;
-			}
-			// System.out.println(elementType + " NOT found");
-			
-			// If the element clicked is not the element that we need then click Back button
-			driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
-			Thread.sleep(2000);
-			
-		}
 	
-	}
-
 
 	
 	

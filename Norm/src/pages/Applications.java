@@ -716,6 +716,7 @@ public class Applications extends BaseMain
 			ClickSorting("//span[text()='Enabled']");
 			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "IS_ENABLED");
 			
+
 			// click a sort item and verify.
 			ClickSorting("//span[text()='Enabled']");
 			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "IS_ENABLED");
@@ -1591,6 +1592,13 @@ public class Applications extends BaseMain
 	public static void VerifyPagesSorting(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception		
 	{
 		int index = 0;
+		
+		// 5/23/18
+		// this is used to decide whether to select the first page when the loop is done. if the loop stays on only one page, this
+		// boolean stays false and selecting the first page is not needed. selecting the first page when on the first page gave selenium
+		// locator error. tried looking for isEnabled in selector but isEnabled is true, even when on the first page.
+		boolean haveSelectedNextPage = false;  
+		
 		System.out.println("Num Pages = " + numberOfPages);
 		for(int x = 0; x < numberOfPages; x++) // go through each page.
 		{
@@ -1619,30 +1627,19 @@ public class Applications extends BaseMain
 			// select next page.
 			//index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
 			//ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
-			SelectNextPage();
+			CommonMethods_AppsRoutes.SelectNextPage();
+			haveSelectedNextPage = true;
 		}
 		
 		// ClickItem("(//ul[@class='pagination']/li)[1]/a", 3); // back to first page.
-		SelectFirstPage();
-		
+		// CommonMethods_AppsRoutes.ShowPopup("");
+		if(haveSelectedNextPage)
+		{
+			CommonMethods_AppsRoutes.SelectFirstPage();
+		}
 		Thread.sleep(1000);
 	}	
 
-	// select next page. // TODO: this is common
-	public static void SelectNextPage()
-	{
-		int index = 0;
-		index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
-		ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
-	}
-	
-	// select next page. // TODO: this is common
-	// select next page.
-	public static void SelectFirstPage()
-	{
-		ClickItem("(//ul[@class='pagination']/li)[1]/a", 3); // back to first page.	
-	}
-	
 	public static void VerifySortingForItemAndDirection(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception
 	{
 		VerifyPagesSorting(numberOfPages, apiType, pageSize, sortDirection, sortBy);	

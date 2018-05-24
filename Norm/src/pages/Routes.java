@@ -78,7 +78,9 @@ public class Routes extends BaseMain
 	public static String tempHost = "";
 	public static String tempPath = "";
 	public static String tempTenantID = "";
-													 	
+
+	public static String appWithNoDeploys = ""; // used in route add pulldown tests,
+	
 	public static String apiType = "\"routes\":";
 	public static String RoutesTableCss = ".table.table-striped>tbody>tr";
 	public static String RoutesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
@@ -97,6 +99,16 @@ public class Routes extends BaseMain
 	public static List<DeployInfo> listOfMaxDeploymentItems = new ArrayList<DeployInfo>();
 
 	public static int[] pageSizes = {5, 10, 20, 50}; // selectable page sizes in console.	
+
+	enum DisabledReason
+	{
+		upgrading, 
+		onboarding,
+		offboarding,
+		maintenance,
+		unknown,
+		noselect
+	}
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// this gets all items in the collection from the API and all items from the applications UI and compares them.
@@ -237,7 +249,6 @@ public class Routes extends BaseMain
 			ClickSorting("(//span[text()='Name'])[2]");
 			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "APPLICATION_NAME");									
 
-
 			// click a sort item and verify.
 			ClickSorting("//span[text()='Deployment Key']");
 			VerifyPagesSorting(numberOfPages, apiType, pageSize, "ASC", "DEPLOYMENT_KEY");
@@ -277,56 +288,148 @@ public class Routes extends BaseMain
 			// click a sort item and verify.
 			ClickSorting("//span[text()='Service Calls']");
 			VerifyPagesSorting(numberOfPages, apiType, pageSize, "DESC", "ALLOW_SERVICE_CALLS");									
-			
+
 			pageSizeSelectorIndex++;
 		}	
 	}
 
-	public static void ValidatePrePopulatedItemsAndEdits_PartTwo() throws Exception  // bladd
+	public static void ValidatePrePopulatedItemsAndEdits_PartThree() throws Exception 
+	{
+		int indexLocator = -1;
+		ShowCurrentTest("Routes: ValidatePrePopulatedItemsAndEdits_PartThree");
+		
+		// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// finish test for disabled reason values unknown (selected via pull-down), upgrading, maintenance, and on boarding.
+		// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		
+		// /////////////////////////////////////////////////////////
+		// disabled reason value unknown (selected via pull-down).
+		// /////////////////////////////////////////////////////////
+		SetupForAppRouteEnabledAndServiceCall(false, false, DisabledReason.unknown); // using pull-down set reason to unknown
+		SaveRoutePopup();
+
+		indexLocator = StoreUI_WithPartialVerification();
+		
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, false);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, false);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.unknown.toString().toUpperCase());
+		
+		// //////////////////////////////////
+		// disabled reason value upgrading.
+		// //////////////////////////////////
+		SetupForAppRouteEnabledAndServiceCall(false, false, DisabledReason.upgrading); // using pull-down set reason to upgrading
+		SaveRoutePopup();
+		
+		indexLocator = StoreUI_WithPartialVerification();
+
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, false);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, false);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.upgrading.toString().toUpperCase());
+		
+		// ////////////////////////////////////
+		// disabled reason value maintenance.
+		// ////////////////////////////////////
+		SetupForAppRouteEnabledAndServiceCall(false, false, DisabledReason.maintenance); // using pull-down set reason to maintenance
+		SaveRoutePopup();
+
+		indexLocator = StoreUI_WithPartialVerification();
+		
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, false);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, false);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.maintenance.toString().toUpperCase());
+		
+		// ////////////////////////////////////
+		// disabled reason value on boarding.
+		// ////////////////////////////////////
+		SetupForAppRouteEnabledAndServiceCall(false, false, DisabledReason.maintenance); // using pull-down set reason to maintenance
+		SaveRoutePopup();
+
+		indexLocator = StoreUI_WithPartialVerification();
+		
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, false);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, false);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.maintenance.toString().toUpperCase());
+		
+		// now verify add route error when using existing route sub domain, domain, and path. 
+		SelectAddRoute();
+		ClearRouteTextFields();
+		PopulateRouteAddFields(false);
+		WaitForElementVisible(By.xpath("//div/small"), 2);
+		Assert.assertEquals(driver.findElement(By.xpath("//div/small")).getText(), "There is already a route to this subdomain.domain/path"); // verify expected error. 
+		
+		CancelOpenAddRouteUI(false); // close route add UI.
+		
+	}
+		
+	// see first set of comments for description.
+	public static void ValidatePrePopulatedItemsAndEdits_PartTwo() throws Exception
 	{
 		int indexLocator = 0;
 		ShowCurrentTest("Routes: AddRoutePrePopulatedItems_PartTwo");
 
-		// delete test route if it exists.
-		DeleteRouteByKeyFromRow(automationRouteKey);
-		
-		SelectAddRoute();
-		
-		// save a route for these enabled/service-calls.
-		// false/false, false/true, true/false,	true/true.
-		
-		// select correct pull-downs and fill in fields for test route.
-		PopulatePulldownsForAddTestRoute();
-		ClearRouteTextFields();
-		PopulateRouteAddFields();
-		
-		// now set enabled/service-calls false/false
-		
+		// //////////////////////////////////////////////////////////////////////////////////////////////
+		// save a route for these enabled/service-calls: false/false, false/true, true/false,true/true.
+		// this also verifies these disabled reasons: unknown, off boarding, on boarding. 
+		// //////////////////////////////////////////////////////////////////////////////////////////////
+
+		// ///////////////////////////////////////////////////////////////////////////////
+		// enabled/service-calls = false/false and leave disabled reason at default.
+		// ///////////////////////////////////////////////////////////////////////////////
+		SetupForAppRouteEnabledAndServiceCall(false, false, DisabledReason.noselect); // no select means the disabled reason pull-down is not touched. 
 		SaveRoutePopup();
 
-		listOfActualRoutes.clear();
-		ShowActualRoutesOrStore(ActionForApplications.Store);
+		indexLocator = StoreUI_WithPartialVerification();		
 
-		// see if added route exist by searching for it in routes list.
-		indexLocator = TestRouteIsInRoutesList();
-		
-		if(indexLocator == -1)
-		{
-			Assert.fail("Route that was added is not found in 'AddRoute'.");
-		}		
-		
-		
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, false);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, false);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.unknown.toString().toUpperCase());
 
-		// verify route is in list.
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_Key, automationRouteKey);
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tenantId, automationTenantID);
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tennantKey, automationTenant);
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_appKey, automationApp);		
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_deployKey, automationDeploy);
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, automationAllowServiceCalls);		
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, automationEnabled);
-		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, automationDisabledReason);
+		// ///////////////////////////////////////////////////////////////////////////////
+		// enabled/service-calls = false/true. disabled reason will be at off-boarding  
+		// ///////////////////////////////////////////////////////////////////////////////
 
+		SetupForAppRouteEnabledAndServiceCall(false, true, DisabledReason.offboarding);
+		SaveRoutePopup();
+
+		indexLocator = StoreUI_WithPartialVerification();
+	
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, false);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, true);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.offboarding.toString().toUpperCase());
+		
+		// ///////////////////////////////////////////////////////////////////////////////
+		// enabled/service-calls = true/false. disabled reason will not matter.  
+		// ///////////////////////////////////////////////////////////////////////////////
+
+		SetupForAppRouteEnabledAndServiceCall(true, false, DisabledReason.noselect);
+		SaveRoutePopup();
+
+		indexLocator = StoreUI_WithPartialVerification();
+		
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, true);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, false);
+		// Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.offboarding.toString().toUpperCase());
+		
+		// ///////////////////////////////////////////////////////////////////////////////
+		// enabled/service-calls = true/true. disabled reason will not matter  
+		// ///////////////////////////////////////////////////////////////////////////////
+
+		SetupForAppRouteEnabledAndServiceCall(true, true, DisabledReason.onboarding);
+		SaveRoutePopup();
+
+		indexLocator = StoreUI_WithPartialVerification();
+		
+		// verify items of interest.
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, true);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, true);
+		// Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, DisabledReason.onboarding.toString().toUpperCase());
 	}
 	
 	
@@ -390,6 +493,7 @@ public class Routes extends BaseMain
 		// deployment keys, application keys, and deploy versions that should be shown in the 
 		// deployments pull-down, after the application with the most deployments is selected.
 		// the API is used to get the information for the 'listOfDeploymentItems' list.
+		// this also finds an application that has no deployments.
 		FindAppWithTheMostDeploys();
 		
 		ClickItem("(.//*[@id='sortMenu'])[6]", 3); // select applications pull-down.
@@ -398,17 +502,33 @@ public class Routes extends BaseMain
 		// this will be the application with the most deployments.
 		SetAppPulldown(listOfMaxDeploymentItems.get(0).m_appName);  
 		
-		ClickItem("(.//*[@id='sortMenu'])[7]", 3); // select deployment pull-down.
+		// ClickItem("(.//*[@id='sortMenu'])[7]", 3); // select deployment pull-down.
+		SelectDeploymentPulldown();
 		
 		VerifyItemsInDeployPulldown();
 		
-		CancelOpenAddRouteUI(false);
+		// ///////////////////////////////////////////////////////////////////////////////////////
+		// verify application with no deployment shows no deployments in deployment pull-down.
+		// ///////////////////////////////////////////////////////////////////////////////////////
+
+		SelectDeploymentPulldown();
+		//ClickItem("(.//*[@id='sortMenu'])[7]", 3); // select deployment pull-down to close it.
+		
+		SetTenantPulldown(GetTenantID(true)); // select any tenant.
+		
+		SetAppPulldown(appWithNoDeploys); // select application that has no deployments
+		
+		SelectDeploymentPulldown();
+		//ClickItem("(.//*[@id='sortMenu'])[7]", 3); // select deployment pull-down to open it.
+		
+		VerifyNoItemsDeployPulldown();
+		
+		CancelOpenAddRouteUI(false); // close UI.
 	}
 	
 	public static void AddRoute() throws Exception 
 	{
 		int indexLocator = 0;
-		//boolean foundAddedRoute = false;
 		
 		ShowCurrentTest("Routes: AddRoute");
 		
@@ -420,7 +540,7 @@ public class Routes extends BaseMain
 		// select correct pull-downs and fill in fields for test route.
 		PopulatePulldownsForAddTestRoute();
 		ClearRouteTextFields();
-		PopulateRouteAddFields();
+		PopulateRouteAddFields(true);
 		
 		SaveRoutePopup();
 		
@@ -483,10 +603,6 @@ public class Routes extends BaseMain
 		
 		ShowActualRoutesOrStore(ActionForApplications.Store);
 		//ShowActualRoutesOrStore(ActionForApplications.Show);
-		
-		existingRoutePath = listOfActualRoutes.get(0).m_host + listOfActualRoutes.get(0).m_path;
-		
-		ShowText(existingRoutePath);
 		
 		// make sure test application is not on the list.
 		//DeleteAppByKeyFromRow(testAppKey); 
@@ -598,6 +714,121 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
+	// select deployment pull-down.
+	public static void SelectDeploymentPulldown()
+	{
+		ClickItem("(.//*[@id='sortMenu'])[7]", 3); 
+	}
+	
+	
+	// this is used to get what's in the UI, find a route that was supposed to be added, and verify some of the added route values.
+	// this is used where testing of route enabled, allow services calls, and disabled reason combinations are tested.
+	public static int StoreUI_WithPartialVerification() throws Exception
+	{
+		int indexLocator = -1;
+		
+		// clear actual routes list, store current routes in the UI, and get index of added route. 
+		listOfActualRoutes.clear();
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+		indexLocator = TestRouteIsInRoutesList();
+		
+		if(indexLocator == -1) // error if added route not found in routes list.
+		{
+			Assert.fail("Route that was added is not found in 'ValidatePrePopulatedItemsAndEdits_PartTwo'.");
+		}		
+		
+		// verify route is in list.
+		VerifyRoutePartial(indexLocator);
+		
+		return indexLocator;
+	}
+	
+	// this sets up pull-downs and populates some fields in the route add pop-up with test variables. the enabled, allow service, and disabled reason 
+	// are set according to what the user passes in.
+	public static void SetupForAppRouteEnabledAndServiceCall(boolean enabledState,  boolean serviceCallState, DisabledReason dReason) throws Exception
+	{
+		// delete test route and select add.
+		DeleteRouteByKeyFromRow(automationRouteKey);
+		SelectAddRoute();
+		
+		// select correct pull-downs and fill in fields for test route.
+		PopulatePulldownsForAddTestRoute();
+		ClearRouteTextFields();
+		PopulateRouteAddFields(false);
+		
+		if(enabledState)
+		{
+			driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[1]")).click();
+		}
+		else 
+		{
+			driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();			
+		}
+		
+		if(serviceCallState)
+		{
+			driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[1]")).click();			
+		}
+		else
+		{
+			driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[2]")).click();			
+		}
+		
+		if(!enabledState)
+		{
+			switch(dReason)
+			{
+				case unknown:
+				{
+					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByIndex(0);
+					break;
+				}
+				case upgrading:
+				{
+					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");
+					break;
+				}
+				case onboarding:
+				{
+					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("On boarding");
+					break;
+				}
+				case offboarding:
+				{
+					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Off boarding");
+					break;
+				}				
+				case maintenance:
+				{
+					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Maintenance");
+					break;
+				}
+				case noselect:
+				{
+					break;
+				}
+				default:
+				{
+					Assert.fail("Method 'SetupForAppRouteEnabledAndServiceCall' has been sent a bad enumerated type.");
+				}
+			}				
+		}
+	}
+	
+	// verify some of the items in a test route that's in the route list.
+	public static void VerifyRoutePartial(int indexLocator)
+	{
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_Key, automationRouteKey);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tenantId, automationTenantID);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_tennantKey, automationTenant);
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_appKey, automationApp);		
+		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_deployKey, automationDeploy);
+		//Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, automationAllowServiceCalls);		
+		//Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, automationEnabled);
+		//Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, automationDisabledReason);		
+	}
+	
+	
 	public static int TestRouteIsInRoutesList() throws Exception
 	{
 		boolean foundAddedRoute = false;
@@ -632,8 +863,8 @@ public class Routes extends BaseMain
 	}
 	
 	
-	// fill in fields in add route UI with test route values.
-	public static void PopulateRouteAddFields()
+	// fill in fields in add route UI with test route values. disabled reason is optional.
+	public static void PopulateRouteAddFields(boolean includeDisabledreason)
 	{
 		driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(automationSubDomain);
 		driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(automationDomain);
@@ -641,8 +872,11 @@ public class Routes extends BaseMain
 		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID);
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(automationDescription);		
 		driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[2]")).click();
-		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();		
-		new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");		
+		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();
+		if(includeDisabledreason)
+		{
+			new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");			
+		}
 	}
 	
 	// clear all text fields in route add UI.
@@ -757,6 +991,19 @@ public class Routes extends BaseMain
 		}
 	}
 	
+	// if list is empty there will be an in list returned.
+	public static void VerifyNoItemsDeployPulldown()
+	{
+		// get list of items in the deployment drop down.
+		List<WebElement> listOfDeploysInPulldown = driver.findElements(By.xpath(("(//div[@class='dropdown-menu'])[7]/div")));
+
+		for(WebElement ele: listOfDeploysInPulldown)
+		{
+			//ShowText("data " + ele.getText());
+			Assert.assertTrue(ele.getText().length() == 0);
+		}
+		// ShowInt(listOfDeploysInPulldown.size());
+	}
 	
 	// depending on 'hasHostAndPath' boolean passed in: 
 	// find an application that has host and path variables or find an application that doesn't have host and path variables. return the application key.
@@ -880,6 +1127,11 @@ public class Routes extends BaseMain
 					listOfMaxDeploymentItems.add(new DeployInfo(jo.getString("key"), jo.getString("applicationKey"), jo.getString("version")));
 				}
 				maxNumDeploysFound = jArray.length();
+			}
+			
+			if(jArray.length() == 0 && appWithNoDeploys.equals("")) // store application name that has no deployments.
+			{
+				appWithNoDeploys = appClass.m_Key;
 			}
 		}
 	}
@@ -1006,7 +1258,8 @@ public class Routes extends BaseMain
 		// ///////////
 		// deploy
 		// ///////////
-		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		// ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		SelectDeploymentPulldown();
 		
 		// send search text.		
 		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
@@ -1045,7 +1298,8 @@ public class Routes extends BaseMain
 	public static void SetDeployPulldown(String appName)
 	{
 		// application
-		ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		// ClickItem("(.//*[@id='sortMenu'])[7]", 3);
+		SelectDeploymentPulldown();
 		
 		// send search text.		
 		WaitForElementClickable(By.xpath("(//input[@placeholder='Search...'])[6]"), 3, "");
@@ -1161,13 +1415,15 @@ public class Routes extends BaseMain
 	
 	public static void VerifyPagesSorting(int numberOfPages, String apiType, int pageSize, String sortDirection, String sortBy) throws Exception		
 	{
+
+		// 5/23/18
+		// this is used to decide whether to select the first page when the loop is done. if the loop stays on only one page, this
+		// boolean stays false and selecting the first page is not needed. selecting the first page when on the first page gave selenium
+		// locator error. tried looking for isEnabled in selector but isEnabled is true, even when on the first page.
+		boolean haveSelectedNextPage = false;  
+		
 		for(int x = 0; x < numberOfPages; x++) // go through each page.
 		{
-			// click a page per x index.
-			WaitForElementClickable(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a"), 3, "");
-			driver.findElement(By.cssSelector(".pagination>li:nth-of-type(" + (x + 3) + ")>a")).click();
-			Thread.sleep(1000);
-
 			// this stores API info for page x + 1  into listOfExpectedApps 
 			PassDataAndStoreApiRequest(apiType, pageSize, x + 1, sortDirection, sortBy);
 			
@@ -1176,6 +1432,20 @@ public class Routes extends BaseMain
 
 			// verify actual and expected are equal.
 			VerifyRouteCollectionsExpectedAndActual();
+			
+			if(x == (numberOfPages - 1)) // last page has been verified - exit.
+			{
+				break;
+			}
+			
+			CommonMethods_AppsRoutes.SelectNextPage();
+			haveSelectedNextPage = true;
+			Thread.sleep(1000);
+		}
+
+		if(haveSelectedNextPage)
+		{
+			CommonMethods_AppsRoutes.SelectFirstPage();			
 		}
 	}		
 	

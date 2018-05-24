@@ -83,7 +83,21 @@ public class CommonMethods_AppsRoutes extends BaseMain
 		return new String[]{deployName, deployAppName, deployVersion};
 	}
 	
+	// select next page. this is used for paging back to the first page.
+	public static void SelectFirstPage()
+	{
+		System.out.println("STATE = " + driver.findElement(By.xpath("(//ul[@class='pagination']/li)[1]/a")) .isEnabled() );
+		
+		ClickItem("(//ul[@class='pagination']/li)[1]/a", 3); // back to first page.	
+	}
 	
+	// select next page. this is used for going through pages.
+	public static void SelectNextPage()
+	{
+		int index = 0;
+		index = driver.findElements(By.xpath("//ul[@class='pagination']/li")).size();
+		ClickItem("(//ul[@class='pagination']/li)[" + (index - 1) + "]/a", 3);
+	}	
 	
 	// receive a key and name. the key and name are separated by one or more spaces. 
 	// the key can have no spaces. return the key and name in a two element array.

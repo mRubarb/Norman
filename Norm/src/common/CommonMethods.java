@@ -14,6 +14,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -661,15 +662,17 @@ public class CommonMethods extends BaseMain
 		for (int i = 1; i <= tenantCount; i++) {
 		
 			String tenantKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
-			//String tenantName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
-			//String tenantEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
+			String tenantName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
+			boolean tenantEnabled = Boolean.parseBoolean(driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[4]/span")).getText());
 			
 			Tenant tenant = new Tenant();
 			tenant.setKey(tenantKey);
+			tenant.setName(tenantName);
+			tenant.setEnabled(tenantEnabled);
 			tenantsInTab.add(tenant);
 			tenantsKeysInTab.add(tenantKey);
 			
-			// System.out.println("key: " + tenantKey);
+			// System.out.println("key from tab: " + tenantKey);
 			
 		}
 		
@@ -686,9 +689,12 @@ public class CommonMethods extends BaseMain
 		List<Tenant> tenantsFromAPI = CommonMethods.putJsonArrayTenantsIntoList(jsonArrayTenants);	
 		List<String> tenantKeysFromAPI = new ArrayList<>();
 		
+		HashMap<String, Tenant> hashmapTenantsAPI = new HashMap<>();
+				
 		for (int i = 0; i < tenantsFromAPI.size(); i++) {
 			
 			tenantKeysFromAPI.add(tenantsFromAPI.get(i).getKey());
+			hashmapTenantsAPI.put(tenantsFromAPI.get(i).getKey(), tenantsFromAPI.get(i));
 			
 		}
 		
@@ -700,6 +706,10 @@ public class CommonMethods extends BaseMain
 		for (int i = 0; i < tenantCount; i++) {
 			
 			Assert.assertEquals(tenantKeysFromAPI.get(i), tenantsKeysInTab.get(i));
+			
+			String tKey = tenantsInTab.get(i).getKey();
+			Assert.assertEquals(tenantsInTab.get(i).getName(), hashmapTenantsAPI.get(tKey).getName());
+			Assert.assertEquals(tenantsInTab.get(i).isEnabled(), hashmapTenantsAPI.get(tKey).isEnabled());
 			
 		}
 		
@@ -717,7 +727,10 @@ public class CommonMethods extends BaseMain
 		 * 
 		 */
 		
-				
+		// *********** CONTINUE HERE **********************
+		// *********** CONTINUE HERE **********************
+		// *********** CONTINUE HERE **********************
+		
 		// 1. Click 'Deployments' tab
 		String xpathDepTab = "//li/a[@id='deployment_tab']/div[text()='Deployments ']";
 		driver.findElement(By.xpath(xpathDepTab)).click();
@@ -736,15 +749,16 @@ public class CommonMethods extends BaseMain
 		for (int i = 1; i <= deploymentCount; i++) {
 		
 			String depKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
+			String appKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[1]/a")).getText();
 			String depVersion = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]")).getText();
 			String depEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
 			
-			Deployment dep = new Deployment(depKey, "", depVersion, "", CommonMethods.convertToBoolean(depEnabled));
+			Deployment dep = new Deployment(depKey, appKey, depVersion, "", CommonMethods.convertToBoolean(depEnabled));
 			deploymentsInTab.add(dep);
 			deploymentsKeysInTab.add(depKey);
 			
-			System.out.println("key: " + depKey);
-			
+			//System.out.println("key: " + depKey);
+			System.out.println("appkey: " + appKey);
 		}
 		
 		
@@ -758,9 +772,12 @@ public class CommonMethods extends BaseMain
 		List<Deployment> deploymentsFromAPI = CommonMethods.putJsonArrayDeploymentsIntoList(jsonArrayDeployments);	
 		List<String> deploymentKeysFromAPI = new ArrayList<>();
 		
+		HashMap<String, Deployment> hashmapDeploymentsAPI = new HashMap<>();
+		
 		for (int i = 0; i < deploymentsFromAPI.size(); i++) {
 			
 			deploymentKeysFromAPI.add(deploymentsFromAPI.get(i).getKey());
+			hashmapDeploymentsAPI.put(deploymentsFromAPI.get(i).getKey(), deploymentsFromAPI.get(i));
 			
 		}
 		
@@ -773,9 +790,20 @@ public class CommonMethods extends BaseMain
 			
 			Assert.assertEquals(deploymentKeysFromAPI.get(i), deploymentsKeysInTab.get(i));
 			
+			String dKey = deploymentsInTab.get(i).getKey();
+			
+			System.out.println("deploymentsInTab.get(i).getApplicationKey(): " + deploymentsInTab.get(i).getApplicationKey());
+			System.out.println("hashmapDeploymentsAPI.get(dKey).getApplicationKey(): " + hashmapDeploymentsAPI.get(dKey).getApplicationKey());
+			
+			Assert.assertEquals(deploymentsInTab.get(i).getApplicationKey(), hashmapDeploymentsAPI.get(dKey).getApplicationKey());
+			Assert.assertEquals(deploymentsInTab.get(i).getVersion(), hashmapDeploymentsAPI.get(dKey).getVersion());
+			Assert.assertEquals(deploymentsInTab.get(i).isEnabled(), hashmapDeploymentsAPI.get(dKey).isEnabled());
+			System.out.println(" *** Assert Deployment tab ***");
+			
 		}
 		
 	}
+	
 	
 	public static void verifyApplicationDataTabInDetailsPage(String key, String detailsPage) throws Exception {
 		

@@ -16,7 +16,6 @@ import org.testng.Assert;
 
 import baseItems.BaseMain;
 import classes.Deployment;
-import classes.Tenant;
 import common.CommonMethods;
 
 
@@ -63,7 +62,7 @@ public class Deployments extends BaseMain
 	public static void verifyData() throws IOException, JSONException {
 		
 		String token = CommonMethods.GetTokenFromPost();
-		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments"; //"http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments";
 		String apiType = "\"" + "deployments" + "\"" + ":";
 		
 		JSONArray jsonArrayDeployments = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
@@ -71,7 +70,7 @@ public class Deployments extends BaseMain
 		List<Deployment> actualDeploymentsList = putJsonArrayIntoList(jsonArrayDeployments);
 		List<Deployment> expectedDeploymentsList = addDeploymentsFromUItoList();
 		
-		for (int i = 0; i < expectedDeploymentsList.size(); i++) {  // actualDeploymentsList.size(); i++) {
+		for (int i = 0; i < expectedDeploymentsList.size(); i++) {
 			
 			Deployment actual = actualDeploymentsList.get(i);
 			Deployment expected = expectedDeploymentsList.get(i);
@@ -133,15 +132,13 @@ public class Deployments extends BaseMain
 	private static List<Deployment> addDeploymentsFromUItoList() {
 
 		List<Deployment> expectedDeploymentsList = new ArrayList<>();
-		//List<WebElement> row = new ArrayList<>();
-		
+				
 		int rowTotalCount = driver.findElements(By.xpath("//div[@class='table-responsive']/table/tbody/tr")).size();
 		
 		System.out.println("# rows: " + rowTotalCount);
 		
 		for (int i = 1; i <= rowTotalCount; i++) {
 			
-			//row = driver.findElements(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td"));
 			String key = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[1]")).getText();
 			String appKey = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[2]/div[1]/a")).getText();
 			//String appName = driver.findElement(By.xpath("//div[@class='table-responsive']/table/tbody/tr[" + i + "]/td[2]/div[2]")).getText();
@@ -198,7 +195,7 @@ public class Deployments extends BaseMain
 	public static void verifyDataFromUIMatchesAPI(int page, int pageSize) throws IOException, JSONException {
 		
 		String token = CommonMethods.GetTokenFromPost();
-		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments";  //"http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/deployments";
 		String apiType = "\"" + "deployments" + "\"" + ":";
 				
 		String queryParameters = "?page=" + page + "&pageSize=" + pageSize;
@@ -443,7 +440,7 @@ public class Deployments extends BaseMain
 			
 		}*/
 		
-		String totalCountItems = CommonMethods.getTotalCountItems(); //driver.findElement(By.xpath("//div/jhi-item-count")).getText();
+		String totalCountItems = CommonMethods.getTotalCountItems();
 		
 		int index = totalCountItems.indexOf("of");
 		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
@@ -456,9 +453,6 @@ public class Deployments extends BaseMain
 		// Verify data for each pageSize  (5 / 10 / 20 / 50)
 		
 		for (int i = 0; i < listSizesElements.size(); i++) {
-			
-			
-			// remove --System.out.println("pageSize = " + listSizesElements.get(i).getAttribute("value"));
 			
 			int pageSize = Integer.parseInt(listSizesElements.get(i).getAttribute("value"));
 			
@@ -550,6 +544,8 @@ public class Deployments extends BaseMain
 		CommonMethods.clickFilterDropdown("All Applications");
 		
 		CommonMethods.enterSearchCriteria("All Applications", applicationKey);
+		
+		Thread.sleep(3000);
 		
 		// make sure that the Edit button clicked belongs to the deployment that needs to be edited
 		
@@ -835,31 +831,6 @@ public class Deployments extends BaseMain
 			
 	}
 	
-	// TO BE REMOVED
-	/*
-	private static void resetFilters() throws InterruptedException {
-		
-		String xpathTenant = "//jhi-tenant-selector/form/div/div/button[@id='sortMenu']";
-		driver.findElement(By.xpath(xpathTenant)).click();
-				
-		String xpathAllTenants = "//jhi-tenant-selector/form/div/div/div/button/span[text()='All Tenants']";
-		driver.findElement(By.xpath(xpathAllTenants)).click();
-		
-		String xpathApp = "//jhi-application-selector/form/div/div/button[@id='sortMenu']";
-		driver.findElement(By.xpath(xpathApp)).click();
-				
-		String xpathAllApp = "//jhi-application-selector/form/div/div/div/button/span[text()='All Applications']";
-		driver.findElement(By.xpath(xpathAllApp)).click();
-		
-		String xpathEnabled = "//jhi-value-selector/div/div/button[@id='sortMenu']";
-		driver.findElement(By.xpath(xpathEnabled)).click();
-				
-		String xpathAllEnabled = "//jhi-value-selector/div/div/div/button/span[text()='Show Enabled and Disabled']";
-		driver.findElement(By.xpath(xpathAllEnabled)).click();
-		
-		Thread.sleep(2000); 
-		
-	}*/
 		
 	
 	private static String getEnabledValueForRequest(String enabled) {
@@ -893,14 +864,10 @@ public class Deployments extends BaseMain
 		// 3. Verify data in Routes tab
 		CommonMethods.verifyRouteDataTabInDetailsPage(deploymentKey, "deployment");
 		
-		
-		
 	}
+
 	
-	/// ********* CONTINUE HERE ***********************
-	/// ********* CONTINUE HERE ***********************
-	/// ********* CONTINUE HERE ***********************
-	
+	// Verify the deployment's data in the Deployment's details page
 	public static void verifyDeploymentDetails(String deploymentKey) throws Exception {
 	
 		CommonMethods.openElementDetailsPage(deploymentKey, "deployment");
@@ -910,58 +877,83 @@ public class Deployments extends BaseMain
 						
 		JSONObject jsonObject = CommonMethods.getSingleObject(token, url); 
 		
-		/// ********* CONTINUE HERE ***********************
+		Deployment deploymentObject = putJsonObjectIntoDeploymentObject(jsonObject); 
 		
-		/*
-		Deployment deploymentObject = putJsonObjectIntoDeploymentObject(jsonObject); // <--- ADD CODE TO METHOD 
+		String xpathAppName = "//jhi-deployment-detail/div/div/div[@class='row']/dt[text()='Application:']/following-sibling::dd/a";	
+		String xpathVersion = "//jhi-deployment-detail/div/div/div[@class='row']/dt[text()='Version:']/following-sibling::dd";
+		String xpathDescription = "//jhi-deployment-detail/div/div/div[@class='row']/dt[text()='Description:']/following-sibling::dd";
+		String xpathEnabled = "//jhi-deployment-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
 		
-		String xpathNameDeployment = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Name:']/following-sibling::dd";	
-		String xpathDefIdDeployment = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Default Deployment ID:']/following-sibling::dd";
-		String xpathEnabledDeployment = "//jhi-tenant-detail/div/div/div[@class='row']/dt[text()='Key:']/following-sibling::dd";
+		// Verify App Name ??
+		String appNameUI = driver.findElement(By.xpath(xpathAppName)).getText().trim();
+		//Assert.assertEquals(appNameUI, deploymentObject.getName());
+
+		// Verify Version
+		String versionUI = driver.findElement(By.xpath(xpathVersion)).getText().trim();
+		Assert.assertEquals(versionUI, deploymentObject.getVersion());
 		
-		// Verify Name
-		String nameUI = driver.findElement(By.xpath(xpathNameDeployment)).getText().trim();
-		Assert.assertEquals(nameUI, deploymentObject.getName());
-				
-		// Verify Default Deployment ID - in some cases there is no value for Default Deployment ID 
-		String defTenIdUI = "";
+		// Verify Description - in some cases there is no value for Description
+		String descriptionUI = "";
 		
 		try {
-			defTenIdUI = driver.findElement(By.xpath(xpathDefIdDeployment)).getText().trim();
-			Assert.assertEquals(defTenIdUI, deploymentObject.getDefaultDeploymentID());
+			descriptionUI = driver.findElement(By.xpath(xpathDescription)).getText().trim();
+			Assert.assertEquals(descriptionUI, deploymentObject.getDescription());
 			
 		} catch (NoSuchElementException e) { }
 		
 		// Verify Enabled value
-		String enabledUI = driver.findElement(By.xpath(xpathEnabledDeployment)).getText().split("   ")[1].trim();
+		String enabledUI = driver.findElement(By.xpath(xpathEnabled)).getText().split("   ")[1].trim();
 		Assert.assertEquals(CommonMethods.convertToBoolean(enabledUI), deploymentObject.isEnabled());
 		
 		
 		// Verify the # on each tab
-		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
-		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Deployments ']/span")).getText()); 
+		int tenantCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Tenants ']/span")).getText());
 		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
 		
-		System.out.println("applicationCount: " + applicationCount);
-		System.out.println("deploymentCount: " + deploymentCount);
+		System.out.println("tenantCount: " + tenantCount);
 		System.out.println("routeCount: " + routeCount);
 	
-		Assert.assertEquals(applicationCount, deploymentObject.getApplicationCount());
-		Assert.assertEquals(deploymentCount, deploymentObject.getDeploymentCount());
+		Assert.assertEquals(tenantCount, deploymentObject.getTenantCount());
 		Assert.assertEquals(routeCount, deploymentObject.getRouteCount());
 		
 		driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
 		Thread.sleep(2000);
-		*/
+		
 		
 	}
 
 	
 	
-	
-	private static Deployment putJsonObjectIntoDeploymentObject(JSONObject jsonObject) {
-		// TODO Auto-generated method stub
-		return null;
+	private static Deployment putJsonObjectIntoDeploymentObject(JSONObject jsonObject) throws JSONException {
+		
+		Deployment deployment = new Deployment();
+		
+		/*			
+		System.out.print(i+1 + "  Key: " + jo.getString("key"));
+		System.out.print(", Version: " + jo.getString("version"));
+		System.out.print(", Application Key: " + jo.getString("applicationKey"));
+		System.out.print(", Description: " + CommonMethods.GetNonRequiredItem(jsonObject, "description")
+		System.out.println(", Enabled: " + jo.getBoolean("enabled"));
+		*/
+		
+		deployment.setKey(jsonObject.getString("key"));
+		deployment.setVersion(jsonObject.getString("version"));
+		deployment.setApplicationKey(jsonObject.getString("applicationKey"));
+		deployment.setDescription(CommonMethods.GetNonRequiredItem(jsonObject, "description"));
+		deployment.setEnabled(jsonObject.getBoolean("enabled"));
+		
+		try { 
+			deployment.setTenantCount(jsonObject.getJSONObject("statistics").getInt("tenantCount")); 
+		}
+		catch (NoSuchElementException e) { }
+		
+		try { 
+			deployment.setRouteCount(jsonObject.getJSONObject("statistics").getInt("routeCount")); 
+		}
+		catch (NoSuchElementException e) { }
+		
+		return deployment;
+		
 	}
 	
 	//public static void verifyTenantDataTabInDetailsPage(String deploymentKey) throws Exception {

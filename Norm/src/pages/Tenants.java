@@ -685,9 +685,9 @@ public class Tenants extends BaseMain
 		 * */
 		// Get all the "sizes" into a list
 		
-		List<WebElement> listSizesElements = driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
+		List<WebElement> listSizesElements = CommonMethods.getSizesOfPages(); //driver.findElements(By.xpath("//div/span[text()='Size: ']/following-sibling::span/label/input"));
 		
-		String totalCountItems = driver.findElement(By.xpath("//div/jhi-item-count")).getText();
+		String totalCountItems = CommonMethods.getTotalCountItems(); // driver.findElement(By.xpath("//div/jhi-item-count")).getText();
 		
 		int index = totalCountItems.indexOf("of");
 		totalCountItems = totalCountItems.substring(index).replace("of", "").replace("items.", "").trim();
@@ -738,7 +738,7 @@ public class Tenants extends BaseMain
 	public static void verifyDataNew(int page, int pageSize, int totalCount) throws IOException, JSONException {
 		
 		String token = CommonMethods.GetTokenFromPost();
-		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";  //"http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";
+		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
 		String apiType = "\"" + "tenants" + "\"" + ":";
 				
 		String queryParameters = "?page=1&pageSize=" + totalCount;
@@ -751,9 +751,8 @@ public class Tenants extends BaseMain
 		int indexStart = (page - 1) * pageSize;
 		int indexEnd = indexStart + pageSize - 1;
 		
-		if (indexEnd >  totalCount) 
-			indexEnd = totalCount - 1;
-				
+		if (indexEnd >= totalCount) indexEnd = totalCount - 1;
+		
 		int index = 0;
 		
 		for (int i = indexStart; i <= indexEnd; i++) {
@@ -812,10 +811,6 @@ public class Tenants extends BaseMain
 		String url = baseUrl.replace("#", "") + "platformservice/api/v1/tenants";
 		String apiType = "\"" + "tenants" + "\"" + ":";
 		
-						
-		/*
-		 * String[] filterValue = {"RVM", "DEP_RVM_1", "Show Enabled Tenants Only"};
-		String[] queryParameterValues = {"RVM", "DEP_RVM_1", enabledValueForRequest};*/
 		
 		for (int i = 0; i < filterNameMap.size(); i++) {
 

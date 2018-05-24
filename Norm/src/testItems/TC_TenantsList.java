@@ -31,17 +31,17 @@ public class TC_TenantsList extends BaseMain {
 		CommonMethods.selectItemPlatformDropdown("Tenants");
 		
 		CommonMethods.verifyTitle("Tenants");
-		
+		/*
 		Tenants.verifyColumnsNames();
 		
 		Tenants.verifyDataAndSorting();
-		
+		*/
 		Tenants.verifyPagingNew();
-		
+		/*
 		Tenants.verifyFiltering("RVM", "RVM_1", "Show Enabled Tenants Only");
 
 		Tenants.verifyFilteringCombined("RVM", "RVM_1", "Show Enabled Tenants Only");
-		
+		*/
 		
 	}
 	

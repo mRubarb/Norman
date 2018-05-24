@@ -2,8 +2,6 @@ package classes;
 
 import java.util.Comparator;
 
-import common.CommonMethods;
-
 public class Deployment {
 
 	private String key;
@@ -12,6 +10,8 @@ public class Deployment {
 	private String description;
 	private boolean enabled;
 	
+	private int tenantCount;
+	private int routeCount;
 	
 	public String getKey() {
 		return key;
@@ -42,6 +42,19 @@ public class Deployment {
 	}
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+	
+	public int getTenantCount() {
+		return tenantCount;
+	}
+	public void setTenantCount(int tenantCount) {
+		this.tenantCount = tenantCount;
+	}
+	public int getRouteCount() {
+		return routeCount;
+	}
+	public void setRouteCount(int routeCount) {
+		this.routeCount = routeCount;
 	}
 	
 	

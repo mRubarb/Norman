@@ -116,12 +116,14 @@ public class CommonMethods_AppsRoutes extends BaseMain
 		public String m_key = "";
 		public String m_name = "";
 		public String m_tenantID = "";
+		public boolean m_enabled = false;
 		
-		public TenantInfo(String key, String name, String tenantID) 
+		public TenantInfo(String key, String name, String tenantID, boolean enabled) 
 		{
 			m_key = key;
 			m_name = name;
 			m_tenantID = tenantID;
+			m_enabled = enabled;
 		}
 		
 		public void Show()
@@ -130,6 +132,7 @@ public class CommonMethods_AppsRoutes extends BaseMain
 			System.out.println("key= " + m_key);
 			System.out.println("name= " + m_name);
 			System.out.println("tenantID= " + m_tenantID);
+			System.out.println("enabled= " + m_enabled);
 		}
 	}
 	

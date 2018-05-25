@@ -42,7 +42,7 @@ public class TC_ApplicationsList extends BaseMain
 		//Applications.VerifyFilteringByEnabledDisabled(); // TC1011 - filter in enabled/disabled full list.		
 		//Applications.VerifyFilteringEnabledDisabledWithTenant(); // TC1011 - combined filtering.
 		// TODO -- setup so it doesn't do all page sizes after reaching the page size that has all items.
-		Applications.VerifySortingMultiplePages(); // TC1156 sorting with different page sizes applications.  
+		// Applications.VerifySortingMultiplePages(); // TC1156 sorting with different page sizes applications.  
 		
 		// RMINF-172 -- Add application. 
 		//Applications.AddValidations(); // validations
@@ -55,7 +55,7 @@ public class TC_ApplicationsList extends BaseMain
 		
 		// RMINF-220 - the test above, Applications.EditApplicationFromRowEdit(), has already deleted an application with no dependencies.
 		// this test verifies the delete application operations in delete UI, from the application list delete button, for an application with and w/o dependencies.
-		// Applications.EditApplicationDeleteItemsFromRowSelect();   
+		//Applications.EditApplicationDeleteItemsFromRowSelect();   
 	}
 	
 	

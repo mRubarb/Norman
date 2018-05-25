@@ -29,19 +29,24 @@ public class TC_RoutesList extends BaseMain
 		{
 			Routes.GoToRoutes();
 			CommonMethods.verifyTitle("Routes");
-			Routes.VerifyFullList();
+			//Routes.VerifyFullList();
 
 			// TODO -- setup so it doesn't do all page sizes after reaching the page size that has all items.
 			// Routes.VerifySortingMultiplePages();
 			
 			// RMINF-173
-			Routes.AddValidations();
-			Routes.AddRoute();
+			//Routes.AddValidations();
+			//Routes.AddRoute(false);
 			
 			// RMINF-173: Operations Console: ADD screen for Route
-			Routes.ValidatePrePopulatedItemsAndEdits_PartOne();
-			Routes.ValidatePrePopulatedItemsAndEdits_PartTwo();
-			Routes.ValidatePrePopulatedItemsAndEdits_PartThree();
+			// Routes.ValidatePrePopulatedItemsAndEdits_PartOne();
+			// Routes.ValidatePrePopulatedItemsAndEdits_PartTwo();
+			// Routes.ValidatePrePopulatedItemsAndEdits_PartThree();
+			
+			// RMINF-194: RMINF-194: Operations Console: EDIT page for a route
+			//Routes.ValidationAndInitialStates_PartOne(); 
+			Routes.ValidationAndInitialStates_PartTwo();			
+			
 		}
 		
 		@AfterClass

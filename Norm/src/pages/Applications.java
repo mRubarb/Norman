@@ -47,7 +47,8 @@ public class Applications extends BaseMain
 	public static final String deploymentsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";	
 	public static final String routesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
 	
-	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNzI4NzE0Nn0.qL_k3R9Tec5AlB3dLVcd2EfTItr5USR9n9CEj_LYoludqMJpb3FBaBvvWh3lEeud8YJ0hLOtjC-Z5Hspy2CeYA";	
+	//public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNzI4NzE0Nn0.qL_k3R9Tec5AlB3dLVcd2EfTItr5USR9n9CEj_LYoludqMJpb3FBaBvvWh3lEeud8YJ0hLOtjC-Z5Hspy2CeYA";
+	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyOTg4MDg5NX0.TDNUXzChWcaaTiQESxzL4-wuUolfzT4EpmL5IUmAkLtsh6oXaBArxAlDJNE2Lv-2yXL9zec7jEVHeQ3HXHARaw";
 	public static final String testAppKey = "1234567890";
 	public static final String testAppName = "ZZZ_ZEBRA_XYZ";
 	public static final String testDefaultHost = "automationzz.com";
@@ -1069,7 +1070,7 @@ public class Applications extends BaseMain
 		}		
 	}
 	
-	public static void ClickRowViewForEdit(int rowIndex) throws Exception
+	public static void ClickRowViewForEdit(int rowIndex) throws Exception 
 	{
 		driver.findElement(By.xpath("(//button[@class='btn btn-primary btn-sm'])[" + rowIndex + "]")).click();
 		WaitForElementVisible(By.xpath("//strong[text()='Edit Application']"), 3); // title

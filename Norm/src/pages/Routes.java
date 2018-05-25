@@ -1,5 +1,7 @@
 package pages;
 
+import static org.testng.Assert.assertEquals;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
@@ -16,6 +19,8 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 import org.testng.Assert;
+
+import com.gargoylesoftware.htmlunit.WaitingRefreshHandler;
 
 import baseItems.BaseMain;
 import classes.ApplicationClass;
@@ -47,6 +52,9 @@ public class Routes extends BaseMain
 	public static final String uiCancel_Locator = "(//button[@class='btn btn-secondary'])[2]"; // TODO: same for routes.
 	public static final String approveDeleteInPoup_Locator = "//input[@class='ng-untouched ng-pristine ng-valid']"; // TODO: same for routes.
 	public static final String selectDeleteInPoup_Locator = "//button[@class='btn btn-danger']"; // TODO: same for routes.
+	public static final String pullDown_Locator = ".//*[@id='sortMenu']";
+	public static final String uiRadioButton_Locator = "//label[@class='radio-inline']";	
+	public static final String uiTitle_Locator = "//div[@class='modal-header']/h4";
 	
 	// this is the real route in the QA environment - don't touch.
 	public static final String tenantDontUse = "CTTI";
@@ -66,8 +74,11 @@ public class Routes extends BaseMain
 	public static final String automationDescription = "selenium Description";	
 	public static final String automationRouteKey = "SELENIUM_TENANT:SELEN_APP:1246924192";
 	public static final String automationTenant = "SELENIUM_TENANT";
+	public static final String automationTenantName = "selenium tenant";	
 	public static final String automationApp = "SELEN_APP";
+	public static final String automationAppName = "selenium app";
 	public static final String automationDeploy = "SELEN_DEPLOYMENT";
+	public static final String automationDeployVersion = "18.1";	
 	public static final String automationDisabledReason = "UPGRADING";	
 	public static final boolean automationAllowServiceCalls = false;
 	public static final boolean automationEnabled = false;	
@@ -86,12 +97,17 @@ public class Routes extends BaseMain
 	public static String RoutesURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/routes";
 	public static final String tenantsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/tenants";
 	public static final String deploymentsURL = "http://dc1testrmapp03.prod.tangoe.com:4070/platformservice/api/v1/deployments";	
-	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyNzI4NzE0Nn0.qL_k3R9Tec5AlB3dLVcd2EfTItr5USR9n9CEj_LYoludqMJpb3FBaBvvWh3lEeud8YJ0hLOtjC-Z5Hspy2CeYA";	
+	public static String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImF1dGgiOiJST0xFX0FETUlOLFJPTEVfVVNFUiIsImV4cCI6MTUyOTg4MDg5NX0.TDNUXzChWcaaTiQESxzL4-wuUolfzT4EpmL5IUmAkLtsh6oXaBArxAlDJNE2Lv-2yXL9zec7jEVHeQ3HXHARaw";	
+	
 	
 	public static final int maxItemsPerPage = 50;
 	
 	public static int expectedNumberOfColumns = 8;
 	public static int maxNumberOfItemsInPulldown = 10;
+	public static int indexToSelectForTenant = 1;
+	public static int indexToSelectForApp = 1;
+	public static int indexToSelectForRoute = 1;	
+	public static int indexToSelectForDeployment = 1;	
 	
 	public static List<RouteClass> listOfExpectedRoutes = new ArrayList<RouteClass>();
 	public static List<RouteClass> listOfActualRoutes = new ArrayList<RouteClass>();
@@ -293,6 +309,162 @@ public class Routes extends BaseMain
 		}	
 	}
 
+	// step 5. step 6 - only use one deployment.
+	public static void ValidationAndInitialStates_PartTwo() throws Exception // bladd
+	{
+		ShowCurrentTest("Routes: ValidationAndInitialStates_PartTwo");		
+		
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		// store row indexes to test tenant and application. add route and store its index.
+		// set tenant and application for test route true and verify edit route has no warning
+		// indicators in tenant and application fields.
+		// ////////////////////////////////////////////////////////////////////////////////////////
+
+		ShowText("Store row indexes for apps, tenants, and deployments.");
+		SetupRowIndexesForTestAppTenantDeployment(); // find row indexes for test application, tenant, and deployment.
+
+		GoToRoutes();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+
+		ShowText("Delete/Add a test route.");
+		AddRoute(true); // add the test route. with parameter set true, this stores row index for test route after it is deleted(maybe)/created. 
+
+		ShowText("Verify no warnings.");
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		// set tenant and application for test route true/true and verify edit route warnings
+		// ////////////////////////////////////////////////////////////////////////////////////////
+
+		SetTenantAppEnabledState(true, true);
+		
+		GoToRoutes();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		
+		SelectEditByRow(indexToSelectForRoute); // select test route edit
+		
+		// verify there are no tenant and application warnings.
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(2)>span")).size() == 1); // tenant
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(3)>span")).size() == 1); // application		
+		
+		CancelOpenAddRouteUI(false); // close edit route
+
+		ShowText("Verify app warnings.");
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		// set tenant and application for test route true/false and verify edit route warnings
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		SetTenantAppEnabledState(true, false);
+
+		GoToRoutes();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+
+		SelectEditByRow(indexToSelectForRoute); // select test route edit
+		
+		// verify there is tenant warning and no application warning.
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(2)>span")).size() == 1); // tenant
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(3)>span")).size() == 2); // application		
+		
+		CancelOpenAddRouteUI(false); // close edit route
+		
+		ShowText("Verify tenant warnings.");
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		// set tenant and application for test route false/true and verify edit route warnings
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		SetTenantAppEnabledState(false, true);
+
+		GoToRoutes();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+
+		SelectEditByRow(indexToSelectForRoute); // select test route edit
+		
+		// verify there is no tenant warning and is application warning.
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(2)>span")).size() == 2); // tenant
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(3)>span")).size() == 1); // application		
+		
+		CancelOpenAddRouteUI(false); // close edit route
+		
+		ShowText("Verify app and tenant warnings.");
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		// set tenant and application for test route false/false and verify edit route warnings
+		// ////////////////////////////////////////////////////////////////////////////////////////
+		SetTenantAppEnabledState(false, false);
+
+		GoToRoutes();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+
+		SelectEditByRow(indexToSelectForRoute); // select test route edit
+		
+		// verify there is a tenant warning and an application warning.
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(2)>span")).size() == 2); // tenant
+		Assert.assertTrue(driver.findElements(By.cssSelector(".container.no-gutters>dl>dd:nth-of-type(3)>span")).size() == 2); // application		
+		
+		CancelOpenAddRouteUI(false); // close edit route
+
+		// set tenant and application enabled to true/true
+		SetTenantAppEnabledState(true, true);
+		
+		SetDeploymentEnabledState(true);
+	}
+	
+	// steps 1, 2, 3. step 4 requires hovers.
+	public static void ValidationAndInitialStates_PartOne() throws Exception
+	{
+		int indexToSelect = -1;
+		String errMessage = "Verification error in 'ValidationAndInitialStates'.";
+		String actualAppKey = "";
+		String actualDeployVersion = "";
+		String moreThanFiftyChars = "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn";
+		String moreThan1024Chars = "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn";
+		int maxCharsTenantId = 50;
+		int maxCharsDescription = 1024;
+		
+		ShowCurrentTest("Routes: ValidationAndInitialStates_PartOne");		
+
+		// add a route. this will populate the 'listOfActualRoutes' with the test route included. 
+		AddRoute(false); // this will delete an existing test route and add it back into a known state.
+		
+		indexToSelect = TestRouteIsInRoutesList() + 1; // find row index. add one because index is zero based.
+		
+		SelectEditByRow(indexToSelect);
+
+		WaitForElementVisible(By.xpath("//strong[text()='Edit Route']"), 2);
+		
+		// in UI - store key, tenant name, application name, and URL into list.
+		List<WebElement> eleList = driver.findElements(By.cssSelector(".container.no-gutters>dl>dd"));
+
+		// verify what's showing.
+		Assert.assertEquals(eleList.get(0).getText(), automationRouteKey, errMessage);
+		Assert.assertEquals(eleList.get(1).getText(), automationTenantName, errMessage);
+		Assert.assertEquals(eleList.get(2).getText(), automationAppName, errMessage);
+		Assert.assertEquals(eleList.get(3).getText(), automationfullPath.toLowerCase(), errMessage);
+	
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"), automationTenantID);
+		Assert.assertEquals(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value"), automationDescription);		
+		
+		// .container.no-gutters>dl>dd:nth-of-type(2)>span
+		
+		
+		// verify info in deployment pull-down.
+		driver.findElement(By.xpath("(" + pullDown_Locator  + ")[5]")).click(); // select
+
+		// verify number items in pull-down and what's in pull-down.
+		eleList = driver.findElements(By.xpath("(//div[@class='dropdown-menu'])[5]/div"));
+		Assert.assertTrue(eleList.size() == 2, ""); // one item and search box.
+		Assert.assertEquals(driver.findElement(By.xpath("(//button[@class='dropdown-item active'])[5]/span/span[1]")).getText(), automationDeploy, "" ); 
+		
+		// verify deployment drop-down items. 
+		actualAppKey = driver.findElement(By.xpath("(//button[@class='dropdown-item active'])[5]/span/span[2]")).getText().replace("[","").replace("]","").split(" ")[0]; // application key
+		actualDeployVersion = driver.findElement(By.xpath("(//button[@class='dropdown-item active'])[5]/span/span[2]")).getText().replace("[","").replace("]","").split(" ")[1]; // deploy version.	 	
+		
+		Assert.assertEquals(actualAppKey, automationApp, errMessage);
+		Assert.assertEquals(actualDeployVersion, automationDeployVersion, errMessage);
+		
+		// verify max characters in tenant ID and description
+		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(moreThanFiftyChars);
+		Assert.assertTrue(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value").length() == maxCharsTenantId);
+		
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(moreThan1024Chars);
+		Assert.assertTrue(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value").length() == maxCharsDescription);
+	}
+	
 	public static void ValidatePrePopulatedItemsAndEdits_PartThree() throws Exception 
 	{
 		int indexLocator = -1;
@@ -472,13 +644,13 @@ public class Routes extends BaseMain
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("path"))).getAttribute("value"),  "", "");
 		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"),  "", "");		
 	
-		ClickItem("(.//*[@id='sortMenu'])[5]", 3); // select tenants pull-down.
+		ClickItem("(" + pullDown_Locator + ")[5]", 3); // select tenants pull-down.
 		Thread.sleep(500);
 		
 		// compare tenant keys and names in pull-down to expected tenant keys and names.
 		VerifyItemsInTenantPulldown();
 		
-		ClickItem("(.//*[@id='sortMenu'])[6]", 3); // select application pull-down 
+		ClickItem("(" + pullDown_Locator + ")[6]", 3); // select application pull-down 
 		Thread.sleep(500);		
 
 		// compare application keys and names in pull-down to expected application keys and names.
@@ -496,13 +668,12 @@ public class Routes extends BaseMain
 		// this also finds an application that has no deployments.
 		FindAppWithTheMostDeploys();
 		
-		ClickItem("(.//*[@id='sortMenu'])[6]", 3); // select applications pull-down.
+		ClickItem("(" + pullDown_Locator + ")[6]", 3); // select applications pull-down.
 		
 		// select application that's common to all items in the 'listOfDeploymentItems' list.
 		// this will be the application with the most deployments.
 		SetAppPulldown(listOfMaxDeploymentItems.get(0).m_appName);  
 		
-		// ClickItem("(.//*[@id='sortMenu'])[7]", 3); // select deployment pull-down.
 		SelectDeploymentPulldown();
 		
 		VerifyItemsInDeployPulldown();
@@ -526,11 +697,17 @@ public class Routes extends BaseMain
 		CancelOpenAddRouteUI(false); // close UI.
 	}
 	
-	public static void AddRoute() throws Exception 
+	// this is used as a basic add route test and can also be called by other tests that need a test route added.
+	// if 'callFromAnotherTest' is true the test message will not be shown and the row index will saved so the 
+	// route can be selected from the routes list.   
+	public static void AddRoute(boolean callFromAnotherTest) throws Exception 
 	{
 		int indexLocator = 0;
 		
-		ShowCurrentTest("Routes: AddRoute");
+		if(!callFromAnotherTest) // this is here because this method can be called to add a route from some other tests.
+		{
+			ShowCurrentTest("Routes: AddRoute");			
+		}
 		
 		// delete test route if it exists.
 		DeleteRouteByKeyFromRow(automationRouteKey);
@@ -548,7 +725,7 @@ public class Routes extends BaseMain
 		listOfActualRoutes.clear();
 		ShowActualRoutesOrStore(ActionForApplications.Store);
 
-		// see if added route exist by searching for it in routes list.
+		// see if added route exist by searching for it in routes list collection.
 		indexLocator = TestRouteIsInRoutesList();
 		
 		if(indexLocator == -1)
@@ -565,11 +742,16 @@ public class Routes extends BaseMain
 		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_allowServiceCalls, automationAllowServiceCalls);		
 		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_enabled, automationEnabled);
 		Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, automationDisabledReason);
+		
+		if(callFromAnotherTest)
+		{
+			indexToSelectForRoute = ++indexLocator;			
+		}
+
 	}
 	
 	public static void AddValidations() throws Exception 
 	{
-		String existingRoutePath = "";
 		String badPathError = "Path must only contain letters, numbers, periods, dashes and underscores and must start with a forward slash";
 		String tooManyCharsPathError = "The subdomain.domain combination must not exceed 256 characters";
 		String tenantPulldownMessage = "Select Tenant";
@@ -703,9 +885,10 @@ public class Routes extends BaseMain
 		CancelOpenAddRouteUI(false);
 	}
 	
-	public static void GoToRoutes()
+	public static void GoToRoutes() throws Exception
 	{
 		CommonMethods.selectItemPlatformDropdown("Routes");
+		WaitForPageLoad();
 	}	
 	
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -714,12 +897,200 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
+	// have to go to different pages to test routes. 
+	public static void WaitForPageLoad() throws Exception
+	{
+		Thread.sleep(500);
+		WaitForElementVisible(By.xpath("//span[text()='лл']"), 2);
+	}
+	
+	public static void SetupRowIndexesForTestAppTenantDeployment() throws Exception
+	{
+		boolean foundRow = false;
+		
+		// need to store tenants and deployments. this comes from the API.
+		CreateTenantInformation(); 
+		BuildDeploymentsList();
+		
+		// go to applications page and store applications in UI.
+		Applications.GoToApplications(); 
+		WaitForPageLoad();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		
+		Applications.listOfActualApps.clear();
+		Applications.ShowActualApplicationsOrStore(ActionForApplications.Store); // applications comes from UI.
+
+		// ///////////////////////////////////////////
+		// get index of test tenant in tenants list
+		// ///////////////////////////////////////////
+		for(TenantInfo tInfo : listOfTenantItems)
+		{
+			if(tInfo.m_key.equals(automationTenant))
+			{
+				foundRow = true;
+				break;
+			}
+			indexToSelectForTenant++;
+		}
+		
+		if(!foundRow)
+		{
+			Assert.fail("Did not find index for test tenant");
+		}
+		
+		foundRow = false;
+		
+		// ////////////////////////////////////////////////////////////
+		// get index of test application in application list.
+		// ////////////////////////////////////////////////////////////
+		for(ApplicationClass appClass : Applications.listOfActualApps)
+		{
+			if(appClass.m_Key.equals(automationApp))
+			{
+				foundRow = true;
+				break;
+			}
+			indexToSelectForApp++;
+		}		
+		
+		if(!foundRow)
+		{
+			Assert.fail("Did not find index for test app");			
+		}
+		
+		foundRow = false;
+		
+		// ////////////////////////////////////////////////////////////
+		// get index of test deployment in deployment list.
+		// ////////////////////////////////////////////////////////////
+		for(DeployInfo dInfo : listOfMaxDeploymentItems)
+		{
+			if(dInfo.m_key.equals(automationDeploy))
+			{
+				foundRow = true;
+				break;
+			}
+			indexToSelectForDeployment++;
+		}
+		
+		if(!foundRow)
+		{
+			Assert.fail("Did not find index for test deployment");
+		}
+	}
+	
+	// this sets the enable and disable for the test application and tenant. the indexToSelectForTenant and indexToSelectForApp were set outside 
+	// of this method. throw error if wrong application or tenant is  selected for edit.   
+	public static void SetTenantAppEnabledState(boolean tenantState, boolean appState) throws Exception
+	{
+		// ///////////////////////////////////////////////////////////////////////////
+		// go to tenants page, wait for title, and setup enabled for test tenant.
+		// ///////////////////////////////////////////////////////////////////////////
+		CommonMethods.selectItemPlatformDropdown("Tenants");
+		WaitForPageLoad();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		Thread.sleep(500);
+	
+		
+		SelectEditByRow(indexToSelectForTenant);
+		WaitForElementVisible(By.xpath(uiTitle_Locator), 3);
+		Assert.assertEquals(GetUiKey(), automationTenant, "The test tenant has not been selected for edit."); // make sure have the test tenant in edit UI.
+
+		if(tenantState)
+		{
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[2]")).click();
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[1]")).click();
+			ClickItem(saveButtonPoUp_Locator, 2);
+		}
+		else
+		{
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[1]")).click();
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[2]")).click();
+			ClickItem(saveButtonPoUp_Locator, 2);
+		}
+
+		Thread.sleep(1000); // wait for element not  click-able doesn't work here - 'is not clickable at point (1525, 31). Other element would receive the click'
+		
+		// //////////////////////////////////////////////////////////////////////////////////
+		// go to applications page, wait for title, and setup enabled for test application.
+		// //////////////////////////////////////////////////////////////////////////////////
+		CommonMethods.selectItemPlatformDropdown("Applications");
+		WaitForPageLoad();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		Thread.sleep(500);
+		
+		SelectEditByRow(indexToSelectForApp);
+		WaitForElementVisible(By.xpath(uiTitle_Locator), 3);
+		Assert.assertEquals(GetUiKey(), automationApp, "The test app has not been selected for edit."); // make sure have the test application in edit UI.
+		
+		if(appState)
+		{
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[2]")).click();
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[1]")).click();
+			driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
+		}
+		else
+		{
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[1]")).click();
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[2]")).click();
+			driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
+		}
+		
+		Thread.sleep(1000); // wait for element not click-able doesn't work here - 'is not clickable at point (1525, 31). Other element would receive the click'
+	}
+	
+	public static void SetDeploymentEnabledState(boolean deployState) throws Exception
+	{
+	
+		CommonMethods.selectItemPlatformDropdown("Deployments");
+		WaitForPageLoad();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		Thread.sleep(500);
+		
+		SelectEditByRow(indexToSelectForDeployment);
+		WaitForElementVisible(By.xpath(uiTitle_Locator), 3);
+		//Assert.assertEquals(GetUiKey(), automationDeploy, "The test deployment has not been selected for edit."); // make sure have the test deploy edit UI.
+		Assert.assertEquals(driver.findElement(By.xpath("(//dl[@class='row']/dd)[1]")).getText(), automationDeploy, "The test deployment has not been selected for edit."); // make sure have the test deploy edit UI.		
+		
+
+		
+		if(deployState)
+		{
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[2]")).click();
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[1]")).click();
+			driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
+		}
+		else
+		{
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[1]")).click();
+			driver.findElement(By.xpath("(" + uiRadioButton_Locator + ")[2]")).click();
+			driver.findElement(By.xpath(saveButtonPoUp_Locator)).click();
+		}
+		
+		Thread.sleep(1000); // wait for element not click-able doesn't work here - 'is not clickable at point (1525, 31). Other element would receive the click'	
+	}
+	
+	public static String GetUiKey()
+	{
+		return driver.findElement(By.cssSelector(".col-sm-11")).getText();
+	}
+	
 	// select deployment pull-down.
 	public static void SelectDeploymentPulldown()
 	{
-		ClickItem("(.//*[@id='sortMenu'])[7]", 3); 
+		ClickItem("(" + pullDown_Locator + ")[7]", 3); 
 	}
 	
+	public static void SetTestTenantEnableDisable(int index, boolean state)
+	{
+		SelectEditByRow(index);
+	}
+
+	// select the edit button in the the row passed in (1 based).
+	public static void SelectEditByRow(int row)
+	{
+		ClickItem("(//button[@class='btn btn-primary btn-sm'])" + "[" + row + "]", 3);
+	}
 	
 	// this is used to get what's in the UI, find a route that was supposed to be added, and verify some of the added route values.
 	// this is used where testing of route enabled, allow services calls, and disabled reason combinations are tested.
@@ -828,7 +1199,7 @@ public class Routes extends BaseMain
 		//Assert.assertEquals(listOfActualRoutes.get(indexLocator).m_disabledReason, automationDisabledReason);		
 	}
 	
-	
+	// see of test route is in routes list and return index.
 	public static int TestRouteIsInRoutesList() throws Exception
 	{
 		boolean foundAddedRoute = false;
@@ -871,8 +1242,10 @@ public class Routes extends BaseMain
 		driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath);
 		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID);
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(automationDescription);		
-		driver.findElement(By.xpath("(//input[@formcontrolname='allowServiceCalls'])[2]")).click();
-		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click();
+		driver.findElement(By.xpath(("(//label[@class='radio-inline'])[4]"))).click();
+		driver.findElement(By.xpath(("(" + uiRadioButton_Locator + ")[4]"))).click();		
+		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click(); // bladd-- change all of these to 
+		
 		if(includeDisabledreason)
 		{
 			new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");			
@@ -1136,11 +1509,29 @@ public class Routes extends BaseMain
 		}
 	}
 	
+	// store off deployment by calling API.
+	public static void BuildDeploymentsList() throws Exception
+	{
+		String url =  deploymentsURL + "?pageSize=300";
+		String apiType = "\"deployments\":";
+		JSONArray jArray;
+		JSONObject jo;
+
+		listOfMaxDeploymentItems.clear();
+		
+		jArray = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
+		for(int x = 0; x < jArray.length(); x++)
+		{
+			jo = jArray.getJSONObject(x); // get current json object from the list		
+			listOfMaxDeploymentItems.add(new DeployInfo(jo.getString("key"), jo.getString("applicationKey"), jo.getString("version")));
+		}
+	}
+	
 	// store all tenant keys and their corresponding tenantID/name 
 	public static void CreateTenantInformation() throws Exception
 	{
 		JSONArray jArray;
-		String url = tenantsURL + "?pageSize=";
+		String url = tenantsURL + "?pageSize=300";
 		String apiType = "\"tenants\":";
 		int cntr = 0;
 		
@@ -1154,12 +1545,12 @@ public class Routes extends BaseMain
 			if(CommonMethods.GetNonRequiredItem(jo, "defaultTenantID").equals(""))
 			{
 				//listOfTenantItems.add(jo.getString("key") + charSeparatorForTenantItems + "null" + charSeparatorForTenantItems + jo.getString("name"));
-				listOfTenantItems.add(new CommonMethods_AppsRoutes.TenantInfo(jo.getString("key"), jo.getString("name"), "null"));
+				listOfTenantItems.add(new CommonMethods_AppsRoutes.TenantInfo(jo.getString("key"), jo.getString("name"), "null", jo.getBoolean("enabled")));
 			}
 			else
 			{
 				//listOfTenantItems.add(jo.getString("key") + charSeparatorForTenantItems + jo.getString("defaultTenantID") + charSeparatorForTenantItems + jo.getString("name"));
-				listOfTenantItems.add(new CommonMethods_AppsRoutes.TenantInfo(jo.getString("key"), jo.getString("name"), jo.getString("defaultTenantID") ));
+				listOfTenantItems.add(new CommonMethods_AppsRoutes.TenantInfo(jo.getString("key"), jo.getString("name"), jo.getString("defaultTenantID"), jo.getBoolean("enabled")));
 			}
 		}		
 

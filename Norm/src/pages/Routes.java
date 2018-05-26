@@ -312,6 +312,11 @@ public class Routes extends BaseMain
 	// step 5. step 6 - only use one deployment.
 	public static void ValidationAndInitialStates_PartTwo() throws Exception // bladd
 	{
+		String errDeployWrongNumItemsInList = "Deployment dropdown should only have two items.";
+		String errDeployDisabledWarningFailed = "Disabled warning test failed.";
+		
+ 
+		
 		ShowCurrentTest("Routes: ValidationAndInitialStates_PartTwo");		
 		
 		// ////////////////////////////////////////////////////////////////////////////////////////
@@ -320,8 +325,10 @@ public class Routes extends BaseMain
 		// indicators in tenant and application fields.
 		// ////////////////////////////////////////////////////////////////////////////////////////
 
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+
 		ShowText("Store row indexes for apps, tenants, and deployments.");
-		SetupRowIndexesForTestAppTenantDeployment(); // find row indexes for test application, tenant, and deployment.
+		SetupRowIndexesForTestAppTenantDeployment(); // find row indexes for test application, test tenant, and test deployment.
 
 		GoToRoutes();
 		CommonMethods_AppsRoutes.SetPageSizeToMax();
@@ -400,8 +407,46 @@ public class Routes extends BaseMain
 
 		// set tenant and application enabled to true/true
 		SetTenantAppEnabledState(true, true);
+
+		// //////////////////////////////////////////////
+		// verify test deployment enabled and disabled. 
+		// //////////////////////////////////////////////
 		
-		SetDeploymentEnabledState(true);
+		SetDeploymentEnabledState(false); // set deployment disabled
+		
+		CommonMethods.selectItemPlatformDropdown("Routes");
+		WaitForPageLoad();
+
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		
+		SelectEditByRow(indexToSelectForRoute); // select test route edit
+
+		ClickItem("(" + pullDown_Locator + ")[5]", 3);  // select deployment pull-down. no method created or this because this is only done once in edit route. 
+		
+		// deployment drop-down should only have one item and the search space.
+		Assert.assertTrue(driver.findElements(By.xpath("(//div[@class='dropdown-menu'])[5]/div")).size() == 2, errDeployWrongNumItemsInList);
+		// verify warning in deployment drop down.
+		Assert.assertTrue(driver.findElements(By.xpath("(//button[@class='dropdown-item active'])[5]/span/span")).size() == 3, errDeployDisabledWarningFailed);		
+
+		CancelOpenAddRouteUI(false); // close edit route
+		
+		SetDeploymentEnabledState(true); // set deployment enabled.
+		
+		CommonMethods.selectItemPlatformDropdown("Routes");
+		WaitForPageLoad();
+
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		
+		SelectEditByRow(indexToSelectForRoute); // select test route edit
+
+		ClickItem("(" + pullDown_Locator + ")[5]", 3);  // select deployment pull-down. no method created or this because this is only done once in edit route. 
+		
+		// deployment drop-down should only have one item and the search space.
+		Assert.assertTrue(driver.findElements(By.xpath("(//div[@class='dropdown-menu'])[5]/div")).size() == 2, errDeployWrongNumItemsInList);
+		// verify no warning in deployment drop down.
+		Assert.assertTrue(driver.findElements(By.xpath("(//button[@class='dropdown-item active'])[5]/span/span")).size() == 2, errDeployDisabledWarningFailed);		
+		
+		CancelOpenAddRouteUI(false); // close edit route
 	}
 	
 	// steps 1, 2, 3. step 4 requires hovers.

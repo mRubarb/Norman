@@ -309,13 +309,36 @@ public class Routes extends BaseMain
 		}	
 	}
 
-	// step 5. step 6 - only use one deployment.
-	public static void ValidationAndInitialStates_PartTwo() throws Exception // bladd
+	// step 7, 8, and 9 - reset and cancel.
+	public static void ValidationAndInitialStates_PartThree() throws Exception // bladd
+	{
+		// make sure user is on routes page. add test route and open it.
+		MakeSureUserOnRoutespage();
+		CommonMethods_AppsRoutes.SetPageSizeToMax();
+		AddRoute(true);
+		SelectEditByRow(indexToSelectForRoute); // select test route edit
+		
+		// change each item in the test route.
+		PopulateRouteAddFieldsChangeData(true);
+		
+		System.out.println(driver.findElement(By.xpath("//span[text()='Reset']/..")).isEnabled());
+		System.out.println(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled());		
+		System.out.println(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled());
+		
+		driver.findElement(By.xpath("//span[text()='Reset']/..")).click();
+
+		System.out.println(driver.findElement(By.xpath("//span[text()='Reset']/..")).isEnabled());
+		System.out.println(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled());		
+		System.out.println(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled());
+
+		
+	}
+	
+	// step 5 and 6
+	public static void ValidationAndInitialStates_PartTwo() throws Exception 
 	{
 		String errDeployWrongNumItemsInList = "Deployment dropdown should only have two items.";
 		String errDeployDisabledWarningFailed = "Disabled warning test failed.";
-		
- 
 		
 		ShowCurrentTest("Routes: ValidationAndInitialStates_PartTwo");		
 		
@@ -508,6 +531,9 @@ public class Routes extends BaseMain
 		
 		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(moreThan1024Chars);
 		Assert.assertTrue(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value").length() == maxCharsDescription);
+		
+		CancelOpenAddRouteUI(false); // close route add UI.
+		
 	}
 	
 	public static void ValidatePrePopulatedItemsAndEdits_PartThree() throws Exception 
@@ -792,7 +818,6 @@ public class Routes extends BaseMain
 		{
 			indexToSelectForRoute = ++indexLocator;			
 		}
-
 	}
 	
 	public static void AddValidations() throws Exception 
@@ -941,6 +966,15 @@ public class Routes extends BaseMain
 	// 															HELPERS 
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+	
+	
+	public static void MakeSureUserOnRoutespage() throws Exception
+	{
+		if(WaitForElementNotVisibleNoThrow(By.xpath("//span[contains(text(),'Add Route')]"), 3))
+		{
+			GoToRoutes();
+		}
+	}
 	
 	// have to go to different pages to test routes. 
 	public static void WaitForPageLoad() throws Exception
@@ -1294,6 +1328,25 @@ public class Routes extends BaseMain
 		if(includeDisabledreason)
 		{
 			new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");			
+		}
+	}
+	
+	// fill in fields in add route UI with data that is not the test route.
+	public static void PopulateRouteAddFieldsChangeData(boolean includeDisabledreason)
+	{
+		String textToAdd = "newData";
+		//driver.findElement(By.xpath(GetXpathForTextBox("subdomain"))).sendKeys(automationSubDomain + textToAdd);
+		//driver.findElement(By.xpath(GetXpathForTextBox("domain"))).sendKeys(automationDomain + textToAdd);
+		//driver.findElement(By.xpath(GetXpathForTextBox("path"))).sendKeys(automationPath + textToAdd);
+		driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).sendKeys(automationTenantID + textToAdd);
+		driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).sendKeys(automationDescription + textToAdd);		
+		driver.findElement(By.xpath(("(//label[@class='radio-inline'])[3]"))).click();
+		driver.findElement(By.xpath(("(" + uiRadioButton_Locator + ")[3]"))).click();		
+		driver.findElement(By.xpath("(//input[@formcontrolname='enabled'])[2]")).click(); // bladd-- change all of these to 
+		
+		if(includeDisabledreason)
+		{
+			new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("On boarding");			
 		}
 	}
 	

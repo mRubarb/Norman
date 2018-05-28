@@ -39,13 +39,14 @@ public class TC_RoutesList extends BaseMain
 			//Routes.AddRoute(false);
 			
 			// RMINF-173: Operations Console: ADD screen for Route
-			// Routes.ValidatePrePopulatedItemsAndEdits_PartOne();
-			// Routes.ValidatePrePopulatedItemsAndEdits_PartTwo();
-			// Routes.ValidatePrePopulatedItemsAndEdits_PartThree();
+			//Routes.ValidatePrePopulatedItemsAndEdits_PartOne();
+			//Routes.ValidatePrePopulatedItemsAndEdits_PartTwo();
+			//Routes.ValidatePrePopulatedItemsAndEdits_PartThree();
 			
 			// RMINF-194: RMINF-194: Operations Console: EDIT page for a route
 			//Routes.ValidationAndInitialStates_PartOne(); 
-			Routes.ValidationAndInitialStates_PartTwo();			
+			//Routes.ValidationAndInitialStates_PartTwo();	
+			Routes.ValidationAndInitialStates_PartThree();
 			
 		}
 		

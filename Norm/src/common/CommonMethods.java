@@ -209,13 +209,14 @@ public class CommonMethods extends BaseMain
 	
 	
 	// ENABLED/DISABLED values are converted to true/false
-	public static boolean convertToBoolean(String isEnabled) {
+	// ALLOW/BLOCK values are converted to true/false - this is for routes
+	public static boolean convertToBoolean(String value) {
 		
-		if (isEnabled.equals("ENABLED")) {
+		if (value.equals("ENABLED") || value.equals("ALLOW")) {
 	
 			return true;
 			
-		} else if (isEnabled.equals("DISABLED")) {
+		} else if (value.equals("DISABLED") || value.equals("BLOCK")) {
 			
 			return false;
 			
@@ -510,7 +511,7 @@ public class CommonMethods extends BaseMain
 		for (int i = 0; i < jsonArrayDeps.length(); i++) {
 			
 			JSONObject jo = jsonArrayDeps.getJSONObject(i);
-			Deployment dep = new Deployment(jo.getString("key"), "", jo.getString("version"), "", jo.getBoolean("enabled"));
+			Deployment dep = new Deployment(jo.getString("key"), jo.getString("applicationKey"), jo.getString("version"), "", jo.getBoolean("enabled"));
 			
 			/*			
 			System.out.print(i+1 + "  Key: " + jo.getString("key"));
@@ -536,11 +537,15 @@ public class CommonMethods extends BaseMain
 		for (int i = 0; i < jsonArrayRoutes.length(); i++) {
 			
 			JSONObject jo = jsonArrayRoutes.getJSONObject(i);
-			RouteClass route = new RouteClass(jo.getString("key"), "", "", "", "", "", "", "", "", jo.getBoolean("enabled"), "", true, "", "");
+			RouteClass route = new RouteClass(jo.getString("key"), jo.getString("tenantKey"), "", 
+					jo.getString("applicationKey"), "", jo.getString("deploymentKey"), "", jo.getString("tenantID"), "", 
+					jo.getBoolean("enabled"), "", jo.getBoolean("allowServiceCalls"), 
+					jo.getString("host"), jo.getString("path"));
 			
+			if (jo.getBoolean("enabled") == false) route.m_disabledReason = jo.getString("disabledReason"); 
+						
 			/*			
 			System.out.print(i+1 + "  Key: " + jo.getString("key"));
-			
 			System.out.println(", Enabled: " + jo.getBoolean("enabled"));
 			*/
 			
@@ -586,15 +591,47 @@ public class CommonMethods extends BaseMain
 		for (int i = 1; i <= routeCount; i++) {
 		
 			String routeKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
-			String routeAppKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]/div/a")).getText();
-			String routeEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div/span")).getText();
+			String hostAndPath = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[1]")).getText();
+			//String path = "/" + driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[1]")).getText().split("/")[1];
+			String tenantID = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[2]")).getText(); 
 			
-			RouteClass route = new RouteClass(routeKey, "", "", routeAppKey, "", "", "", "", "", 
-					CommonMethods.convertToBoolean(routeEnabled), "", true, "", "");
+			String applicationKey = "";
+			String deploymentKey = "";
+			String tenantKey = ""; 
+			
+			if (detailsPage.equals("tenant")) {
+				
+				applicationKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]/div/a")).getText();
+				deploymentKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[4]/div/a")).getText();
+				
+			} else if (detailsPage.equals("application")) {
+				
+				tenantKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]/div/a")).getText();
+				deploymentKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[4]/div/a")).getText();
+				
+			} else if (detailsPage.equals("deployment")) {
+				
+				tenantKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]/div/a")).getText();
+				applicationKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[4]/div/a")).getText();
+				
+			}
+			 
+			boolean enabled = convertToBoolean(driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div/span")).getText());
+			String disabledReason = "";
+			if (enabled == false) disabledReason = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div[2]")).getText();
+			boolean allowServiceCalls = convertToBoolean(driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[6]/div/span")).getText()); 
+			/*
+			 *  RouteClass(String key, String tennantKey, String tennantName, String appKey, String appName, String deployKey, String deployVersion, String tenantId, String description, boolean enabled, String disabledReason,
+		    boolean  allowServiceCalls, String host, String path)*/
+			
+			RouteClass route = new RouteClass(routeKey, tenantKey, "", applicationKey, "", deploymentKey, "", tenantID, "", 
+					enabled, disabledReason, allowServiceCalls, hostAndPath, "");
 			routesInTab.add(route);
 			routesKeysInTab.add(routeKey);
 			
-			System.out.println("key: " + routeKey);
+			route.ShowRoute();
+			
+			// System.out.println("key: " + routeKey);
 			
 		}
 		
@@ -604,7 +641,7 @@ public class CommonMethods extends BaseMain
 		
 		String url = baseUrl.replace("#", "") + "platformservice/api/v1/routes?" + detailsPage + "Key=" + key + "&pageSize=" + sizeOfList;
 		//                                E.g.: "platformservice/api/v1/routes?deploymentKey=deploymentKey&pageSize=" + sizeOfList;
-		
+		 
 		String apiType = "\"" + "routes" + "\"" + ":";
 		
 		JSONArray jsonArrayRoutes = CommonMethods.GetJsonArrayWithUrl(token, url, apiType);
@@ -612,9 +649,12 @@ public class CommonMethods extends BaseMain
 		List<RouteClass> routesFromAPI = CommonMethods.putJsonArrayRoutesIntoList(jsonArrayRoutes);	
 		List<String> routeKeysFromAPI = new ArrayList<>();
 		
+		HashMap<String, RouteClass> hashmapRoutesAPI = new HashMap<>();
+		
 		for (int i = 0; i < routesFromAPI.size(); i++) {
 			
 			routeKeysFromAPI.add(routesFromAPI.get(i).m_Key);
+			hashmapRoutesAPI.put(routesFromAPI.get(i).m_Key, routesFromAPI.get(i));
 			
 		}
 		
@@ -626,6 +666,36 @@ public class CommonMethods extends BaseMain
 		for (int i = 0; i < routeCount; i++) {
 			
 			Assert.assertEquals(routeKeysFromAPI.get(i), routesKeysInTab.get(i));
+			
+			String rKey = routesInTab.get(i).m_Key;
+			
+			Assert.assertEquals(routesInTab.get(i).m_host, hashmapRoutesAPI.get(rKey).m_host + hashmapRoutesAPI.get(rKey).m_path);
+			
+			Assert.assertEquals(routesInTab.get(i).m_tenantId, hashmapRoutesAPI.get(rKey).m_tenantId);
+			
+			if (detailsPage.equals("tenant")) {
+				
+				Assert.assertEquals(routesInTab.get(i).m_appKey, hashmapRoutesAPI.get(rKey).m_appKey);
+				Assert.assertEquals(routesInTab.get(i).m_deployKey, hashmapRoutesAPI.get(rKey).m_deployKey);
+				
+			} else if (detailsPage.equals("application")) {
+				
+				Assert.assertEquals(routesInTab.get(i).m_tennantKey, hashmapRoutesAPI.get(rKey).m_tennantKey);
+				Assert.assertEquals(routesInTab.get(i).m_deployKey, hashmapRoutesAPI.get(rKey).m_deployKey);
+				
+			} else if (detailsPage.equals("deployment")) {
+				
+				Assert.assertEquals(routesInTab.get(i).m_tennantKey, hashmapRoutesAPI.get(rKey).m_tennantKey);
+				Assert.assertEquals(routesInTab.get(i).m_appKey, hashmapRoutesAPI.get(rKey).m_appKey);
+				
+			}
+			
+			Assert.assertEquals(routesInTab.get(i).m_enabled, hashmapRoutesAPI.get(rKey).m_enabled);
+			
+			if (routesInTab.get(i).m_enabled == false)  
+				Assert.assertEquals(routesInTab.get(i).m_disabledReason, hashmapRoutesAPI.get(rKey).m_disabledReason);
+			
+			Assert.assertEquals(routesInTab.get(i).m_allowServiceCalls, hashmapRoutesAPI.get(rKey).m_allowServiceCalls);
 			
 		}
 		
@@ -757,8 +827,6 @@ public class CommonMethods extends BaseMain
 			deploymentsInTab.add(dep);
 			deploymentsKeysInTab.add(depKey);
 			
-			//System.out.println("key: " + depKey);
-			System.out.println("appkey: " + appKey);
 		}
 		
 		
@@ -792,14 +860,10 @@ public class CommonMethods extends BaseMain
 			
 			String dKey = deploymentsInTab.get(i).getKey();
 			
-			System.out.println("deploymentsInTab.get(i).getApplicationKey(): " + deploymentsInTab.get(i).getApplicationKey());
-			System.out.println("hashmapDeploymentsAPI.get(dKey).getApplicationKey(): " + hashmapDeploymentsAPI.get(dKey).getApplicationKey());
-			
 			Assert.assertEquals(deploymentsInTab.get(i).getApplicationKey(), hashmapDeploymentsAPI.get(dKey).getApplicationKey());
 			Assert.assertEquals(deploymentsInTab.get(i).getVersion(), hashmapDeploymentsAPI.get(dKey).getVersion());
 			Assert.assertEquals(deploymentsInTab.get(i).isEnabled(), hashmapDeploymentsAPI.get(dKey).isEnabled());
-			System.out.println(" *** Assert Deployment tab ***");
-			
+						
 		}
 		
 	}
@@ -857,9 +921,12 @@ public class CommonMethods extends BaseMain
 		List<ApplicationClass> applicationsFromAPI = CommonMethods.putJsonArrayAppsIntoList(jsonArrayApplications);	
 		List<String> applicationKeysFromAPI = new ArrayList<>();
 		
+		HashMap<String, ApplicationClass> hashmapApplicationsAPI = new HashMap<>();
+		
 		for (int i = 0; i < applicationsFromAPI.size(); i++) {
 			
 			applicationKeysFromAPI.add(applicationsFromAPI.get(i).m_Key);
+			hashmapApplicationsAPI.put(applicationsFromAPI.get(i).m_Key, applicationsFromAPI.get(i));
 			
 		}
 		
@@ -872,6 +939,11 @@ public class CommonMethods extends BaseMain
 			
 			Assert.assertEquals(applicationKeysFromAPI.get(i), applicationsKeysInTab.get(i));
 			
+			String appKey = applicationsInTab.get(i).m_Key;
+			
+			Assert.assertEquals(applicationsInTab.get(i).m_Name, hashmapApplicationsAPI.get(appKey).m_Name);
+			Assert.assertEquals(applicationsInTab.get(i).m_Enabled, hashmapApplicationsAPI.get(appKey).m_Enabled);
+		
 		}
 		
 	}

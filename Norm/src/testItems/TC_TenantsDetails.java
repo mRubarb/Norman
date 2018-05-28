@@ -28,7 +28,7 @@ public class TC_TenantsDetails extends BaseMain {
 	{
 				
 		CommonMethods.selectItemPlatformDropdown("Tenants");
-		
+		/*
 		String tenantKey = "T_AUTOM_ANA";
 				
 		Tenants.addTenant(tenantKey);
@@ -46,10 +46,10 @@ public class TC_TenantsDetails extends BaseMain {
 		Thread.sleep(2000);
 		
 		Tenants.deleteTenant(tenantKey);
-			
-		String tenantKey3 = "APR"; // "ANA_1";  
+			*/
+		String tenantKey3 = "BAUTO"; //"INI"; //"APR"; // "ANA_1";  
 		
-		Tenants.searchTenant("A");
+		//Tenants.searchTenant("B");
 		
 		Thread.sleep(2000);
 		
@@ -60,8 +60,6 @@ public class TC_TenantsDetails extends BaseMain {
 		// Verify deployments listed in the Deployments tab, in Tenant's details page
 		// Verify routes listed in the Routes tab, in Tenant's details page
 		// Verify addresses listed in the ACL tab, in Tenant's details page
-		
-		// *********** CONTINUE HERE ********************** SOMETHING IS FAILING WITH THE APPKEY
 		
 		Tenants.verifyDetailsPages(tenantKey3);
 		

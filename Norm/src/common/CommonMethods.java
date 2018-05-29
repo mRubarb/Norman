@@ -557,6 +557,7 @@ public class CommonMethods extends BaseMain
 	}
 
 
+	// Verify the data of the Routes listed in the Routes tab (Details pages that have Routes tab are: Deployments, Tenants, Applications)
 	public static void verifyRouteDataTabInDetailsPage(String key, String detailsPage) throws Exception {
 		
 		/*
@@ -591,8 +592,7 @@ public class CommonMethods extends BaseMain
 		for (int i = 1; i <= routeCount; i++) {
 		
 			String routeKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
-			String hostAndPath = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[1]")).getText();
-			//String path = "/" + driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[1]")).getText().split("/")[1];
+			String hostAndPath = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[1]")).getText(); // host and path are in the same line in the tab
 			String tenantID = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[2]")).getText(); 
 			
 			String applicationKey = "";
@@ -629,7 +629,7 @@ public class CommonMethods extends BaseMain
 			routesInTab.add(route);
 			routesKeysInTab.add(routeKey);
 			
-			route.ShowRoute();
+			// route.ShowRoute();
 			
 			// System.out.println("key: " + routeKey);
 			
@@ -702,6 +702,7 @@ public class CommonMethods extends BaseMain
 	}
 	
 	
+	// Verify the data of the Tenants listed in the Tenants tab (Details pages that have Tenants tab are: Deployments, Applications)
 	public static void verifyTenantDataTabInDetailsPage(String key, String detailsPage) throws Exception {
 		
 		/*
@@ -786,6 +787,7 @@ public class CommonMethods extends BaseMain
 	}
 	
 	
+	// Verify the data of the Deployments listed in the Deployments tab (Details pages that have Deployments tab are: Tenants, Applications)
 	public static void verifyDeploymentDataTabInDetailsPage(String key, String detailsPage) throws Exception {
 		
 		/*
@@ -796,10 +798,7 @@ public class CommonMethods extends BaseMain
 		 * 4. Compare the deployments listed on each list - they should be the same 
 		 * 
 		 */
-		
-		// *********** CONTINUE HERE **********************
-		// *********** CONTINUE HERE **********************
-		// *********** CONTINUE HERE **********************
+
 		
 		// 1. Click 'Deployments' tab
 		String xpathDepTab = "//li/a[@id='deployment_tab']/div[text()='Deployments ']";
@@ -869,6 +868,7 @@ public class CommonMethods extends BaseMain
 	}
 	
 	
+	// Verify the data of the Applications listed in the Applications tab (Details pages that have Applications tab are: Tenants, Deployments)
 	public static void verifyApplicationDataTabInDetailsPage(String key, String detailsPage) throws Exception {
 		
 		/*
@@ -959,7 +959,7 @@ public class CommonMethods extends BaseMain
 		String indexViewButton = "";
 		
 		if (elementType.equals("tenant")) indexViewButton = "5";
-		if (elementType.equals("deployment")) indexViewButton = "6";
+		if (elementType.equals("deployment") || elementType.equals("application")) indexViewButton = "6";
 		
 		
 		for (int i = 1; i <= pageSize; i++) {

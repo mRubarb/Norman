@@ -55,6 +55,7 @@ public class Routes extends BaseMain
 	public static final String pullDown_Locator = ".//*[@id='sortMenu']";
 	public static final String uiRadioButton_Locator = "//label[@class='radio-inline']";	
 	public static final String uiTitle_Locator = "//div[@class='modal-header']/h4";
+	public static final String disabledReasonPulldown_Locator = "//select[@formcontrolname='disabledReason']";
 	
 	// this is the real route in the QA environment - don't touch.
 	public static final String tenantDontUse = "CTTI";
@@ -316,21 +317,39 @@ public class Routes extends BaseMain
 		MakeSureUserOnRoutespage();
 		CommonMethods_AppsRoutes.SetPageSizeToMax();
 		AddRoute(true);
-		SelectEditByRow(indexToSelectForRoute); // select test route edit
-		
-		// change each item in the test route.
-		PopulateRouteAddFieldsChangeData(true);
-		
-		System.out.println(driver.findElement(By.xpath("//span[text()='Reset']/..")).isEnabled());
-		System.out.println(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled());		
-		System.out.println(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled());
-		
-		driver.findElement(By.xpath("//span[text()='Reset']/..")).click();
+		SelectEditByRow(indexToSelectForRoute); // select test route edit and verify button states.
+		WaitForElementVisible(By.xpath("//strong[contains(text(),'Edit Route')]"), 3);
 
-		System.out.println(driver.findElement(By.xpath("//span[text()='Reset']/..")).isEnabled());
-		System.out.println(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled());		
-		System.out.println(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled());
+		// verify states of buttons
+		Assert.assertFalse(driver.findElement(By.xpath("//span[text()='Reset']/..")).isEnabled()); // reset false
+		Assert.assertFalse(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled()); // save false
+		Assert.assertTrue(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled()); // cancel true.
+		
+		PopulateRouteAddFieldsChangeData(true); // change each item in the test route and verify button states.
+		
+		// verify states of buttons
+		Assert.assertTrue(driver.findElement(By.xpath("//span[text()='Reset']/..")).isEnabled()); // reset true
+		Assert.assertTrue(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled()); // save true
+		Assert.assertTrue(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled()); // cancel true.
+		
+		// select reset. verify buttons and changed data are back to original states.
+		driver.findElement(By.xpath("//span[text()='Reset']/..")).click();    
+		
+		Assert.assertFalse(driver.findElement(By.xpath("//span[text()='Reset']/..")).isEnabled()); // reset false
+		Assert.assertFalse(driver.findElement(By.xpath(saveButtonPoUp_Locator)).isEnabled()); // save false
+		Assert.assertTrue(driver.findElement(By.xpath(uiCancel_Locator)).isEnabled()); // cancel true.
+		
+		VerifyEditUiTestRoute(false); // verify all items edited are set back to original.
+		
+		// change each item in the test route and select cancel.
+		PopulateRouteAddFieldsChangeData(true); 
+		CancelOpenAddRouteUI(false);
 
+		// verify the test route in the routes list
+		listOfActualRoutes.clear();
+		ShowActualRoutesOrStore(ActionForApplications.Store);
+		
+		//listOfActualRoutes.get(indexToSelectForRoute - 1).m_appKey;
 		
 	}
 	
@@ -341,6 +360,8 @@ public class Routes extends BaseMain
 		String errDeployDisabledWarningFailed = "Disabled warning test failed.";
 		
 		ShowCurrentTest("Routes: ValidationAndInitialStates_PartTwo");		
+		
+		MakeSureUserOnRoutespage();
 		
 		// ////////////////////////////////////////////////////////////////////////////////////////
 		// store row indexes to test tenant and application. add route and store its index.
@@ -495,26 +516,14 @@ public class Routes extends BaseMain
 
 		WaitForElementVisible(By.xpath("//strong[text()='Edit Route']"), 2);
 		
-		// in UI - store key, tenant name, application name, and URL into list.
-		List<WebElement> eleList = driver.findElements(By.cssSelector(".container.no-gutters>dl>dd"));
-
-		// verify what's showing.
-		Assert.assertEquals(eleList.get(0).getText(), automationRouteKey, errMessage);
-		Assert.assertEquals(eleList.get(1).getText(), automationTenantName, errMessage);
-		Assert.assertEquals(eleList.get(2).getText(), automationAppName, errMessage);
-		Assert.assertEquals(eleList.get(3).getText(), automationfullPath.toLowerCase(), errMessage);
-	
-		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"), automationTenantID);
-		Assert.assertEquals(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value"), automationDescription);		
-		
-		// .container.no-gutters>dl>dd:nth-of-type(2)>span
-		
+		// verify items on page.
+		VerifyEditUiTestRoute(true);
 		
 		// verify info in deployment pull-down.
 		driver.findElement(By.xpath("(" + pullDown_Locator  + ")[5]")).click(); // select
 
 		// verify number items in pull-down and what's in pull-down.
-		eleList = driver.findElements(By.xpath("(//div[@class='dropdown-menu'])[5]/div"));
+		List<WebElement> eleList = driver.findElements(By.xpath("(//div[@class='dropdown-menu'])[5]/div"));
 		Assert.assertTrue(eleList.size() == 2, ""); // one item and search box.
 		Assert.assertEquals(driver.findElement(By.xpath("(//button[@class='dropdown-item active'])[5]/span/span[1]")).getText(), automationDeploy, "" ); 
 		
@@ -533,7 +542,6 @@ public class Routes extends BaseMain
 		Assert.assertTrue(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value").length() == maxCharsDescription);
 		
 		CancelOpenAddRouteUI(false); // close route add UI.
-		
 	}
 	
 	public static void ValidatePrePopulatedItemsAndEdits_PartThree() throws Exception 
@@ -967,6 +975,47 @@ public class Routes extends BaseMain
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 	
+	public static void VerifyEditUiTestRoute(boolean includeTopSection)
+	{
+		if(includeTopSection)
+		{
+			String errMessage = "Verification error in 'VerifyEditUiTestRoute'.";		
+
+			// in UI - store key, tenant name, application name, and URL into list.
+			List<WebElement> eleList = driver.findElements(By.cssSelector(".container.no-gutters>dl>dd"));
+			
+			// verify what's showing. top section
+			Assert.assertEquals(eleList.get(0).getText(), automationRouteKey, errMessage);
+			Assert.assertEquals(eleList.get(1).getText(), automationTenantName, errMessage);
+			Assert.assertEquals(eleList.get(2).getText(), automationAppName, errMessage);
+			Assert.assertEquals(eleList.get(3).getText(), automationfullPath.toLowerCase(), errMessage);
+		}
+		
+		String errMessage = "Verification error in 'ValidationAndInitialStates'.";		
+
+		// in UI - store key, tenant name, application name, and URL into list.
+		List<WebElement> eleList = driver.findElements(By.cssSelector(".container.no-gutters>dl>dd"));
+		
+		// verify what's showing. top section
+		Assert.assertEquals(eleList.get(0).getText(), automationRouteKey, errMessage);
+		Assert.assertEquals(eleList.get(1).getText(), automationTenantName, errMessage);
+		Assert.assertEquals(eleList.get(2).getText(), automationAppName, errMessage);
+		Assert.assertEquals(eleList.get(3).getText(), automationfullPath.toLowerCase(), errMessage);
+	
+		// tenant ID and description
+		Assert.assertEquals(driver.findElement(By.xpath(GetXpathForTextBox("tenantID"))).getAttribute("value"), automationTenantID);
+		Assert.assertEquals(driver.findElement(By.xpath("//textarea[@formcontrolname='description']")).getAttribute("value"), automationDescription);		
+		
+		// radio buttons
+		Assert.assertTrue(driver.findElement(By.xpath("(//label[@class='radio-inline'])[1]/input")).getAttribute("value").equals("true"));
+		Assert.assertTrue(driver.findElement(By.xpath("(//label[@class='radio-inline'])[2]/input")).getAttribute("value").equals("false"));
+		Assert.assertTrue(driver.findElement(By.xpath("(//label[@class='radio-inline'])[3]/input")).getAttribute("value").equals("true"));
+		Assert.assertTrue(driver.findElement(By.xpath("(//label[@class='radio-inline'])[4]/input")).getAttribute("value").equals("false"));
+
+		// disabled reason. 
+		Assert.assertEquals((driver.findElement(By.xpath(disabledReasonPulldown_Locator)).getAttribute("value")), automationDisabledReason);		
+	}
+	
 	
 	public static void MakeSureUserOnRoutespage() throws Exception
 	{
@@ -1230,27 +1279,27 @@ public class Routes extends BaseMain
 			{
 				case unknown:
 				{
-					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByIndex(0);
+					new Select(driver.findElement(By.xpath(disabledReasonPulldown_Locator))).selectByIndex(0);
 					break;
 				}
 				case upgrading:
 				{
-					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Upgrading");
+					new Select(driver.findElement(By.xpath(disabledReasonPulldown_Locator))).selectByVisibleText("Upgrading");
 					break;
 				}
 				case onboarding:
 				{
-					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("On boarding");
+					new Select(driver.findElement(By.xpath(disabledReasonPulldown_Locator))).selectByVisibleText("On boarding");
 					break;
 				}
 				case offboarding:
 				{
-					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Off boarding");
+					new Select(driver.findElement(By.xpath(disabledReasonPulldown_Locator))).selectByVisibleText("Off boarding");
 					break;
 				}				
 				case maintenance:
 				{
-					new Select(driver.findElement(By.xpath("//select[@formcontrolname='disabledReason']"))).selectByVisibleText("Maintenance");
+					new Select(driver.findElement(By.xpath(disabledReasonPulldown_Locator))).selectByVisibleText("Maintenance");
 					break;
 				}
 				case noselect:

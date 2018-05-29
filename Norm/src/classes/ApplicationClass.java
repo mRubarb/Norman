@@ -8,9 +8,13 @@ public class ApplicationClass
 	public String m_defaultHost = "";
 	public String m_defaultPath = "";
 	public boolean m_Enabled = false;
+	public int m_tenantCount = 0;
+	public int m_routeCount = 0;
+	public int m_deploymentCount = 0;
 	
 	
-	// bladdxx
+	public ApplicationClass(){};
+
 	public ApplicationClass(String key, String name, String description, boolean enabled, String defaultHost, String defaultPath)
 	{
 		m_Key = key;

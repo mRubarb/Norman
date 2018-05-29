@@ -17,6 +17,8 @@ public class RouteClass
 	public String m_host = "";
 	public String m_path = "";
 	
+	public RouteClass(){};
+	
 	public RouteClass(String key, String tennantKey, String tennantName, String appKey, String appName, String deployKey, String deployVersion, String tenantId, String description, boolean enabled, String disabledReason,
 		    boolean  allowServiceCalls, String host, String path)
 	{

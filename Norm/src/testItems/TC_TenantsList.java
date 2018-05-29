@@ -31,33 +31,17 @@ public class TC_TenantsList extends BaseMain {
 		CommonMethods.selectItemPlatformDropdown("Tenants");
 		
 		CommonMethods.verifyTitle("Tenants");
-		
+		/*
 		Tenants.verifyColumnsNames();
 		
 		Tenants.verifyDataAndSorting();
-		
-		Tenants.verifyPaging();
-		
+		*/
+		Tenants.verifyPagingNew();
+		/*
 		Tenants.verifyFiltering("RVM", "RVM_1", "Show Enabled Tenants Only");
 
 		Tenants.verifyFilteringCombined("RVM", "RVM_1", "Show Enabled Tenants Only");
-		
-		String tenantKey = "T_AUTOM_ANA";
-		
-		Tenants.addTenant();
-		
-		Tenants.searchTenant("T_A");
-		
-		Thread.sleep(3000);
-		
-		Tenants.editTenant(tenantKey);
-		
-		Tenants.searchTenant("T_A");
-		
-		Thread.sleep(3000);
-		
-		Tenants.deleteTenant(tenantKey);
-		
+		*/
 		
 	}
 	

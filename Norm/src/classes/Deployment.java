@@ -10,6 +10,8 @@ public class Deployment {
 	private String description;
 	private boolean enabled;
 	
+	private int tenantCount;
+	private int routeCount;
 	
 	public String getKey() {
 		return key;
@@ -42,6 +44,31 @@ public class Deployment {
 		this.enabled = enabled;
 	}
 	
+	public int getTenantCount() {
+		return tenantCount;
+	}
+	public void setTenantCount(int tenantCount) {
+		this.tenantCount = tenantCount;
+	}
+	public int getRouteCount() {
+		return routeCount;
+	}
+	public void setRouteCount(int routeCount) {
+		this.routeCount = routeCount;
+	}
+	
+	
+	public Deployment() {}
+	
+	public Deployment(String key, String appKey, String version, String desc, boolean enabled) {
+		
+		this.key = key;
+		this.applicationKey = appKey;
+		this.version = version;
+		this.description = desc;
+		this.enabled = enabled;
+		
+	}
 	
 	/* Comparator for sorting the list by Key Ascending */
     public static Comparator<Deployment> keyComparatorAsc = new Comparator<Deployment>() {

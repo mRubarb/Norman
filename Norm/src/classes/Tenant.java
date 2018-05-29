@@ -9,6 +9,10 @@ public class Tenant {
 	private String defaultTenantID;
 	private boolean enabled;
 	
+	private int applicationCount;
+	private int deploymentCount;
+	private int routeCount;
+	
 	
 	public String getKey() {
 		return key;
@@ -35,6 +39,25 @@ public class Tenant {
 		this.enabled = enabled;
 	}
 	
+	public int getApplicationCount() {
+		return applicationCount;
+	}
+	public void setApplicationCount(int applicationCount) {
+		this.applicationCount = applicationCount;
+	}
+	public int getDeploymentCount() {
+		return deploymentCount;
+	}
+	public void setDeploymentCount(int deploymentCount) {
+		this.deploymentCount = deploymentCount;
+	}
+	public int getRouteCount() {
+		return routeCount;
+	}
+	public void setRouteCount(int routeCount) {
+		this.routeCount = routeCount;
+	}
+
 	/* Comparator for sorting the list by Key Ascending */
     public static Comparator<Tenant> keyComparatorAsc = new Comparator<Tenant>() {
 

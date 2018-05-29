@@ -191,4 +191,15 @@ public class CommonMethodsAna  extends BaseMain {
 	}
 	
 	
+	public static void refreshPage() {
+		
+		driver.findElement(By.xpath("//button[@title='refresh']")).click();
+		
+	}
+	
+
+	
+
+	
+	
 }

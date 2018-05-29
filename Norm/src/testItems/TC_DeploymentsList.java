@@ -30,6 +30,9 @@ public class TC_DeploymentsList extends BaseMain {
 					
 		CommonMethods.selectItemPlatformDropdown("Deployments");
 		
+		String deploymentKey = "APR";
+		String applicationKey = "RVM";
+		
 		CommonMethods.verifyTitle("Deployments");
 		
 		Deployments.verifyColumnsNames();
@@ -40,33 +43,17 @@ public class TC_DeploymentsList extends BaseMain {
 		
 		Deployments.verifyPaging();
 	
-		Deployments.verifyFiltering("APR", "RVM", "Show Enabled Deployments Only");
+		Deployments.verifyFiltering(deploymentKey, applicationKey, "Show Enabled Deployments Only");
 
-		Deployments.verifyFilteringCombined("APR", "RVM", "Show Enabled Deployments Only");
+		Deployments.verifyFilteringCombined(deploymentKey, applicationKey, "Show Enabled Deployments Only");
 		
-		String deploymentKey = "DEP_AUTOM_ANA";
-				
-		String applicationKey = "RVM";
-		
-		Deployments.addDeployment(deploymentKey, applicationKey);
-				
-		Thread.sleep(5000);
-		
-		Deployments.editDeployment(deploymentKey, applicationKey);  // *** IT WORKS :) ***
-			
-		Thread.sleep(3000);
-		
-		Deployments.deleteDeployment(deploymentKey); // OK!
-		
-		
-			
 	}
 	
 	
 	@AfterClass
 	public void finish() 
 	{
-		JOptionPane.showMessageDialog(null, "Ready To Close Driver.");		
+		JOptionPane.showMessageDialog(null, "Deployments Tests Finished.");		
 		driver.close();
 
 	}

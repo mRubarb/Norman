@@ -30,12 +30,14 @@ import org.testng.Assert;
 
 public class CommonMethods extends BaseMain 
 {
-	public static String token = "";	
+	public static String token = "";
+	public static boolean printLogs = false; // printLogs == false --> logs related to API requests won't be printed in the Console - May 29
+	
 	
 	// Call into API and get json array back.  
 	public static JSONArray GetJsonArrayWithUrl(String token, String url, String apiType) throws IOException, JSONException
 	{
-		ShowText("Token for request = " + token);
+		if (printLogs) ShowText("Token for request = " + token);
 		
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -47,8 +49,12 @@ public class CommonMethods extends BaseMain
 		con.setRequestProperty("Authorization", "Bearer " + token);
 		
 		int responseCode = con.getResponseCode();
-		System.out.println("\nSending 'GET' request to URL : " + url);
-		System.out.println("Response Code : " + responseCode);
+		
+		if (printLogs) {
+			System.out.println("\nSending 'GET' request to URL : " + url);
+			System.out.println("Response Code : " + responseCode);
+		}
+		
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String inputLine;
@@ -60,7 +66,7 @@ public class CommonMethods extends BaseMain
 		}
 		in.close();
 		
-		System.out.println(response.toString().split(apiType)[1]);		
+		if (printLogs) System.out.println(response.toString().split(apiType)[1]);		
 		
 		// create json array by removing meta data   
 		JSONArray jasonArray = new JSONArray(response.toString().split(apiType)[1]);		
@@ -70,7 +76,7 @@ public class CommonMethods extends BaseMain
 	// Call into API and get metadata string back.  
 	public static String GetMetaDataWithUrl(String token, String url, String apiType) throws IOException, JSONException
 	{
-		ShowText("Token for request = " + token);
+		if (printLogs) ShowText("Token for request = " + token);
 		
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -82,8 +88,11 @@ public class CommonMethods extends BaseMain
 		con.setRequestProperty("Authorization", "Bearer " + token);
 		
 		int responseCode = con.getResponseCode();
-		System.out.println("\nSending 'GET' request to URL : " + url);
-		System.out.println("Response Code : " + responseCode);
+		if (printLogs) {
+			System.out.println("\nSending 'GET' request to URL : " + url);
+			System.out.println("Response Code : " + responseCode);
+		}
+		
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String inputLine;
@@ -145,12 +154,15 @@ public class CommonMethods extends BaseMain
 		wr.flush();
 		wr.close();
 		 		
-		System.out.println(con.getResponseCode());
+		//System.out.println(con.getResponseCode());
 		
 		int responseCode = con.getResponseCode();
-		System.out.println("nSending 'POST' request to URL : " + url);
-		System.out.println("Post Data : " + postJsonData);
-		System.out.println("Response Code : " + responseCode);
+		
+		if (printLogs) {
+			System.out.println("\nSending 'POST' request to URL : " + url);
+			System.out.println("Post Data : " + postJsonData);
+			System.out.println("Response Code : " + responseCode);	
+		}
 		 
 		BufferedReader in = new BufferedReader( new InputStreamReader(con.getInputStream()));
 		String output;
@@ -162,15 +174,18 @@ public class CommonMethods extends BaseMain
 		}
 		in.close();
 		  
-		//printing result from response
-		System.out.println(response.toString());
 		retToken = response.toString().split(":")[1].replace("}", "");
-		System.out.println("Latest Token " + retToken);
+		
+		//printing result from response
+		if (printLogs) {
+			System.out.println(response.toString());
+			System.out.println("Latest Token " + retToken);
+		}
 		
 		// NOTE: couldn't put token id into a string. had to get if from json array into a json object. 
 		// to get the response in a json array, need to add leading/trailing "[" and "]"
 		JSONArray tokenArray = new JSONArray("[" + response.toString() + "]");
-		System.out.println(tokenArray.length());
+		//System.out.println(tokenArray.length());
 		JSONObject jo = tokenArray.getJSONObject(0);
 		return jo.getString("id_token");
 	}    	
@@ -228,7 +243,7 @@ public class CommonMethods extends BaseMain
 	
 	public static void selectSizeOfList(int size) {
 		
-		System.out.println("Size to select: " + size);
+		// System.out.println("Size to select: " + size);
 		
 		String xpath1 = "//span/label";
 		String xpath2 = "/input[@name='pageSize']";
@@ -380,7 +395,7 @@ public class CommonMethods extends BaseMain
 				
 				driver.findElement(By.xpath(xpathTenant)).click();
 				driver.findElement(By.xpath(xpathAllTenants)).click();
-				System.out.println(".. Tenant filter reseted .. ");
+				// System.out.println(".. Tenant filter reseted .. ");
 			
 			} else {
 
@@ -396,7 +411,7 @@ public class CommonMethods extends BaseMain
 				
 				driver.findElement(By.xpath(xpathApp)).click();
 				driver.findElement(By.xpath(xpathAllApp)).click();
-				System.out.println(".. Application filter reseted .. ");
+				// System.out.println(".. Application filter reseted .. ");
 			
 			} else {
 				
@@ -412,11 +427,11 @@ public class CommonMethods extends BaseMain
 			
 				driver.findElement(By.xpath(xpathDep)).click();
 				driver.findElement(By.xpath(xpathAllDep)).click();
-				System.out.println(".. Deployment filter reseted .. ");
+				// System.out.println(".. Deployment filter reseted .. ");
 				
 			} else {
 
-				System.out.println(".. Deployment filter DOES NOT need to be reseted .. ");
+				// System.out.println(".. Deployment filter DOES NOT need to be reseted .. ");
 			}
 			
 		} catch (NoSuchElementException e) { }
@@ -432,7 +447,7 @@ public class CommonMethods extends BaseMain
 			
 			} else {
 
-				System.out.println(".. Enabled filter DOES NOT need to be reseted .. ");
+				// System.out.println(".. Enabled filter DOES NOT need to be reseted .. ");
 			}
 						
 		} catch (NoSuchElementException e) { }
@@ -571,7 +586,7 @@ public class CommonMethods extends BaseMain
 		
 			
 		// 1. Click 'Routes' tab
-		String xpathRouteTab = "//li/a[@id='route_tab']/div[text()='Routes ']";
+		String xpathRouteTab = "//li/a[@id='route_tab']/div[contains(text(),'Routes')]";
 		driver.findElement(By.xpath(xpathRouteTab)).click();
 			
 		// * Wait for tab to be selected
@@ -585,7 +600,8 @@ public class CommonMethods extends BaseMain
 		
 		
 		// 2. Get a list with the routes listed in the UI
-		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
+		int routeCount = Integer.parseInt(driver.findElement(By.xpath(xpathRouteTab + "/span")).getText());
+		//int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
 		List<RouteClass> routesInTab = new ArrayList<>();
 		List<String> routesKeysInTab = new ArrayList<>();
 				
@@ -617,19 +633,16 @@ public class CommonMethods extends BaseMain
 			}
 			 
 			boolean enabled = convertToBoolean(driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div/span")).getText());
+			
 			String disabledReason = "";
 			if (enabled == false) disabledReason = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/div[2]")).getText();
+			
 			boolean allowServiceCalls = convertToBoolean(driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[6]/div/span")).getText()); 
-			/*
-			 *  RouteClass(String key, String tennantKey, String tennantName, String appKey, String appName, String deployKey, String deployVersion, String tenantId, String description, boolean enabled, String disabledReason,
-		    boolean  allowServiceCalls, String host, String path)*/
 			
 			RouteClass route = new RouteClass(routeKey, tenantKey, "", applicationKey, "", deploymentKey, "", tenantID, "", 
 					enabled, disabledReason, allowServiceCalls, hostAndPath, "");
 			routesInTab.add(route);
 			routesKeysInTab.add(routeKey);
-			
-			// route.ShowRoute();
 			
 			// System.out.println("key: " + routeKey);
 			
@@ -716,7 +729,7 @@ public class CommonMethods extends BaseMain
 		
 		
 		// 1. Click 'Tenants' tab
-		String xpathTenantTab = "//li/a[@id='tenant_tab']/div[text()='Tenants ']";
+		String xpathTenantTab = "//li/a[@id='tenant_tab']/div[contains(text(),'Tenants')]";
 		driver.findElement(By.xpath(xpathTenantTab)).click();
 		
 		// * Wait for tab to be selected
@@ -726,7 +739,8 @@ public class CommonMethods extends BaseMain
 		
 		
 		// 2. Get a list with the tenants listed in the UI
-		int tenantCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Tenants ']/span")).getText());
+		int tenantCount = Integer.parseInt(driver.findElement(By.xpath(xpathTenantTab + "/span")).getText());
+		
 		List<Tenant> tenantsInTab = new ArrayList<>();
 		List<String> tenantsKeysInTab = new ArrayList<>();
 				
@@ -734,7 +748,7 @@ public class CommonMethods extends BaseMain
 		
 			String tenantKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
 			String tenantName = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]")).getText();
-			boolean tenantEnabled = Boolean.parseBoolean(driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[4]/span")).getText());
+			boolean tenantEnabled = convertToBoolean(driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[4]/span")).getText());
 			
 			Tenant tenant = new Tenant();
 			tenant.setKey(tenantKey);
@@ -779,6 +793,7 @@ public class CommonMethods extends BaseMain
 			Assert.assertEquals(tenantKeysFromAPI.get(i), tenantsKeysInTab.get(i));
 			
 			String tKey = tenantsInTab.get(i).getKey();
+			
 			Assert.assertEquals(tenantsInTab.get(i).getName(), hashmapTenantsAPI.get(tKey).getName());
 			Assert.assertEquals(tenantsInTab.get(i).isEnabled(), hashmapTenantsAPI.get(tKey).isEnabled());
 			
@@ -798,10 +813,9 @@ public class CommonMethods extends BaseMain
 		 * 4. Compare the deployments listed on each list - they should be the same 
 		 * 
 		 */
-
 		
 		// 1. Click 'Deployments' tab
-		String xpathDepTab = "//li/a[@id='deployment_tab']/div[text()='Deployments ']";
+		String xpathDepTab = "//li/a[@id='deployment_tab']/div[contains(text(),'Deployments')]";
 		driver.findElement(By.xpath(xpathDepTab)).click();
 		
 		// * Wait for tab to be selected
@@ -809,20 +823,35 @@ public class CommonMethods extends BaseMain
 		wait.until(ExpectedConditions.attributeToBe(By.id("deployment_tab"), "aria-expanded", "true"));
 		WaitForElementVisible(By.xpath("//table/thead/tr/th[@jhisortby='KEY']"), 4);
 		
+		selectSizeOfList(50);
 		
 		// 2. Get a list with the deployments listed in the UI
-		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Deployments ']/span")).getText());
+		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath(xpathDepTab + "/span")).getText());
+		
 		List<Deployment> deploymentsInTab = new ArrayList<>();
 		List<String> deploymentsKeysInTab = new ArrayList<>();
 				
 		for (int i = 1; i <= deploymentCount; i++) {
 		
 			String depKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[1]/a")).getText();
-			String appKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[2]/div[1]/a")).getText();
-			String depVersion = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[3]")).getText();
-			String depEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[5]/span")).getText();
 			
-			Deployment dep = new Deployment(depKey, appKey, depVersion, "", CommonMethods.convertToBoolean(depEnabled));
+			String appKey = ""; 
+			int index = 2;
+			
+			if (!detailsPage.equals("application")) {
+				appKey = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[" + index + "]/div[1]/a")).getText();
+				index++;
+			}
+			
+			String depVersion = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[" + index + "]")).getText();
+			index++;
+			
+			String depDescription = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[" + index + "]")).getText();
+			index++;
+			
+			String depEnabled = driver.findElement(By.xpath("//table/tbody/tr[" + i + "]/td[" + index + "]/span")).getText();
+			
+			Deployment dep = new Deployment(depKey, appKey, depVersion, depDescription, CommonMethods.convertToBoolean(depEnabled));
 			deploymentsInTab.add(dep);
 			deploymentsKeysInTab.add(depKey);
 			
@@ -859,7 +888,9 @@ public class CommonMethods extends BaseMain
 			
 			String dKey = deploymentsInTab.get(i).getKey();
 			
-			Assert.assertEquals(deploymentsInTab.get(i).getApplicationKey(), hashmapDeploymentsAPI.get(dKey).getApplicationKey());
+			if (!detailsPage.equals("application")) {
+				Assert.assertEquals(deploymentsInTab.get(i).getApplicationKey(), hashmapDeploymentsAPI.get(dKey).getApplicationKey());
+			}
 			Assert.assertEquals(deploymentsInTab.get(i).getVersion(), hashmapDeploymentsAPI.get(dKey).getVersion());
 			Assert.assertEquals(deploymentsInTab.get(i).isEnabled(), hashmapDeploymentsAPI.get(dKey).isEnabled());
 						
@@ -882,7 +913,7 @@ public class CommonMethods extends BaseMain
 		
 		
 		// 1. Click 'Applications' tab
-		String xpathAppTab = "//li/a[@id='tenant_tab']/div[text()='Applications ']";  // tenant_tab -- the 'id' is incorrectly named in the DOM - it should application_tab
+		String xpathAppTab = "//li/a[@id='tenant_tab']/div[contains(text(),'Applications')]";  // tenant_tab -- the 'id' is incorrectly named in the DOM - it should application_tab
 		driver.findElement(By.xpath(xpathAppTab)).click();
 		
 		// * Wait for tab to be selected
@@ -892,7 +923,8 @@ public class CommonMethods extends BaseMain
 		
 		
 		// 2. Get a list with the apps listed in the UI
-		int applicationCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Applications ']/span")).getText());
+		int applicationCount = Integer.parseInt(driver.findElement(By.xpath(xpathAppTab + "/span")).getText());
+		
 		List<ApplicationClass> applicationsInTab = new ArrayList<>();
 		List<String> applicationsKeysInTab = new ArrayList<>();
 				
@@ -949,12 +981,12 @@ public class CommonMethods extends BaseMain
 	}
 	
 	
-	// Open element details page. It works for Tenants and Deployments
+	// Open element details page. It works for Applications, Tenants and Deployments
 	public static void openElementDetailsPage(String key, String elementType) throws Exception {
 		
 		int pageSize = 10;
 		
-		// make sure that the View button clicked belongs to the tenant that is going to be viewed
+		// make sure that the View button clicked belongs to the app / deployment / tenant that is going to be viewed
 		
 		String indexViewButton = "";
 		
@@ -976,7 +1008,7 @@ public class CommonMethods extends BaseMain
 			
 			String keyUI = driver.findElement(By.xpath(xpathKey)).getText().split("   ")[0].trim();
 			
-			System.out.println("Tenant key: " + keyUI);
+			// System.out.println(elementType + " key: " + keyUI);
 			
 			if (keyUI.equals(key)) {
 				
@@ -1008,8 +1040,11 @@ public class CommonMethods extends BaseMain
 		con.setRequestProperty("Authorization", "Bearer " + token);
 		
 		int responseCode = con.getResponseCode();
-		System.out.println("\nSending 'GET' request to URL : " + url);
-		System.out.println("Response Code : " + responseCode);
+		if (printLogs) {
+			System.out.println("\nSending 'GET' request to URL : " + url);
+			System.out.println("Response Code : " + responseCode);
+		}
+		
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 		String inputLine;
@@ -1021,7 +1056,7 @@ public class CommonMethods extends BaseMain
 		}
 		in.close();
 		
-		System.out.println(response.toString());		
+		if (printLogs) System.out.println(response.toString());		
 		
 		// Create json object
 		JSONObject jsonObject = new JSONObject(response.toString());		

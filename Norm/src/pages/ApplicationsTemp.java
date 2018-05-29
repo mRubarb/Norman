@@ -57,19 +57,17 @@ public class ApplicationsTemp extends BaseMain {
 		
 		
 		// Verify the # on each tab
-		int tenantCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Tenants ']/span")).getText());
-		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Deployments ']/span")).getText());
-		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
+		int tenantCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[contains(text(),'Tenants')]/span")).getText());
+		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[contains(text(),'Deployments')]/span")).getText());
+		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[contains(text(),'Routes')]/span")).getText());
 		
-		System.out.println("tenantCount: " + tenantCount);
-		System.out.println("deploymentCount: " + deploymentCount);
-		System.out.println("routeCount: " + routeCount);
-	
-		// **** UNCOMMENT AFTER MERGE ***********
+		// System.out.println("tenantCount: " + tenantCount);
+		// System.out.println("deploymentCount: " + deploymentCount);
+		// System.out.println("routeCount: " + routeCount);
 		
-		//Assert.assertEquals(tenantCount, applicationObject.m_tenantCount);
-		//Assert.assertEquals(deploymentCount, applicationObject.m_deploymentCount);
-		//Assert.assertEquals(routeCount, applicationObject.m_routeCount);
+		Assert.assertEquals(tenantCount, applicationObject.m_tenantCount);
+		Assert.assertEquals(deploymentCount, applicationObject.m_deploymentCount);
+		Assert.assertEquals(routeCount, applicationObject.m_routeCount);
 		
 		driver.findElement(By.xpath("//button/span[text()=' Back']/..")).click();
 		Thread.sleep(2000);
@@ -79,9 +77,7 @@ public class ApplicationsTemp extends BaseMain {
 	
 	private static ApplicationClass putJsonObjectIntoApplicationObject(JSONObject jsonObject) throws JSONException {
 		
-		// **** UNCOMMENT AFTER MERGE ***********
-		
-		ApplicationClass application = new ApplicationClass("", "", "", true, "", "");  // = new ApplicationClass();
+		ApplicationClass application = new ApplicationClass();
 		
 		/*			
 		System.out.print(i+1 + "  Key: " + jo.getString("key"));
@@ -99,17 +95,17 @@ public class ApplicationsTemp extends BaseMain {
 		application.m_Enabled = jsonObject.getBoolean("enabled");
 		
 		try { 
-		//	application.m_tenantCount = jsonObject.getJSONObject("statistics").getInt("tenantCount"); 
+			application.m_tenantCount = jsonObject.getJSONObject("statistics").getInt("tenantCount"); 
 		}
 		catch (NoSuchElementException e) { }
 		
 		try { 
-		//	application.m_deploymentCount = jsonObject.getJSONObject("statistics").getInt("deploymentCount"); 
+			application.m_deploymentCount = jsonObject.getJSONObject("statistics").getInt("deploymentCount"); 
 		}
 		catch (NoSuchElementException e) { }
 		
 		try { 
-		//	application.m_routeCount = jsonObject.getJSONObject("statistics").getInt("routeCount"); 
+			application.m_routeCount = jsonObject.getJSONObject("statistics").getInt("routeCount"); 
 		}
 		catch (NoSuchElementException e) { }
 		

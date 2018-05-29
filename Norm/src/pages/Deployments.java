@@ -557,6 +557,8 @@ public class Deployments extends BaseMain
 			
 			String xpathKeyPopUp = "//jhi-deployment-management-dialog/form/div/dl/dd";
 			
+			WaitForElementPresent(By.xpath(xpathKeyPopUp), 3);
+			
 			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(deploymentKey)) {
 				
 				// System.out.println("Deployment found");
@@ -601,7 +603,7 @@ public class Deployments extends BaseMain
 
 	
 	
-	public static void deleteDeployment(String deploymentKey) {
+	public static void deleteDeployment(String deploymentKey) throws Exception {
 		
 		int pageSize = 10;
 		
@@ -614,6 +616,8 @@ public class Deployments extends BaseMain
 			driver.findElement(By.xpath(xpathButtonDelete)).click();	
 			
 			String xpathKeyPopUp = "//jhi-deployment-mgmt-delete-dialog/form/div[2]/div/div[2]/dd[1]";
+
+			WaitForElementPresent(By.xpath(xpathKeyPopUp), 3);
 			
 			if (driver.findElement(By.xpath(xpathKeyPopUp)).getText().equals(deploymentKey)) {
 				
@@ -910,8 +914,8 @@ public class Deployments extends BaseMain
 		int tenantCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Tenants ']/span")).getText());
 		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
 		
-		System.out.println("tenantCount: " + tenantCount);
-		System.out.println("routeCount: " + routeCount);
+		// System.out.println("tenantCount: " + tenantCount);
+		// System.out.println("routeCount: " + routeCount);
 	
 		Assert.assertEquals(tenantCount, deploymentObject.getTenantCount());
 		Assert.assertEquals(routeCount, deploymentObject.getRouteCount());

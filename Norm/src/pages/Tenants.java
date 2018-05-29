@@ -1195,9 +1195,9 @@ public class Tenants extends BaseMain
 		int deploymentCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Deployments ']/span")).getText()); 
 		int routeCount = Integer.parseInt(driver.findElement(By.xpath("//li[@class='nav-item']/a/div[text()='Routes ']/span")).getText());
 		
-		System.out.println("applicationCount: " + applicationCount);
-		System.out.println("deploymentCount: " + deploymentCount);
-		System.out.println("routeCount: " + routeCount);
+		// System.out.println("applicationCount: " + applicationCount);
+		// System.out.println("deploymentCount: " + deploymentCount);
+		// System.out.println("routeCount: " + routeCount);
 	
 		Assert.assertEquals(applicationCount, tenantObject.getApplicationCount());
 		Assert.assertEquals(deploymentCount, tenantObject.getDeploymentCount());

@@ -36,7 +36,7 @@ public class TC_DeploymentsDetails extends BaseMain {
 				
 		Thread.sleep(5000);
 		
-		Deployments.editDeployment(deploymentKey, applicationKey);  
+		Deployments.editDeployment(deploymentKey, applicationKey);
 			
 		Thread.sleep(3000);
 		
